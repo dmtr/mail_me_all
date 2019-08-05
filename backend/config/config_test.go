@@ -12,8 +12,8 @@ import (
 // TestGetConfig func
 func TestGetDefaultConfig(t *testing.T) {
 	conf := GetConfig()
-	assert.Equal(t, appHost, conf.host, fmt.Sprintf("Host must be %s", appHost))
-	assert.Equal(t, appPort, conf.port, fmt.Sprintf("Port must be %d", appPort))
+	assert.Equal(t, appHost, conf.Host, fmt.Sprintf("Host must be %s", appHost))
+	assert.Equal(t, appPort, conf.Port, fmt.Sprintf("Port must be %d", appPort))
 
 }
 
@@ -23,7 +23,7 @@ func TestGetConfigFromEnv(t *testing.T) {
 	port := 80
 	os.Setenv(appPrefix+"_PORT", strconv.Itoa(port))
 	conf := GetConfig()
-	assert.Equal(t, "localhost", conf.host, "Host must be localhost")
-	assert.Equal(t, port, conf.port, "Port must be 80")
+	assert.Equal(t, "localhost", conf.Host, "Host must be localhost")
+	assert.Equal(t, port, conf.Port, "Port must be 80")
 
 }

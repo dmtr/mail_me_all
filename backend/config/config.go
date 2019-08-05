@@ -14,11 +14,11 @@ const (
 
 // Config - app config
 type Config struct {
-	host string
-	port int
+	Host string
+	Port int
 }
 
-// GetConfig return app config
+// GetConfig returns app config
 func GetConfig() Config {
 	viper.SetEnvPrefix(appPrefix)
 	viper.SetDefault("HOST", appHost)
@@ -26,8 +26,8 @@ func GetConfig() Config {
 	viper.AutomaticEnv()
 
 	conf := Config{
-		host: viper.GetString("HOST"),
-		port: viper.GetInt("PORT"),
+		Host: viper.GetString("HOST"),
+		Port: viper.GetInt("PORT"),
 	}
 
 	log.Println("Config loaded")
