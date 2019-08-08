@@ -14,8 +14,9 @@ const (
 
 // Config - app config
 type Config struct {
-	Host string
-	Port int
+	Host  string
+	Port  int
+	Debug int
 }
 
 // GetConfig returns app config
@@ -23,11 +24,13 @@ func GetConfig() Config {
 	viper.SetEnvPrefix(appPrefix)
 	viper.SetDefault("HOST", appHost)
 	viper.SetDefault("PORT", appPort)
+	viper.SetDefault("DEBUG", 0)
 	viper.AutomaticEnv()
 
 	conf := Config{
-		Host: viper.GetString("HOST"),
-		Port: viper.GetInt("PORT"),
+		Host:  viper.GetString("HOST"),
+		Port:  viper.GetInt("PORT"),
+		Debug: viper.GetInt("DEBUG"),
 	}
 
 	log.Println("Config loaded")

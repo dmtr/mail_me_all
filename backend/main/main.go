@@ -14,6 +14,10 @@ import (
 
 func main() {
 	conf := config.GetConfig()
+	if conf.Debug == 0 {
+		log.Info("Release mode")
+		gin.SetMode(gin.ReleaseMode)
+	}
 	router := gin.Default()
 
 	routes.RegisterRoutes(router)
