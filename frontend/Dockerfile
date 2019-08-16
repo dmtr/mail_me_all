@@ -1,4 +1,6 @@
-FROM nginx
+FROM node:10.16.1-alpine
+ENV PORT=3005
+RUN apk add --no-cache yarn
 RUN mkdir /app
-COPY /client/dist /app
-COPY nginx.client.conf /etc/nginx/nginx.conf
+WORKDIR app
+EXPOSE $PORT
