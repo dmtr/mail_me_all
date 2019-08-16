@@ -1,0 +1,25 @@
+version: '3'
+services:
+    backend:
+      build:
+        context: ./backend/
+      environment:
+        - MAILME_APP_DEBUG=0
+        - MAILME_APP_HOST=0.0.0.0
+      command: /app/mailmeapp
+    frontend:
+      build:
+        context: ./frontend/
+      volumes:
+         - ./frontend/client/:/app
+      command: yarn serve   
+    nginx:
+      image: nginx:1.17.3-alpine
+      build:
+        context: ./nginx/
+      volumes:
+        - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+        - ./nginx/cert/server.crt:/etc/nginx/server.crt
+        - ./nginx/cert/server.key:/etc/nginx/server.key
+      ports:
+        - "443:443"
