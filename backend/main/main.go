@@ -12,14 +12,27 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func initLogger(loglevel log.Level) {
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true})
+	log.SetOutput(os.Stdout)
+	if loglevel == 0 {
+		loglevel = log.ErrorLevel
+	}
+	log.SetLevel(loglevel)
+}
+
 func main() {
+	log.Infoln("Loadding Config")
 	conf := config.GetConfig()
+	initLogger(conf.Loglevel)
+
 	if conf.Debug == 0 {
 		log.Info("Release mode")
 		gin.SetMode(gin.ReleaseMode)
 	}
-	router := gin.Default()
 
+	router := gin.Default()
 	routes.RegisterRoutes(router)
 
 	server := &http.Server{
