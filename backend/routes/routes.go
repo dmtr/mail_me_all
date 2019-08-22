@@ -13,6 +13,6 @@ func RegisterRoutes(router *gin.Engine) {
 	router.GET("/healthcheck", func(c *gin.Context) { c.String(http.StatusOK, "Ok") })
 	router.GET("/oauth/fb", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK!!!")
-		log.Infof("context %+v", c)
+		log.Debugf("context %+v", c)
 	})
 }
