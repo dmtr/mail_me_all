@@ -20,10 +20,11 @@ func initLogger(loglevel log.Level) {
 		loglevel = log.ErrorLevel
 	}
 	log.SetLevel(loglevel)
+	log.SetReportCaller(true)
 }
 
 func main() {
-	log.Infoln("Loadding Config")
+	log.Infoln("Loading Config")
 	conf := config.GetConfig()
 	initLogger(conf.Loglevel)
 
