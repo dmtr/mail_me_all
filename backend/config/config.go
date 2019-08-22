@@ -1,8 +1,7 @@
 package config
 
 import (
-	"log"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -14,9 +13,10 @@ const (
 
 // Config - app config
 type Config struct {
-	Host  string
-	Port  int
-	Debug int
+	Host     string
+	Port     int
+	Debug    int
+	Loglevel log.Level
 }
 
 // GetConfig returns app config
@@ -25,14 +25,20 @@ func GetConfig() Config {
 	viper.SetDefault("HOST", appHost)
 	viper.SetDefault("PORT", appPort)
 	viper.SetDefault("DEBUG", 0)
+	viper.SetDefault("Loglevel", "debug")
 	viper.AutomaticEnv()
 
-	conf := Config{
-		Host:  viper.GetString("HOST"),
-		Port:  viper.GetInt("PORT"),
-		Debug: viper.GetInt("DEBUG"),
+	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
+	if err != nil {
+		loglevel = log.ErrorLevel
 	}
 
-	log.Println("Config loaded")
+	conf := Config{
+		Host:     viper.GetString("HOST"),
+		Port:     viper.GetInt("PORT"),
+		Debug:    viper.GetInt("DEBUG"),
+		Loglevel: loglevel,
+	}
+
 	return conf
 }
