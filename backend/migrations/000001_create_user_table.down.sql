@@ -1,1 +1,5 @@
-DROP TABLE user;
+BEGIN;
+
+DROP TABLE user_account;
+
+COMMIT;
