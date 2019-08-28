@@ -2,21 +2,18 @@
   <div id="app">
     <div>
       <SignIn />
-      <Subscription />
     </div>
   </div>
 </template>
 
 <script>
-import Subscription from "./components/Subscription.vue";
-import SignIn from "./components/SignIn.vue";
+import SignIn from "./components/SignIn";
 
 export default {
   name: "app",
 
   components: {
-    Subscription,
-    SignIn
+    SignInn
   }
 };
 </script>
