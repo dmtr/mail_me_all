@@ -33,8 +33,7 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
-	routes.RegisterRoutes(router)
+	router := routes.GetRouter()
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", conf.Host, conf.Port),
