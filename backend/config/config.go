@@ -17,6 +17,7 @@ type Config struct {
 	Port     int
 	Debug    int
 	Loglevel log.Level
+	DSN      string
 }
 
 // GetConfig returns app config
@@ -26,6 +27,7 @@ func GetConfig() Config {
 	viper.SetDefault("PORT", appPort)
 	viper.SetDefault("DEBUG", 0)
 	viper.SetDefault("Loglevel", "debug")
+	viper.SetDefault("DSN", "")
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -38,6 +40,7 @@ func GetConfig() Config {
 		Port:     viper.GetInt("PORT"),
 		Debug:    viper.GetInt("DEBUG"),
 		Loglevel: loglevel,
+		DSN:      viper.GetString("DSN"),
 	}
 
 	return conf
