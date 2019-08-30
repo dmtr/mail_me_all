@@ -34,6 +34,7 @@ func main() {
 	log.Infoln("Loading Config")
 	conf := config.GetConfig()
 	initLogger(conf.Loglevel)
+	log.Infof("Config loaded %v", conf)
 
 	if conf.Debug == 0 {
 		log.Info("Release mode")
