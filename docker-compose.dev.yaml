@@ -7,10 +7,12 @@ services:
       environment:
         - MAILME_APP_DEBUG=0
         - MAILME_APP_HOST=0.0.0.0
-        - DSN=postgres://postgres@postgresql:5432/mailmeapp?sslmode=disable
+        - MAILME_APP_DSN=postgres://postgres@postgresql:5432/mailmeapp?sslmode=disable
       command: /app/mailmeapp
       depends_on:
         - postgresql
+      networks:
+        - mailmeapp 
     frontend:
       build:
         context: ./frontend/
@@ -18,6 +20,8 @@ services:
       volumes:
          - ./frontend/client/:/app
       command: yarn serve   
+      networks:
+        - mailmeapp 
     nginx:
       image: nginx:1.17.3-alpine
       build:
@@ -29,6 +33,8 @@ services:
         - ./nginx/cert/server.key:/etc/nginx/server.key
       ports:
         - "443:443"
+      networks:
+        - mailmeapp 
     postgresql:
       image: postgres:11.5-alpine
       container_name: mailmeapp.postgres
@@ -40,7 +46,7 @@ services:
       volumes:
       - postgres-data:/var/lib/postgresql/data/
       networks:
-      - mailmeapp 
+        - mailmeapp 
 
 volumes:
   postgres-data:
