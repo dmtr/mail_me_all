@@ -33,6 +33,9 @@ services:
         - ./nginx/cert/server.key:/etc/nginx/server.key
       ports:
         - "443:443"
+      depends_on:
+        - backend
+        - frontend
       networks:
         - mailmeapp 
     postgresql:
