@@ -6,7 +6,6 @@ import (
 
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
-	"github.com/dmtr/mail_me_all/backend/routes"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 )
@@ -51,9 +50,9 @@ func GetApp() App {
 		os.Exit(1)
 	}
 
-	fn := func() { db.Close() }
+	fn := func() { log.Info("Closing."); db.Close() }
 	return App{
-		Router: routes.GetRouter(db),
+		Router: GetRouter(db),
 		Conf:   &conf,
 		Close:  fn,
 	}

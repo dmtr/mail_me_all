@@ -1,4 +1,4 @@
-package routes
+package app
 
 import (
 	"bytes"
@@ -9,12 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestCreateUser - test user creation
-func TestCreateUser(t *testing.T) {
-	router := GetRouter()
+func testCreateUser(t *testing.T, app App) {
 	req := map[string]string{"name": "Test Me"}
 	req_json, _ := json.Marshal(req)
-	w := PerformRequest(router, "POST", "/api/users", bytes.NewBuffer(req_json), true)
+	w := PerformRequest(app.Router, "POST", "/api/users", bytes.NewBuffer(req_json), true)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]string
@@ -23,4 +21,11 @@ func TestCreateUser(t *testing.T) {
 	assert.Nil(t, err)
 	assert.True(t, exists)
 	assert.Equal(t, req["name"], value)
+}
+
+func TestUserEndpoinds(t *testing.T) {
+	tests := map[string]testFunc{
+		"testCreateUser": testCreateUser,
+	}
+	RunTests(tests, t)
 }
