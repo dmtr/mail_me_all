@@ -7,7 +7,6 @@ import (
 	"os/signal"
 
 	"github.com/dmtr/mail_me_all/backend/app"
-	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -7,6 +7,7 @@ import (
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
 
