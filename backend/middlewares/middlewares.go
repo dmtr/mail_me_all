@@ -13,7 +13,7 @@ func TransactionlMiddleware(db *sqlx.DB) gin.HandlerFunc {
 		c.Set("Tx", tx)
 		c.Next()
 		if c.IsAborted() {
-			log.Errorln("Context is abortIndex, transaction rollback")
+			log.Errorln("Context is aborted, transaction rollback")
 			tx.Rollback()
 		} else {
 			log.Debugln("Commiting transaction")
