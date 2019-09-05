@@ -2,7 +2,7 @@ version: '3'
 services:
     backend:
       build:
-        context: ./backend/
+        context: .
       container_name: mailmeapp.backend
       environment:
         - MAILME_APP_DEBUG=0
