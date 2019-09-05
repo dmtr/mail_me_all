@@ -1,19 +1,58 @@
+export GO111MODULE=on
 ABS_PATH=`pwd`
-POSTGRES_URL=postgres://postgres@localhost:5436/mailmeapp?sslmode=disable
 N?=1
+TEST_DB_CONTAINER=test_db
+DB_IMAGE=postgres:11.5-alpine
+DB_HOST=localhost
+DB_USER=postgres
+NETWORK=mail_me_all_mailmeapp
 
-all: build-backend
-restart: build-backend restart-backend
+ifneq (, $(findstring test, $(MAKECMDGOALS)))
+	DB_NAME=mailmeapp_test
+	DB_PORT=5439
+else
+	DB_NAME=mailmeapp
+	DB_PORT=5436
+endif
+
+POSTGRES_URL:=postgres://$(DB_USER)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+POSTGRES_URL_INTERNAL:=$(DB_USER)://postgres@$(TEST_DB_CONTAINER):5432/$(DB_NAME)?sslmode=disable
+
+export PG_HOST=$(DB_HOST)
+export PG_PORT=$(DB_PORT)
+export PG_DATABASE=$(DB_NAME)
+export PG_USER=$(DB_USER)
+
+all: restart
+restart: build-backend restart-all
 build-backend:
+	$(info Running target $(MAKECMDGOALS))
 	docker-compose -f docker-compose.dev.yaml build backend
 restart-backend:
+	$(info Running target $(MAKECMDGOALS))
 	docker-compose -f docker-compose.dev.yaml up -d backend
+	docker-compose -f docker-compose.dev.yaml restart backend
+restart-all:
+	$(info Running target $(MAKECMDGOALS))
+	docker-compose -f docker-compose.dev.yaml up -d
+	docker-compose -f docker-compose.dev.yaml restart
 create-migration:
-	cd backend
-	docker run -v $(ABS_PATH)/backend/migrations:/migrations migrate create -ext sql -seq -dir /migrations $(NAME) 
+	$(info Running target $(MAKECMDGOALS))
+	docker run --rm -v $(ABS_PATH)/backend/migrations:/migrations migrate create -ext sql -seq -dir /migrations $(NAME) 
 migrate-up:
-	cd backend
-	docker run --net=host -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL) -path /migrations up $(N)
+	$(info Running target $(MAKECMDGOALS) with $(POSTGRES_URL))
+	docker-compose -f docker-compose.dev.yaml up -d postgresql
+	./scripts/wait-for-pq.sh
+	docker run --rm --net=host -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL) -path /migrations up $(N)
 migrate-down:
-	cd backend
-	docker run --net=host -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL) -path /migrations down $(N)
+	$(info Running target $(MAKECMDGOALS) with $(POSTGRES_URL))
+	docker-compose -f docker-compose.dev.yaml up -d postgresql
+	./scripts/wait-for-pq.sh
+	docker run --rm --net=host -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL) -path /migrations down $(N)
+test-backend:
+	$(info Running target $(MAKECMDGOALS) with $(POSTGRES_URL))
+	docker run --rm --name $(TEST_DB_CONTAINER) --network $(NETWORK) -d -e POSTGRES_DB=$(DB_NAME) -p $(DB_PORT):5432 $(DB_IMAGE)
+	./scripts/wait-for-pq.sh
+	docker run --rm --network $(NETWORK) -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL_INTERNAL) -path /migrations up
+	MAILME_APP_DSN=$(POSTGRES_URL) go test -v ./backend/... || docker stop $(TEST_DB_CONTAINER) 
+	docker stop $(TEST_DB_CONTAINER) || echo already stopped
