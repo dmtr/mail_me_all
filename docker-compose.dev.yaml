@@ -7,7 +7,7 @@ services:
       environment:
         - MAILME_APP_DEBUG=0
         - MAILME_APP_HOST=0.0.0.0
-        - MAILME_APP_DSN=postgres://postgres@postgresql:5432/mailmeapp?sslmode=disable
+        - MAILME_APP_DSN=${MAILME_APP_DSN:-postgres://postgres@postgresql:5432/mailmeapp?sslmode=disable}
       command: /app/mailmeapp
       depends_on:
         - postgresql
@@ -45,7 +45,7 @@ services:
         - "5436:5432"
       environment:
         LC_ALL: C.UTF-8
-        POSTGRES_DB: mailmeapp
+        POSTGRES_DB: ${POSTGRES_DB:-mailmeapp}
       volumes:
       - postgres-data:/var/lib/postgresql/data/
       networks:
