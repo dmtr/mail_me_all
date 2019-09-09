@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"testing"
@@ -9,15 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
-
-// TestGetConfig func
-func TestGetDefaultConfig(t *testing.T) {
-	conf := GetConfig()
-	assert.Equal(t, appHost, conf.Host, fmt.Sprintf("Host must be %s", appHost))
-	assert.Equal(t, appPort, conf.Port, fmt.Sprintf("Port must be %d", appPort))
-	assert.Equal(t, log.DebugLevel, conf.Loglevel, "Loglevel must be debug")
-	assert.Equal(t, "", conf.DSN, "DSN must be empty string")
-}
 
 // TestGetConfig func
 func TestGetConfigFromEnv(t *testing.T) {
