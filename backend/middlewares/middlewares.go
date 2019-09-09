@@ -11,13 +11,16 @@ func TransactionlMiddleware(db *sqlx.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tx := db.MustBegin()
 		c.Set("Tx", tx)
+		defer func() {
+			if err := recover(); err != nil {
+				log.Errorln("Context is aborted, transaction rollback")
+				tx.Rollback()
+				panic(err)
+			} else {
+				log.Debugln("Commiting transaction")
+				tx.Commit()
+			}
+		}()
 		c.Next()
-		if c.IsAborted() {
-			log.Errorln("Context is aborted, transaction rollback")
-			tx.Rollback()
-		} else {
-			log.Debugln("Commiting transaction")
-			tx.Commit()
-		}
 	}
 }
