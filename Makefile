@@ -23,15 +23,16 @@ export PG_PORT=$(DB_PORT)
 export PG_DATABASE=$(DB_NAME)
 export PG_USER=$(DB_USER)
 
-all: restart
-restart: build-backend restart-all
+all: build-backend up-backend 
+restart: restart-all
 build-backend:
 	$(info Running target $(MAKECMDGOALS))
 	docker-compose -f docker-compose.dev.yaml build backend
 restart-backend:
 	$(info Running target $(MAKECMDGOALS))
-	docker-compose -f docker-compose.dev.yaml up -d backend
 	docker-compose -f docker-compose.dev.yaml restart backend
+up-backend:
+	docker-compose -f docker-compose.dev.yaml up -d backend
 restart-all:
 	$(info Running target $(MAKECMDGOALS))
 	docker-compose -f docker-compose.dev.yaml up -d
