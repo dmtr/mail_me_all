@@ -1,12 +1,14 @@
-package app
+package main
 
 import (
 	"os"
 	"time"
 
+	"github.com/dmtr/mail_me_all/backend/api"
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,6 +21,7 @@ const (
 type App struct {
 	Router *gin.Engine
 	Conf   *config.Config
+	Db     *sqlx.DB
 	Close  func()
 }
 
@@ -53,8 +56,9 @@ func GetApp() App {
 
 	fn := func() { log.Info("Closing."); db.Close() }
 	return App{
-		Router: GetRouter(db),
+		Router: api.GetRouter(),
 		Conf:   &conf,
+		Db:     db,
 		Close:  fn,
 	}
 }

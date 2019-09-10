@@ -6,12 +6,11 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/dmtr/mail_me_all/backend/app"
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	app := app.GetApp()
+	app := GetApp()
 	defer app.Close()
 
 	server := &http.Server{
