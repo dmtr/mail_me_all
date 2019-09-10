@@ -1,4 +1,4 @@
-package app
+package api
 
 import (
 	"bytes"
@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
-func testCreateUser(t *testing.T, app App) {
+func testCreateUser(t *testing.T, router *gin.Engine) {
 	req := map[string]string{"name": "Test Me"}
 	req_json, _ := json.Marshal(req)
-	w := PerformRequest(app.Router, "POST", "/api/users", bytes.NewBuffer(req_json), true)
+	w := PerformRequest(router, "POST", "/api/users", bytes.NewBuffer(req_json), true)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]string
