@@ -43,7 +43,7 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 	userDatastore := db.NewUserDatastore(db_)
 	userUseCase := usecases.NewUserUseCase(userDatastore)
 	usecases := models.NewUseCases(userUseCase)
-	router := GetRouter(&usecases)
+	router := GetRouter(usecases)
 
 	for name, fn := range tests {
 		fmt.Printf("Running test %s", name)

@@ -7,8 +7,8 @@ type UserUseCase struct {
 	models.UserDatastore
 }
 
-func NewUserUseCase(datastore models.UserDatastore) UserUseCase {
-	return UserUseCase{datastore}
+func NewUserUseCase(datastore models.UserDatastore) *UserUseCase {
+	return &UserUseCase{datastore}
 }
 
 func (u UserUseCase) CreateUser(user *models.User) error {

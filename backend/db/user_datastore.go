@@ -10,11 +10,11 @@ type UserDatastore struct {
 	DB *sqlx.DB
 }
 
-func NewUserDatastore(db *sqlx.DB) UserDatastore {
-	return UserDatastore{DB: db}
+func NewUserDatastore(db *sqlx.DB) *UserDatastore {
+	return &UserDatastore{DB: db}
 }
 
-func (d UserDatastore) CreateUser(user *models.User) error {
+func (d *UserDatastore) CreateUser(user *models.User) error {
 	log.Debugf("Going to insert user %v", user)
 	tx := d.DB.MustBegin()
 	_, err := tx.NamedExec("INSERT INTO user_account (name, fb_id, fb_token) VALUES (:name, :fb_id, :fb_token)", user)

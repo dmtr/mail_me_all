@@ -63,7 +63,7 @@ func GetApp() App {
 	usecases := models.NewUseCases(userUseCase)
 
 	return App{
-		Router: api.GetRouter(&usecases),
+		Router: api.GetRouter(usecases),
 		Conf:   &conf,
 		Db:     db_,
 		Close:  fn,

@@ -19,6 +19,6 @@ type UseCases struct {
 	User UserUseCase
 }
 
-func NewUseCases(user UserUseCase) UseCases {
-	return UseCases{User: user}
+func NewUseCases(user UserUseCase) *UseCases {
+	return &UseCases{User: user}
 }
