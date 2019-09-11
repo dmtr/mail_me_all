@@ -7,6 +7,8 @@ import (
 	"github.com/dmtr/mail_me_all/backend/api"
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
+	"github.com/dmtr/mail_me_all/backend/models"
+	"github.com/dmtr/mail_me_all/backend/usecases"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -48,17 +50,22 @@ func GetApp() App {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	db, err := db.ConnectDb(conf.DSN, retry*time.Second)
+	db_, err := db.ConnectDb(conf.DSN, retry*time.Second)
 	if err != nil {
 		log.Fatalf("Can't connect to database %s", err)
 		os.Exit(1)
 	}
 
-	fn := func() { log.Info("Closing."); db.Close() }
+	fn := func() { log.Info("Closing."); db_.Close() }
+
+	userDatastore := db.NewUserDatastore(db_)
+	userUseCase := usecases.NewUserUseCase(userDatastore)
+	usecases := models.NewUseCases(userUseCase)
+
 	return App{
-		Router: api.GetRouter(),
+		Router: api.GetRouter(&usecases),
 		Conf:   &conf,
-		Db:     db,
+		Db:     db_,
 		Close:  fn,
 	}
 }

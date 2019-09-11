@@ -14,7 +14,7 @@ func testCreateUser(t *testing.T, router *gin.Engine) {
 	req := map[string]string{"name": "Test Me"}
 	req_json, _ := json.Marshal(req)
 	w := PerformRequest(router, "POST", "/api/users", bytes.NewBuffer(req_json), true)
-	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, http.StatusCreated, w.Code)
 
 	var response map[string]string
 	err := json.Unmarshal([]byte(w.Body.String()), &response)
