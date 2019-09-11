@@ -25,7 +25,7 @@ func (d *UserDatastore) CreateUser(user *models.User) error {
 
 	err = tx.Commit()
 	if err != nil {
-		log.Errorf("Got error commiting transaction %s", err)
+		log.Errorf("Got error commiting transaction %v", err)
 	}
 
 	return err

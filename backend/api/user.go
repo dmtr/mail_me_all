@@ -16,10 +16,10 @@ func CreateUser(usecases *models.UseCases) gin.HandlerFunc {
 		c.BindJSON(&user)
 		err := usecases.User.CreateUser(&user)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"Error": "error!"})
+			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+		} else {
+			log.Debugf("New user %v", user)
+			c.JSON(http.StatusCreated, gin.H{"name": user.Name})
 		}
-
-		log.Debugf("New user %v", user)
-		c.JSON(http.StatusCreated, gin.H{"name": user.Name})
 	}
 }
