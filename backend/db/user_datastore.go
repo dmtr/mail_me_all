@@ -44,6 +44,13 @@ func getDbError(err error) error {
 	return err
 }
 
+func rollbackOnError(tx *sqlx.Tx, err error) {
+	if err != nil {
+		log.Info("Rollback")
+		tx.Rollback()
+	}
+}
+
 type UserDatastore struct {
 	DB *sqlx.DB
 }
@@ -54,19 +61,21 @@ func NewUserDatastore(db *sqlx.DB) *UserDatastore {
 
 func (d *UserDatastore) CreateUser(user *models.User) error {
 	log.Debugf("Going to insert user %v", user)
+
 	tx := d.DB.MustBegin()
-	_, err := tx.NamedExec("INSERT INTO user_account (name, fb_id, fb_token) VALUES (:name, :fb_id, :fb_token)", user)
+	var err error
+
+	defer func() {
+		rollbackOnError(tx, err)
+	}()
+
+	_, err = tx.NamedExec("INSERT INTO user_account (name, fb_id, fb_token) VALUES (:name, :fb_id, :fb_token)", user)
 	err = getDbError(err)
 	if err != nil {
 		log.Error(err.Error() + fmt.Sprintf(" inserting user: %v", user))
 		return err
 	}
 
-	err = tx.Commit()
-	err = getDbError(err)
-	if err != nil {
-		log.Errorf("Got error commiting transaction %s", err.Error())
-	}
-
+	err = getDbError(tx.Commit())
 	return err
 }
