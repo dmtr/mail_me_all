@@ -39,6 +39,7 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 	if err != nil {
 		t.Fatal("Can't connect to database")
 	}
+	defer db_.Close()
 
 	userDatastore := db.NewUserDatastore(db_)
 	userUseCase := usecases.NewUserUseCase(userDatastore)
