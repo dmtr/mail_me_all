@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -10,6 +12,37 @@ import (
 const (
 	uniqueViolationErr pq.ErrorCode = "23505"
 )
+
+type DbError struct {
+	pqError *pq.Error
+	err     error
+}
+
+func (e *DbError) Error() string {
+	if e.pqError != nil {
+		return fmt.Sprintf("Got Database error with code: %s message: %s detail: %s and constraint: %s",
+			e.pqError.Code, e.pqError.Message, e.pqError.Detail, e.pqError.Constraint)
+	}
+	return e.err.Error()
+}
+
+func getPqError(err error) *pq.Error {
+	if err, ok := err.(*pq.Error); ok {
+		return err
+	} else {
+		return nil
+	}
+}
+
+func getDbError(err error) error {
+	if err != nil {
+		return &DbError{
+			pqError: getPqError(err),
+			err:     err,
+		}
+	}
+	return err
+}
 
 type UserDatastore struct {
 	DB *sqlx.DB
@@ -23,16 +56,16 @@ func (d *UserDatastore) CreateUser(user *models.User) error {
 	log.Debugf("Going to insert user %v", user)
 	tx := d.DB.MustBegin()
 	_, err := tx.NamedExec("INSERT INTO user_account (name, fb_id, fb_token) VALUES (:name, :fb_id, :fb_token)", user)
+	err = getDbError(err)
 	if err != nil {
-		if err, ok := err.(*pq.Error); ok {
-			log.Errorf("Got error with code: %s message: %s detail: %s and constraint: %s inserting user: %v", err.Code, err.Message, err.Detail, err.Constraint, user)
-		}
+		log.Error(err.Error() + fmt.Sprintf(" inserting user: %v", user))
 		return err
 	}
 
 	err = tx.Commit()
+	err = getDbError(err)
 	if err != nil {
-		log.Errorf("Got error commiting transaction %v", err)
+		log.Errorf("Got error commiting transaction %s", err.Error())
 	}
 
 	return err
