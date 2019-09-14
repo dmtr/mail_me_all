@@ -7,12 +7,16 @@ import (
 	"os/signal"
 
 	log "github.com/sirupsen/logrus"
+	flag "github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
-func main() {
-	app := GetApp()
-	defer app.Close()
+const (
+	runAPI        string = "api"
+	verifyFbLogin string = "verify-fb-login"
+)
 
+func startApiServer(app *App) {
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", app.Conf.Host, app.Conf.Port),
 		Handler: app.Router,
@@ -39,4 +43,32 @@ func main() {
 		}
 	}
 	log.Info("Exiting")
+}
+
+func main() {
+	flag.String("app-secret", "", "app secret")
+	var accessToken *string = flag.String("access-token", "", "access token")
+	flag.Parse()
+
+	viper.BindPFlags(flag.CommandLine)
+
+	cmd := flag.Arg(0)
+	if cmd == "" {
+		cmd = runAPI
+	}
+
+	var app *App
+	if cmd == runAPI {
+		app = GetApp(true, true)
+	} else if cmd == verifyFbLogin {
+		app = GetApp(false, false)
+		VerifyFbLogin(*accessToken, app)
+	} else {
+		fmt.Printf("Unknown command %s", cmd)
+		os.Exit(1)
+	}
+
+	if app != nil {
+		defer app.Close()
+	}
 }

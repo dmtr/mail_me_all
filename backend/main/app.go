@@ -39,31 +39,46 @@ func initLogger(loglevel log.Level) {
 }
 
 // GetApp - returns app
-func GetApp() App {
+func GetApp(withAPI bool, withDB bool) *App {
 	log.Infoln("Loading Config")
 	conf := config.GetConfig()
 	initLogger(conf.Loglevel)
 	log.Infof("Config loaded %v", conf)
 
-	if conf.Debug == 0 {
-		log.Info("Release mode")
-		gin.SetMode(gin.ReleaseMode)
+	var db_ *sqlx.DB
+
+	if withDB {
+		var err error
+		db_, err = db.ConnectDb(conf.DSN, retry*time.Second)
+		if err != nil {
+			log.Fatalf("Can't connect to database %s", err)
+			os.Exit(1)
+		}
 	}
 
-	db_, err := db.ConnectDb(conf.DSN, retry*time.Second)
-	if err != nil {
-		log.Fatalf("Can't connect to database %s", err)
-		os.Exit(1)
+	fn := func() {
+		log.Info("Closing.")
+		if withDB {
+			db_.Close()
+		}
 	}
-
-	fn := func() { log.Info("Closing."); db_.Close() }
 
 	userDatastore := db.NewUserDatastore(db_)
 	userUseCase := usecases.NewUserUseCase(userDatastore)
 	usecases := models.NewUseCases(userUseCase)
 
-	return App{
-		Router: api.GetRouter(usecases),
+	var router *gin.Engine
+	if withAPI {
+
+		if conf.Debug == 0 {
+			log.Info("Release mode")
+			gin.SetMode(gin.ReleaseMode)
+		}
+		router = api.GetRouter(usecases)
+	}
+
+	return &App{
+		Router: router,
 		Conf:   &conf,
 		Db:     db_,
 		Close:  fn,
