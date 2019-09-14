@@ -8,6 +8,7 @@ services:
         - MAILME_APP_DEBUG=0
         - MAILME_APP_HOST=0.0.0.0
         - MAILME_APP_DSN=${MAILME_APP_DSN:-postgres://postgres@postgresql:5432/mailmeapp?sslmode=disable}
+        - MAILME_APP_FB_APP_ID=2288197271493743
       command: /app/mailmeapp
       depends_on:
         - postgresql
