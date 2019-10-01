@@ -15,6 +15,12 @@ const (
 	grantType  = "fb_exchange_token"
 )
 
+type AccessTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   uint   `json:"expires_in"`
+}
+
 func VerifyFbLogin(accessToken string, appID string, appSecret string, FbRedirectURI string) {
 	var globalApp = fb.New(appID, appSecret)
 	globalApp.RedirectUri = FbRedirectURI
@@ -29,11 +35,13 @@ func VerifyFbLogin(accessToken string, appID string, appSecret string, FbRedirec
 	}
 }
 
-func GenerateLongLivedToken(accessToken string, appID string, appSecret string) (string, error) {
+func GenerateLongLivedToken(accessToken string, appID string, appSecret string) (AccessTokenResponse, error) {
+	var response AccessTokenResponse
+
 	req, err := http.NewRequest("GET", fbTokenUrl, nil)
 	if err != nil {
 		log.Errorf("%s", err)
-		return "", err
+		return response, err
 	}
 
 	q := req.URL.Query()
@@ -46,20 +54,18 @@ func GenerateLongLivedToken(accessToken string, appID string, appSecret string) 
 	client := http.Client{
 		Timeout: timeout,
 	}
-	log.Debugf("Url: %s", req.URL.String())
-	resp, err := client.Do(req)
-	log.Debugf("Response code %s", resp.StatusCode)
-	if err != nil {
-		log.Errorf("%s", err)
-		return "", err
 
+	resp, err := client.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		log.Errorf("Response code %s, error %s", resp.Status, err)
+		return response, err
 	}
 
 	defer resp.Body.Close()
 
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	log.Debugf("result %v", result)
-	return result["access_token"].(string), nil
-
+	decoder := json.NewDecoder(resp.Body)
+	if err = decoder.Decode(&response); err != nil {
+		log.Errorf("Got error decoding response: %s", err)
+	}
+	return response, nil
 }
