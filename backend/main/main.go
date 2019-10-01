@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	runAPI        string = "api"
-	verifyFbLogin string = "verify-fb-login"
+	runAPI          string = "api"
+	verifyFbLogin   string = "verify-fb-login"
+	generateFbToken string = "generate-fb-token"
 )
 
 func startApiServer(app *App) {
@@ -63,6 +64,9 @@ func main() {
 	} else if cmd == verifyFbLogin {
 		app = GetApp(false, false)
 		VerifyFbLogin(*accessToken, app)
+	} else if cmd == generateFbToken {
+		app = GetApp(false, false)
+		GenerateFbToken(*accessToken, app)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)
