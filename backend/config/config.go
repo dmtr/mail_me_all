@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	appPrefix string = "MAILME_APP"
-	appHost   string = "127.0.0.1"
-	appPort   int    = 8080
+	appPrefix   string = "MAILME_APP"
+	appHost     string = "127.0.0.1"
+	appPort     int    = 8080
+	fbProxyPort int    = 5000
 )
 
 // Config - app config
@@ -21,6 +22,7 @@ type Config struct {
 	FbAppID       string
 	FbRedirectURI string
 	AppSecret     string
+	FBProxyPort   int
 }
 
 // GetConfig returns app config
@@ -34,6 +36,7 @@ func GetConfig() Config {
 	viper.SetDefault("FB_APP_ID", "")
 	viper.SetDefault("FB_REDIRECT_URI", "")
 	viper.SetDefault("APP-SECRET", "")
+	viper.SetDefault("FB_PROXY_PORT", fbProxyPort)
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -50,6 +53,7 @@ func GetConfig() Config {
 		FbAppID:       viper.GetString("FB_APP_ID"),
 		FbRedirectURI: viper.GetString("FB_REDIRECT_URI"),
 		AppSecret:     viper.GetString("app-secret"),
+		FBProxyPort:   viper.GetInt("FB_PROXY_PORT"),
 	}
 
 	return conf
