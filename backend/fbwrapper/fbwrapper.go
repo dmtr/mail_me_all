@@ -15,12 +15,14 @@ const (
 	grantType  = "fb_exchange_token"
 )
 
+//AccessTokenResponse - long lived token response
 type AccessTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   uint   `json:"expires_in"`
 }
 
+//VerifyFbToken - check if access token is valid
 func VerifyFbToken(accessToken string, appID string, appSecret string, FbRedirectURI string) (userid string, err error) {
 	var globalApp = fb.New(appID, appSecret)
 	globalApp.RedirectUri = FbRedirectURI
@@ -28,6 +30,7 @@ func VerifyFbToken(accessToken string, appID string, appSecret string, FbRedirec
 	return session.User()
 }
 
+//GenerateLongLivedToken - generates long lived token
 func GenerateLongLivedToken(accessToken string, appID string, appSecret string) (AccessTokenResponse, error) {
 	var response AccessTokenResponse
 
