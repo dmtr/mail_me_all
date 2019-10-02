@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/dmtr/mail_me_all/backend/app"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -17,7 +18,7 @@ const (
 	generateFbToken string = "generate-fb-token"
 )
 
-func startApiServer(app *App) {
+func startApiServer(app *app.App) {
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", app.Conf.Host, app.Conf.Port),
 		Handler: app.Router,
@@ -58,21 +59,21 @@ func main() {
 		cmd = runAPI
 	}
 
-	var app *App
+	var a *app.App
 	if cmd == runAPI {
-		app = GetApp(true, true)
+		a = app.GetApp(true, true)
 	} else if cmd == verifyFbLogin {
-		app = GetApp(false, false)
-		VerifyFbLogin(*accessToken, app)
+		a = app.GetApp(false, false)
+		VerifyFbLogin(*accessToken, a)
 	} else if cmd == generateFbToken {
-		app = GetApp(false, false)
-		GenerateFbToken(*accessToken, app)
+		a = app.GetApp(false, false)
+		GenerateFbToken(*accessToken, a)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)
 	}
 
-	if app != nil {
-		defer app.Close()
+	if a != nil {
+		defer a.Close()
 	}
 }
