@@ -12,6 +12,18 @@ services:
       command: /app/mailmeapp
       depends_on:
         - postgresql
+        - fbproxy
+      networks:
+        - mailmeapp 
+    fbproxy:
+      build:
+        context: .
+        args:
+          - APP_PORT=5000
+      container_name: mailmeapp.fbproxy
+      environment:
+        - MAILME_APP_FB_APP_ID=2288197271493743
+      command: /app/mailmeapp run-fb-proxy
       networks:
         - mailmeapp 
     frontend:

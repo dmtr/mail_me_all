@@ -12,10 +12,11 @@ COPY ./backend /app/backend
 RUN CGO_ENABLED=0 GOOS=linux go build -o mailmeapp ./backend/main
 
 FROM alpine:3.10.1
+ARG APP_PORT
 RUN apk add --no-cache tzdata
 RUN adduser -S -D -H -h /app appuser
 USER appuser
 COPY --from=builder /app/mailmeapp /app/
 WORKDIR /app
-EXPOSE 8080
+EXPOSE ${APP_PORT:-8080}
 CMD ["/app/mailmeapp"]
