@@ -2,23 +2,29 @@ package main
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 
 	"github.com/dmtr/mail_me_all/backend/app"
+	"github.com/dmtr/mail_me_all/backend/fbproxy"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
+
+	pb "github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 )
 
 const (
 	runAPI          string = "api"
 	verifyFbLogin   string = "verify-fb-login"
 	generateFbToken string = "generate-fb-token"
+	runFBProxy      string = "run-fb-proxy"
 )
 
-func startApiServer(app *app.App) {
+func startAPIServer(app *app.App) {
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", app.Conf.Host, app.Conf.Port),
 		Handler: app.Router,
@@ -47,6 +53,19 @@ func startApiServer(app *app.App) {
 	log.Info("Exiting")
 }
 
+func startFBProxy(app *app.App) {
+	log.Info("Starting FB proxy server")
+	lsnr, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", app.Conf.FBProxyPort))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	var opts []grpc.ServerOption
+	grpcServer := grpc.NewServer(opts...)
+	s := fbproxy.NewServiceServer(app)
+	pb.RegisterFbProxyServiceServer(grpcServer, s)
+	grpcServer.Serve(lsnr)
+}
+
 func main() {
 	flag.String("app-secret", "", "app secret")
 	var accessToken *string = flag.String("access-token", "", "access token")
@@ -60,20 +79,22 @@ func main() {
 	}
 
 	var a *app.App
+	defer func() { a.Close() }()
+
 	if cmd == runAPI {
 		a = app.GetApp(true, true)
+		startAPIServer(a)
 	} else if cmd == verifyFbLogin {
 		a = app.GetApp(false, false)
 		VerifyFbLogin(*accessToken, a)
 	} else if cmd == generateFbToken {
 		a = app.GetApp(false, false)
 		GenerateFbToken(*accessToken, a)
+	} else if cmd == runFBProxy {
+		a = app.GetApp(false, false)
+		startFBProxy(a)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)
-	}
-
-	if a != nil {
-		defer a.Close()
 	}
 }

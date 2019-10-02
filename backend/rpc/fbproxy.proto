@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package rpc;
+
+
+service FbProxyService {
+	  rpc GetAccessToken(NewUser) returns (User) {}
+}
+
+
+message NewUser {
+	string user_id = 1;
+	string access_token = 2;
+}
+
+message User {
+	string user_id = 1;
+	string access_token = 2;
+	uint64 expires_in = 3;
+}
