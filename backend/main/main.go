@@ -82,16 +82,16 @@ func main() {
 	defer func() { a.Close() }()
 
 	if cmd == runAPI {
-		a = app.GetApp(true, true)
+		a = app.GetApp(true)
 		startAPIServer(a)
 	} else if cmd == verifyFbLogin {
-		a = app.GetApp(false, false)
+		a = app.GetApp(false)
 		VerifyFbLogin(*accessToken, a)
 	} else if cmd == generateFbToken {
-		a = app.GetApp(false, false)
+		a = app.GetApp(false)
 		GenerateFbToken(*accessToken, a)
 	} else if cmd == runFBProxy {
-		a = app.GetApp(false, false)
+		a = app.GetApp(false)
 		startFBProxy(a)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)

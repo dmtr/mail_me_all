@@ -11,6 +11,7 @@ import (
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/dmtr/mail_me_all/backend/models"
+	"github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/dmtr/mail_me_all/backend/usecases"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -41,8 +42,16 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 	}
 	defer db_.Close()
 
+	conn, err := rpc.GetRpcConection(&conf)
+	if err != nil {
+		t.Fatalf("Can't connect to rpc sever %s", err)
+	}
+
+	defer conn.Close()
+
 	userDatastore := db.NewUserDatastore(db_)
-	userUseCase := usecases.NewUserUseCase(userDatastore)
+	client := rpc.GetRpcClient(conn)
+	userUseCase := usecases.NewUserUseCase(userDatastore, client)
 	usecases := models.NewUseCases(userUseCase)
 	router := GetRouter(usecases)
 

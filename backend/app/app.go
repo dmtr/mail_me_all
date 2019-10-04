@@ -8,11 +8,15 @@ import (
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/dmtr/mail_me_all/backend/models"
+	"github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/dmtr/mail_me_all/backend/usecases"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
+
+	pb "github.com/dmtr/mail_me_all/backend/rpc"
 )
 
 const (
@@ -21,10 +25,11 @@ const (
 
 // App represents application
 type App struct {
-	Router *gin.Engine
-	Conf   *config.Config
-	Db     *sqlx.DB
-	Close  func()
+	Router   *gin.Engine
+	Conf     *config.Config
+	Db       *sqlx.DB
+	UseCases *models.UseCases
+	Close    func()
 }
 
 func initLogger(loglevel log.Level) {
@@ -38,12 +43,28 @@ func initLogger(loglevel log.Level) {
 	log.SetReportCaller(true)
 }
 
+func getUseCases(db_ *sqlx.DB, client pb.FbProxyServiceClient) *models.UseCases {
+	userDatastore := db.NewUserDatastore(db_)
+	userUseCase := usecases.NewUserUseCase(userDatastore, client)
+	return models.NewUseCases(userUseCase)
+}
+
 // GetApp - returns app
-func GetApp(withAPI bool, withDB bool) *App {
+func GetApp(withAPI bool) *App {
 	log.Infoln("Loading Config")
 	conf := config.GetConfig()
 	initLogger(conf.Loglevel)
 	log.Infof("Config loaded %v", conf)
+
+	withDB := false
+	withRpcConn := false
+	withUseCases := false
+
+	if withAPI {
+		withDB = true
+		withRpcConn = true
+		withUseCases = true
+	}
 
 	var db_ *sqlx.DB
 
@@ -56,20 +77,38 @@ func GetApp(withAPI bool, withDB bool) *App {
 		}
 	}
 
+	var conn *grpc.ClientConn
+
+	if withRpcConn {
+		var err error
+		conn, err = rpc.GetRpcConection(&conf)
+		if err != nil {
+			log.Fatalf("Can't connect to rpc sever %s", err)
+			os.Exit(1)
+		}
+
+	}
+
 	fn := func() {
 		log.Info("Closing.")
 		if withDB {
 			db_.Close()
 		}
+		if withRpcConn {
+			defer conn.Close()
+		}
 	}
 
-	userDatastore := db.NewUserDatastore(db_)
-	userUseCase := usecases.NewUserUseCase(userDatastore)
-	usecases := models.NewUseCases(userUseCase)
+	var usecases *models.UseCases
+
+	if withUseCases {
+		client := rpc.GetRpcClient(conn)
+		usecases = getUseCases(db_, client)
+	}
 
 	var router *gin.Engine
-	if withAPI {
 
+	if withAPI {
 		if conf.Debug == 0 {
 			log.Info("Release mode")
 			gin.SetMode(gin.ReleaseMode)
@@ -78,9 +117,10 @@ func GetApp(withAPI bool, withDB bool) *App {
 	}
 
 	return &App{
-		Router: router,
-		Conf:   &conf,
-		Db:     db_,
-		Close:  fn,
+		Router:   router,
+		Conf:     &conf,
+		Db:       db_,
+		UseCases: usecases,
+		Close:    fn,
 	}
 }
