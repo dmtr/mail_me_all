@@ -25,5 +25,5 @@ func RegisterRoutes(router *gin.Engine, usecases *models.UseCases) {
 		log.Debugf("context %+v", c)
 	})
 
-	router.POST("/api/users", CreateUser(usecases))
+	router.POST("/api/signin/fb", SignInFB(usecases))
 }

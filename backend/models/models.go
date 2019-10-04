@@ -8,7 +8,7 @@ type User struct {
 }
 
 type UserUseCase interface {
-	CreateUser(user *User) error
+	SignInFB(userID string, accessToken string) error
 }
 
 type UserDatastore interface {
