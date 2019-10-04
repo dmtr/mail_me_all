@@ -95,7 +95,7 @@ func GetApp(withAPI bool) *App {
 			db_.Close()
 		}
 		if withRpcConn {
-			defer conn.Close()
+			conn.Close()
 		}
 	}
 
