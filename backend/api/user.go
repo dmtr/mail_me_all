@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type fbuser struct {
+type Fbuser struct {
 	Id    string `json:"fbid" binding:"required"`
 	Token string `json:"fbtoken" binding:"required"`
 }
@@ -17,8 +17,13 @@ type fbuser struct {
 // SignInFB - sign in with Facebook
 func SignInFB(usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var user fbuser
-		c.BindJSON(&user)
+		var user Fbuser
+		if err := c.ShouldBindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		log.Debugf("Id %s", user.Id)
 		err := usecases.User.SignInFB(user.Id, user.Token)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
