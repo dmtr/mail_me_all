@@ -1,13 +1,12 @@
 package main
 
 import (
-	"github.com/dmtr/mail_me_all/backend/app"
 	"github.com/dmtr/mail_me_all/backend/fbwrapper"
 	log "github.com/sirupsen/logrus"
 )
 
-func VerifyFbLogin(accessToken string, app *app.App) {
-	user, err := fbwrapper.VerifyFbToken(accessToken, app.Conf.FbAppID, app.Conf.AppSecret, app.Conf.FbRedirectURI)
+func VerifyFbLogin(accessToken string, f fbwrapper.Facebook) {
+	user, err := f.VerifyFbToken(accessToken)
 	if err != nil {
 		log.Errorf("Invalid access token: error %s", err)
 	} else {
@@ -15,8 +14,8 @@ func VerifyFbLogin(accessToken string, app *app.App) {
 	}
 }
 
-func GenerateFbToken(accessToken string, app *app.App) {
-	token, err := fbwrapper.GenerateLongLivedToken(accessToken, app.Conf.FbAppID, app.Conf.AppSecret)
+func GenerateFbToken(accessToken string, f fbwrapper.Facebook) {
+	token, err := f.GenerateLongLivedToken(accessToken)
 	if err != nil {
 		log.Errorf("Got error %s", err)
 	} else {

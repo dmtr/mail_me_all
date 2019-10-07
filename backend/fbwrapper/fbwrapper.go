@@ -22,16 +22,33 @@ type AccessTokenResponse struct {
 	ExpiresIn   uint   `json:"expires_in"`
 }
 
+//Facebook - facebook client
+type Facebook struct {
+	AppSecret string
+	AppID     string
+	App       *fb.App
+}
+
+//NewFacebook - returns new facebook client
+func NewFacebook(appID string, appSecret string, redirectURI string) Facebook {
+	var app = fb.New(appID, appSecret)
+	app.RedirectUri = redirectURI
+
+	return Facebook{
+		AppSecret: appSecret,
+		AppID:     appID,
+		App:       app,
+	}
+}
+
 //VerifyFbToken - check if access token is valid
-func VerifyFbToken(accessToken string, appID string, appSecret string, FbRedirectURI string) (userid string, err error) {
-	var globalApp = fb.New(appID, appSecret)
-	globalApp.RedirectUri = FbRedirectURI
-	session := globalApp.Session(accessToken)
+func (f Facebook) VerifyFbToken(accessToken string) (userid string, err error) {
+	session := f.App.Session(accessToken)
 	return session.User()
 }
 
 //GenerateLongLivedToken - generates long lived token
-func GenerateLongLivedToken(accessToken string, appID string, appSecret string) (AccessTokenResponse, error) {
+func (f Facebook) GenerateLongLivedToken(accessToken string) (AccessTokenResponse, error) {
 	var response AccessTokenResponse
 
 	req, err := http.NewRequest("GET", fbTokenUrl, nil)
@@ -42,8 +59,8 @@ func GenerateLongLivedToken(accessToken string, appID string, appSecret string) 
 
 	q := req.URL.Query()
 	q.Add("grant_type", grantType)
-	q.Add("client_id", appID)
-	q.Add("client_secret", appSecret)
+	q.Add("client_id", f.AppID)
+	q.Add("client_secret", f.AppSecret)
 	q.Add("fb_exchange_token", accessToken)
 	req.URL.RawQuery = q.Encode()
 

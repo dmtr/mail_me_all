@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmtr/mail_me_all/backend/app"
 	"github.com/dmtr/mail_me_all/backend/fbproxy"
+	"github.com/dmtr/mail_me_all/backend/fbwrapper"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 
@@ -62,7 +63,8 @@ func startFBProxy(app *app.App) {
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	s := fbproxy.NewServiceServer(app)
+	f := fbwrapper.NewFacebook(app.Conf.FbAppID, app.Conf.AppSecret, app.Conf.FbRedirectURI)
+	s := fbproxy.NewServiceServer(f)
 	pb.RegisterFbProxyServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
 	grpcServer.Serve(lsnr)
@@ -88,10 +90,12 @@ func main() {
 		startAPIServer(a)
 	} else if cmd == verifyFbLogin {
 		a = app.GetApp(false)
-		VerifyFbLogin(*accessToken, a)
+		f := fbwrapper.NewFacebook(a.Conf.FbAppID, a.Conf.AppSecret, a.Conf.FbRedirectURI)
+		VerifyFbLogin(*accessToken, f)
 	} else if cmd == generateFbToken {
 		a = app.GetApp(false)
-		GenerateFbToken(*accessToken, a)
+		f := fbwrapper.NewFacebook(a.Conf.FbAppID, a.Conf.AppSecret, a.Conf.FbRedirectURI)
+		GenerateFbToken(*accessToken, f)
 	} else if cmd == runFBProxy {
 		a = app.GetApp(false)
 		startFBProxy(a)
