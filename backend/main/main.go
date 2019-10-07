@@ -15,6 +15,7 @@ import (
 	pb "github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -63,6 +64,7 @@ func startFBProxy(app *app.App) {
 	grpcServer := grpc.NewServer(opts...)
 	s := fbproxy.NewServiceServer(app)
 	pb.RegisterFbProxyServiceServer(grpcServer, s)
+	reflection.Register(grpcServer)
 	grpcServer.Serve(lsnr)
 }
 
@@ -79,7 +81,7 @@ func main() {
 	}
 
 	var a *app.App
-	defer func() { a.Close() }()
+	defer func() { fmt.Print("Shutting down"); a.Close() }()
 
 	if cmd == runAPI {
 		a = app.GetApp(true)
