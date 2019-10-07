@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 
+	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/dmtr/mail_me_all/backend/models"
 	log "github.com/sirupsen/logrus"
 
@@ -45,7 +46,15 @@ func (u UserUseCase) SignInFB(userID string, accessToken string) error {
 	}
 
 	if err := u.UserDatastore.CreateUser(&user); err != nil {
-		return NewUseCaseError(userCreationError)
+		e, ok := err.(*db.DbError)
+		if !ok {
+			log.Errorf("Can not convert error to DbError: %s", err)
+			return NewUseCaseError(userCreationError)
+		}
+
+		if e.PqError.Code != db.UniqueViolationErr {
+			return NewUseCaseError(userCreationError)
+		}
 	}
 
 	return nil

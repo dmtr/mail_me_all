@@ -10,20 +10,20 @@ import (
 )
 
 const (
-	uniqueViolationErr pq.ErrorCode = "23505"
+	UniqueViolationErr pq.ErrorCode = "23505"
 )
 
 type DbError struct {
-	pqError *pq.Error
-	err     error
+	PqError *pq.Error
+	Err     error
 }
 
 func (e *DbError) Error() string {
-	if e.pqError != nil {
+	if e.PqError != nil {
 		return fmt.Sprintf("Got Database error with code: %s message: %s detail: %s and constraint: %s",
-			e.pqError.Code, e.pqError.Message, e.pqError.Detail, e.pqError.Constraint)
+			e.PqError.Code, e.PqError.Message, e.PqError.Detail, e.PqError.Constraint)
 	}
-	return e.err.Error()
+	return e.Err.Error()
 }
 
 func getPqError(err error) *pq.Error {
@@ -37,8 +37,8 @@ func getPqError(err error) *pq.Error {
 func getDbError(err error) error {
 	if err != nil {
 		return &DbError{
-			pqError: getPqError(err),
-			err:     err,
+			PqError: getPqError(err),
+			Err:     err,
 		}
 	}
 	return err
