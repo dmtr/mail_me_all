@@ -26,6 +26,8 @@ services:
       command: /app/mailmeapp run-fb-proxy --app-secret=${APP_SECRET}
       networks:
         - mailmeapp 
+      ports:
+        - "5000:5000"
     frontend:
       build:
         context: ./frontend/
