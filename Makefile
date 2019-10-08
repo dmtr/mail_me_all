@@ -59,3 +59,6 @@ test-backend:
 	docker run --rm --network $(NETWORK) -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL_INTERNAL) -path /migrations up
 	MAILME_APP_DSN=$(POSTGRES_URL) go test -v ./backend/... || docker stop $(TEST_DB_CONTAINER) 
 	docker stop $(TEST_DB_CONTAINER) || echo already stopped
+proto: 
+	$(info Running target $(MAKECMDGOALS))
+        cd backend && protoc -I rpc rpc/fbproxy.proto --go_out=plugins=grpc:rpc
