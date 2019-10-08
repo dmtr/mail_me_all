@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	fbTokenUrl = "https://graph.facebook.com/v4.0/oauth/access_token"
-	timeout    = time.Duration(10 * time.Second)
-	grantType  = "fb_exchange_token"
+	fbTokenUrl       = "https://graph.facebook.com/v4.0/oauth/access_token"
+	timeout          = time.Duration(10 * time.Second)
+	grantType        = "fb_exchange_token"
+	sessionExpiresIn = 60 * 10
 )
 
 //AccessTokenResponse - long lived token response
@@ -71,7 +72,7 @@ func (f Facebook) addSession(accessToken string) *fb.Session {
 
 	err = s.Validate()
 	if err == nil {
-		f.sessions[userID] = s
+		f.addSessionWithExpiration(userID, s)
 	}
 	return s
 }
@@ -86,14 +87,24 @@ func (f Facebook) getSession(userID string, accessToken string) *fb.Session {
 	userSession = f.App.Session(accessToken)
 	err := userSession.Validate()
 	if err == nil {
-		f.sessions[userID] = userSession
+		f.addSessionWithExpiration(userID, userSession)
 	}
 	return userSession
+}
+
+func (f Facebook) addSessionWithExpiration(userID string, session *fb.Session) {
+	timer := time.NewTimer(sessionExpiresIn * time.Second)
+	f.sessions[userID] = session
+	go func() {
+		<-timer.C
+		f.deleteSession(userID)
+	}()
 }
 
 func (f Facebook) deleteSession(userID string) {
 	f.mux.Lock()
 	defer f.mux.Unlock()
+	log.Debugf("Deleting Facebook session for user %s", userID)
 	delete(f.sessions, userID)
 }
 
