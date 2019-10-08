@@ -26,7 +26,7 @@ func NewUserUseCase(datastore models.UserDatastore, client pb.FbProxyServiceClie
 func (u UserUseCase) SignInFB(userID string, accessToken string) error {
 	log.Debugf("Sign in user %s", userID)
 
-	newUser := pb.NewUser{UserId: userID, AccessToken: accessToken}
+	newUser := pb.UserToken{UserId: userID, AccessToken: accessToken}
 
 	confirmedUser, err := u.RpcClient.GetAccessToken(context.Background(), &newUser)
 	if err != nil {
@@ -39,8 +39,12 @@ func (u UserUseCase) SignInFB(userID string, accessToken string) error {
 		return NewUseCaseError(userCreationError)
 	}
 
+	userInfo, err := u.RpcClient.GetUserInfo(context.Background(), confirmedUser)
+	if err != nil {
+		log.Errorf("Error %s", err)
+	}
 	user := models.User{
-		Name:    "foo",
+		Name:    userInfo.Name,
 		FbID:    confirmedUser.UserId,
 		FbToken: confirmedUser.AccessToken,
 	}

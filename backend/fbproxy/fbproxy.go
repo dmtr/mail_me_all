@@ -19,7 +19,7 @@ func NewServiceServer(f fbwrapper.Facebook) *ServiceServer {
 }
 
 //GetAccessToken - returns long lived access token
-func (s *ServiceServer) GetAccessToken(ctx context.Context, user *pb.NewUser) (*pb.User, error) {
+func (s *ServiceServer) GetAccessToken(ctx context.Context, user *pb.UserToken) (*pb.UserToken, error) {
 	userID, err := s.facebook.VerifyFbToken(user.AccessToken)
 	if err != nil {
 		log.Errorf("Invalid access token: error %s", err)
@@ -32,11 +32,28 @@ func (s *ServiceServer) GetAccessToken(ctx context.Context, user *pb.NewUser) (*
 		return nil, err
 	}
 
-	u := pb.User{
+	u := pb.UserToken{
 		UserId:      userID,
 		AccessToken: res.AccessToken,
 		ExpiresIn:   uint64(res.ExpiresIn),
 	}
 
 	return &u, nil
+}
+
+//GetUserInfo - returns fb user info
+func (s *ServiceServer) GetUserInfo(ctx context.Context, user *pb.UserToken) (*pb.UserInfo, error) {
+	u, err := s.facebook.GetUserInfo(user.UserId, user.AccessToken)
+	if err != nil {
+		log.Errorf("Can not get user %s info, error: %s", user.UserId, err)
+		return nil, err
+	}
+
+	res := pb.UserInfo{
+		UserId: u.UserID,
+		Name:   u.FirstName,
+		Email:  u.Email,
+	}
+
+	return &res, nil
 }

@@ -2,7 +2,9 @@ package fbwrapper
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	fb "github.com/huandu/facebook"
@@ -22,11 +24,20 @@ type AccessTokenResponse struct {
 	ExpiresIn   uint   `json:"expires_in"`
 }
 
+//UserInfo - user data
+type UserInfo struct {
+	UserID    string
+	FirstName string
+	Email     string
+}
+
 //Facebook - facebook client
 type Facebook struct {
 	AppSecret string
 	AppID     string
 	App       *fb.App
+	sessions  map[string]*fb.Session
+	mux       *sync.Mutex
 }
 
 //NewFacebook - returns new facebook client
@@ -38,13 +49,58 @@ func NewFacebook(appID string, appSecret string, redirectURI string) Facebook {
 		AppSecret: appSecret,
 		AppID:     appID,
 		App:       app,
+		sessions:  make(map[string]*fb.Session),
+		mux:       &sync.Mutex{},
 	}
+}
+
+func (f Facebook) addSession(accessToken string) *fb.Session {
+	f.mux.Lock()
+	defer f.mux.Unlock()
+
+	s := f.App.Session(accessToken)
+	userID, err := s.User()
+	if err != nil {
+		return s
+	}
+
+	userSession, ok := f.sessions[userID]
+	if ok {
+		return userSession
+	}
+
+	err = s.Validate()
+	if err == nil {
+		f.sessions[userID] = s
+	}
+	return s
+}
+
+func (f Facebook) getSession(userID string, accessToken string) *fb.Session {
+	f.mux.Lock()
+	defer f.mux.Unlock()
+	userSession, ok := f.sessions[userID]
+	if ok {
+		return userSession
+	}
+	userSession = f.App.Session(accessToken)
+	err := userSession.Validate()
+	if err == nil {
+		f.sessions[userID] = userSession
+	}
+	return userSession
+}
+
+func (f Facebook) deleteSession(userID string) {
+	f.mux.Lock()
+	defer f.mux.Unlock()
+	delete(f.sessions, userID)
 }
 
 //VerifyFbToken - check if access token is valid
 func (f Facebook) VerifyFbToken(accessToken string) (userid string, err error) {
-	session := f.App.Session(accessToken)
-	return session.User()
+	s := f.addSession(accessToken)
+	return s.User()
 }
 
 //GenerateLongLivedToken - generates long lived token
@@ -81,4 +137,24 @@ func (f Facebook) GenerateLongLivedToken(accessToken string) (AccessTokenRespons
 		log.Errorf("Got error decoding response: %s", err)
 	}
 	return response, nil
+}
+
+//GetUserInfo - returns user info
+func (f Facebook) GetUserInfo(userID string, accessToken string) (UserInfo, error) {
+	var u UserInfo
+	s := f.getSession(userID, accessToken)
+	res, err := s.Get(fmt.Sprintf("/%s", userID), fb.Params{
+		"fields":       "first_name,email",
+		"access_token": accessToken,
+	})
+
+	if err != nil {
+		log.Errorf("Cant get user %s info, got error %s", userID, err)
+	} else {
+		res.Decode(&u)
+	}
+
+	u.UserID = userID
+	log.Debugf("User info %v", u)
+	return u, err
 }
