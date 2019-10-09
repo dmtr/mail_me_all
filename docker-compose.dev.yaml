@@ -9,7 +9,8 @@ services:
         - MAILME_APP_HOST=0.0.0.0
         - MAILME_APP_DSN=${MAILME_APP_DSN:-postgres://postgres@postgresql:5432/mailmeapp?sslmode=disable}
         - MAILME_APP_FB_APP_ID=2288197271493743
-      command: /app/mailmeapp --app-secret=${APP_SECRET}
+        - MAILME_APP_HTTP_ONLY=1
+      command: /app/mailmeapp --app-secret=${APP_SECRET} --auth-key=${AUTH_KEY:-secret} --encrypt-key=${ENCRYPT_KEY}
       depends_on:
         - postgresql
         - fbproxy
