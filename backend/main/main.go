@@ -72,6 +72,8 @@ func startFBProxy(app *app.App) {
 
 func main() {
 	flag.String("app-secret", "", "app secret")
+	flag.String("auth-key", "", "auth key")
+	flag.String("encrypt-key", "", "encryption key")
 	var accessToken *string = flag.String("access-token", "", "access token")
 	flag.Parse()
 
