@@ -113,7 +113,7 @@ func GetApp(withAPI bool) *App {
 			log.Info("Release mode")
 			gin.SetMode(gin.ReleaseMode)
 		}
-		router = api.GetRouter(usecases)
+		router = api.GetRouter(&conf, usecases)
 	}
 
 	return &App{

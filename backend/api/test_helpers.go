@@ -53,7 +53,7 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 	client := rpc.GetRpcClient(conn)
 	userUseCase := usecases.NewUserUseCase(userDatastore, client)
 	usecases := models.NewUseCases(userUseCase)
-	router := GetRouter(usecases)
+	router := GetRouter(&conf, usecases)
 
 	for name, fn := range tests {
 		fmt.Printf("Running test %s", name)
