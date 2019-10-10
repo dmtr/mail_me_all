@@ -50,7 +50,11 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 
 	for name, fn := range tests {
 		fmt.Printf("Running test %s", name)
-		f := func(t *testing.T) { fn(t, router, clientMock) }
+		f := func(t *testing.T) {
+			clientMock = new(mocks.FbProxyServiceClient)
+			userUseCase.RpcClient = clientMock
+			fn(t, router, clientMock)
+		}
 		t.Run(name, f)
 	}
 }
