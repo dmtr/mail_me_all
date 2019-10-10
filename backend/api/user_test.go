@@ -27,6 +27,9 @@ func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
 	assert.Equal(t, http.StatusOK, w.Code)
 
+	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
+	clientMock.AssertNumberOfCalls(t, "GetUserInfo", 1)
+
 	var response map[string]string
 	err := json.Unmarshal([]byte(w.Body.String()), &response)
 	value, exists := response["id"]
@@ -43,12 +46,30 @@ func testSignUpFBFailedBadToken(t *testing.T, router *gin.Engine, clientMock *mo
 
 	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
+	clientMock.AssertNotCalled(t, "GetUserInfo")
+}
+
+func testSignUpFBFailedUserIDMismatch(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient) {
+	token := rpc.UserToken{UserId: "0011", AccessToken: "2fe", ExpiresIn: 1000}
+	clientMock.On("GetAccessToken", mock.Anything, mock.Anything).Return(&token, nil)
+
+	req := map[string]string{"fbid": "1100", "fbtoken": "1abc"}
+	reqJson, _ := json.Marshal(req)
+
+	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
+	clientMock.AssertNotCalled(t, "GetUserInfo")
 }
 
 func TestUserEndpoinds(t *testing.T) {
 	tests := map[string]testFunc{
-		"testSignUpFB":               testSignUpFBOk,
-		"testSignUpFBFailedBadToken": testSignUpFBFailedBadToken,
+		"testSignUpFB":                     testSignUpFBOk,
+		"testSignUpFBFailedBadToken":       testSignUpFBFailedBadToken,
+		"testSignUpFBFailedUserIDMismatch": testSignUpFBFailedUserIDMismatch,
 	}
 	RunTests(tests, t)
 }
