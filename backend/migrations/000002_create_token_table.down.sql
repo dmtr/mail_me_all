@@ -1,0 +1,11 @@
+BEGIN;
+
+ALTER TABLE user_account ADD COLUMN fb_token VARCHAR;
+
+ALTER TABLE user_account DROP COLUMN email;
+
+DROP TABLE IF EXISTS token;
+
+COMMIT;
+
+
