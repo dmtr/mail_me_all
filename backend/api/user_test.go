@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func testSignUpFB(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient) {
+func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient) {
 	token := rpc.UserToken{UserId: "0011", AccessToken: "2fe", ExpiresIn: 1000}
 	clientMock.On("GetAccessToken", mock.Anything, mock.Anything).Return(&token, nil)
 
@@ -21,9 +22,9 @@ func testSignUpFB(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxySer
 	clientMock.On("GetUserInfo", mock.Anything, mock.Anything).Return(&userInfo, nil)
 
 	req := map[string]string{"fbid": token.UserId, "fbtoken": "1abc"}
-	req_json, _ := json.Marshal(req)
+	reqJson, _ := json.Marshal(req)
 
-	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(req_json), true)
+	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response map[string]string
@@ -34,9 +35,20 @@ func testSignUpFB(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxySer
 	assert.Equal(t, req["fbid"], value)
 }
 
+func testSignUpFBFailedBadToken(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient) {
+	clientMock.On("GetAccessToken", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("Invalid token"))
+
+	req := map[string]string{"fbid": "000", "fbtoken": "1abc"}
+	reqJson, _ := json.Marshal(req)
+
+	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
 func TestUserEndpoinds(t *testing.T) {
 	tests := map[string]testFunc{
-		"testSignUpFB": testSignUpFB,
+		"testSignUpFB":               testSignUpFBOk,
+		"testSignUpFBFailedBadToken": testSignUpFBFailedBadToken,
 	}
 	RunTests(tests, t)
 }
