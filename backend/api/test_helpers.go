@@ -10,8 +10,8 @@ import (
 
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
+	"github.com/dmtr/mail_me_all/backend/mocks"
 	"github.com/dmtr/mail_me_all/backend/models"
-	"github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/dmtr/mail_me_all/backend/usecases"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -21,7 +21,7 @@ const (
 	retry time.Duration = 4
 )
 
-type testFunc func(t *testing.T, router *gin.Engine)
+type testFunc func(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient)
 
 func PerformRequest(r http.Handler, method, path string, body io.Reader, json bool) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, body)
@@ -42,22 +42,15 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 	}
 	defer db_.Close()
 
-	conn, err := rpc.GetRpcConection(&conf)
-	if err != nil {
-		t.Fatalf("Can't connect to rpc sever %s", err)
-	}
-
-	defer conn.Close()
-
 	userDatastore := db.NewUserDatastore(db_)
-	client := rpc.GetRpcClient(conn)
-	userUseCase := usecases.NewUserUseCase(userDatastore, client)
+	clientMock := new(mocks.FbProxyServiceClient)
+	userUseCase := usecases.NewUserUseCase(userDatastore, clientMock)
 	usecases := models.NewUseCases(userUseCase)
 	router := GetRouter(&conf, usecases)
 
 	for name, fn := range tests {
 		fmt.Printf("Running test %s", name)
-		f := func(t *testing.T) { fn(t, router) }
+		f := func(t *testing.T) { fn(t, router, clientMock) }
 		t.Run(name, f)
 	}
 }
