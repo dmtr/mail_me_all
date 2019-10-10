@@ -26,6 +26,9 @@ func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 
 	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
 	assert.Equal(t, http.StatusOK, w.Code)
+	h := w.Header()
+	c := h.Get("set-cookie")
+	assert.Contains(t, c, "session")
 
 	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
 	clientMock.AssertNumberOfCalls(t, "GetUserInfo", 1)
