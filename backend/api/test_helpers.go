@@ -46,7 +46,7 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 	clientMock := new(mocks.FbProxyServiceClient)
 	userUseCase := usecases.NewUserUseCase(userDatastore, clientMock)
 	usecases := models.NewUseCases(userUseCase)
-	router := GetRouter(&conf, usecases)
+	router := GetRouter(&conf, db_, usecases)
 
 	for name, fn := range tests {
 		fmt.Printf("Running test %s", name)

@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -37,6 +39,18 @@ func setSessionCookie(c *gin.Context, conf *config.Config, userID string) {
 	}
 }
 
+func getTransaction(c *gin.Context) (*sqlx.Tx, error) {
+	t, exists := c.Get("Tx")
+	if !exists {
+		return nil, fmt.Errorf("No transaction in context!")
+	}
+	tx, ok := t.(*sqlx.Tx)
+	if !ok {
+		return nil, fmt.Errorf("Wrong transaction type!")
+	}
+	return tx, nil
+}
+
 // SignInFB - sign in with Facebook
 func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -45,9 +59,15 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
 		log.Debugf("Id %s", user.ID)
-		err := usecases.User.SignInFB(context.Background(), user.ID, user.Token)
+
+		tx, err := getTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+		}
+
+		ctx := context.WithValue(context.Background(), "Tx", tx)
+		err = usecases.User.SignInFB(ctx, user.ID, user.Token)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		} else {

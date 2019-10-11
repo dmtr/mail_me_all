@@ -13,7 +13,7 @@ func TransactionlMiddleware(db *sqlx.DB) gin.HandlerFunc {
 		c.Set("Tx", tx)
 		defer func() {
 			if err := recover(); err != nil {
-				log.Errorln("Context is aborted, transaction rollback")
+				log.Errorln("Panic, transaction rollback")
 				tx.Rollback()
 				panic(err)
 			} else {

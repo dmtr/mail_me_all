@@ -62,6 +62,19 @@ func NewUserDatastore(db *sqlx.DB) *UserDatastore {
 	return &UserDatastore{DB: db}
 }
 
+func getTransaction(ctx context.Context) (*sqlx.Tx, error) {
+	t := ctx.Value("Tx")
+	if t == nil {
+		return nil, fmt.Errorf("No transaction in context!")
+	}
+
+	tx, ok := t.(*sqlx.Tx)
+	if !ok {
+		return nil, fmt.Errorf("Wrong transaction type!")
+	}
+	return tx, nil
+}
+
 func (d *UserDatastore) execQuery(tx *sqlx.Tx, f queryFunc) (models.Model, error) {
 	var err error
 	beginTx := false
@@ -88,7 +101,10 @@ func (d *UserDatastore) execQuery(tx *sqlx.Tx, f queryFunc) (models.Model, error
 
 func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (models.User, error) {
 	log.Debugf("Going to insert user %s", user.FbID)
-	tx := d.DB.MustBegin()
+	tx, err := getTransaction(ctx)
+	if err != nil {
+		return models.User{}, err
+	}
 
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		res, err := tx.NamedQuery("INSERT INTO user_account (name, fb_id, email) VALUES (:name, :fb_id, :email) RETURNING id", user)
@@ -112,18 +128,19 @@ func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (model
 
 	res, err := d.execQuery(tx, f)
 	if err != nil {
-		tx.Rollback()
-		return user, err
+		return models.User{}, err
 	}
 
 	r, _ := res.(models.User)
-	err = getDbError(tx.Commit())
 	return r, err
 }
 
 func (d *UserDatastore) InsertToken(ctx context.Context, token models.Token) (models.Token, error) {
 	log.Debugf("Going to insert token for user %s", token.UserID)
-	tx := d.DB.MustBegin()
+	tx, err := getTransaction(ctx)
+	if err != nil {
+		return models.Token{}, err
+	}
 
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		_, err := tx.NamedExec("INSERT INTO token (user_id, fb_token, expires_at) VALUES (:user_id, :fb_token, :expires_at)", token)
@@ -131,16 +148,14 @@ func (d *UserDatastore) InsertToken(ctx context.Context, token models.Token) (mo
 			log.Error(err.Error() + fmt.Sprintf(" inserting token: %v", token))
 			return token, err
 		}
-		return token, err
+		return models.Token{}, err
 	}
 
 	res, err := d.execQuery(tx, f)
 	if err != nil {
-		tx.Rollback()
-		return token, err
+		return models.Token{}, err
 	}
 
 	r, _ := res.(models.Token)
-	err = getDbError(tx.Commit())
 	return r, err
 }
