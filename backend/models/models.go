@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -39,7 +40,7 @@ func (t Token) CalculateExpiresAt(expiresIn uint64) time.Time {
 }
 
 type UserUseCase interface {
-	SignInFB(userID string, accessToken string) error
+	SignInFB(ctx context.Context, userID string, accessToken string) error
 }
 
 type UserDatastore interface {

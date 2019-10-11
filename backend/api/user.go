@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/dmtr/mail_me_all/backend/config"
@@ -46,7 +47,7 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 		}
 
 		log.Debugf("Id %s", user.ID)
-		err := usecases.User.SignInFB(user.ID, user.Token)
+		err := usecases.User.SignInFB(context.Background(), user.ID, user.Token)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		} else {
