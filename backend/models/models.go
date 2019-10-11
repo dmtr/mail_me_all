@@ -44,8 +44,8 @@ type UserUseCase interface {
 }
 
 type UserDatastore interface {
-	InsertUser(user User) (User, error)
-	InsertToken(token Token) (Token, error)
+	InsertUser(ctx context.Context, user User) (User, error)
+	InsertToken(ctx context.Context, token Token) (Token, error)
 }
 
 type UseCases struct {

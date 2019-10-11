@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/dmtr/mail_me_all/backend/models"
@@ -85,7 +86,7 @@ func (d *UserDatastore) execQuery(tx *sqlx.Tx, f queryFunc) (models.Model, error
 	return res, err
 }
 
-func (d *UserDatastore) InsertUser(user models.User) (models.User, error) {
+func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (models.User, error) {
 	log.Debugf("Going to insert user %s", user.FbID)
 	tx := d.DB.MustBegin()
 
@@ -120,7 +121,7 @@ func (d *UserDatastore) InsertUser(user models.User) (models.User, error) {
 	return r, err
 }
 
-func (d *UserDatastore) InsertToken(token models.Token) (models.Token, error) {
+func (d *UserDatastore) InsertToken(ctx context.Context, token models.Token) (models.Token, error) {
 	log.Debugf("Going to insert token for user %s", token.UserID)
 	tx := d.DB.MustBegin()
 

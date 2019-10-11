@@ -50,7 +50,7 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 		Email: userInfo.Email,
 	}
 
-	if newUser, err := u.UserDatastore.InsertUser(user); err != nil {
+	if newUser, err := u.UserDatastore.InsertUser(ctx, user); err != nil {
 		e, ok := err.(*db.DbError)
 		if !ok {
 			log.Errorf("Can not convert error to DbError: %s", err)
@@ -69,7 +69,7 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 		}
 		t.ExpiresAt = t.CalculateExpiresAt(confirmedUser.ExpiresIn)
 
-		if token, err := u.UserDatastore.InsertToken(t); err != nil {
+		if token, err := u.UserDatastore.InsertToken(ctx, t); err != nil {
 			return NewUseCaseError(tokenInsertionError)
 		} else {
 			log.Debugf("Token %s", token)
