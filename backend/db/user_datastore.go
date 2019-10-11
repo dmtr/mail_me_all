@@ -13,6 +13,8 @@ const (
 	UniqueViolationErr pq.ErrorCode = "23505"
 )
 
+type queryFunc func(tx *sqlx.Tx) (models.Model, error)
+
 type DbError struct {
 	PqError *pq.Error
 	Err     error
@@ -59,23 +61,85 @@ func NewUserDatastore(db *sqlx.DB) *UserDatastore {
 	return &UserDatastore{DB: db}
 }
 
-func (d *UserDatastore) CreateUser(user *models.User) error {
-	log.Debugf("Going to insert user %v", user)
-
-	tx := d.DB.MustBegin()
+func (d *UserDatastore) execQuery(tx *sqlx.Tx, f queryFunc) (models.Model, error) {
 	var err error
+	beginTx := false
 
-	defer func() {
-		rollbackOnError(tx, err)
-	}()
+	if tx == nil {
+		beginTx = true
+		tx = d.DB.MustBegin()
 
-	_, err = tx.NamedExec("INSERT INTO user_account (name, fb_id, fb_token) VALUES (:name, :fb_id, :fb_token)", user)
-	err = getDbError(err)
-	if err != nil {
-		log.Error(err.Error() + fmt.Sprintf(" inserting user: %v", user))
-		return err
+		defer func() {
+			rollbackOnError(tx, err)
+		}()
 	}
 
+	var res models.Model
+	res, err = f(tx)
+
+	err = getDbError(err)
+
+	if beginTx {
+		err = getDbError(tx.Commit())
+	}
+	return res, err
+}
+
+func (d *UserDatastore) InsertUser(user models.User) (models.User, error) {
+	log.Debugf("Going to insert user %s", user.FbID)
+	tx := d.DB.MustBegin()
+
+	f := func(tx *sqlx.Tx) (models.Model, error) {
+		res, err := tx.NamedQuery("INSERT INTO user_account (name, fb_id, email) VALUES (:name, :fb_id, :email) RETURNING id", user)
+		if err != nil {
+			log.Error(err.Error() + fmt.Sprintf(" inserting user: %v", user))
+			return user, err
+		}
+
+		var userId string
+		for res.Next() {
+			err = res.Scan(&userId)
+			if err != nil {
+				log.Errorf("Scan error: %s", err)
+				return user, err
+			}
+		}
+		log.Debugf("Got user id %s", userId)
+		user.ID = userId
+		return user, nil
+	}
+
+	res, err := d.execQuery(tx, f)
+	if err != nil {
+		tx.Rollback()
+		return user, err
+	}
+
+	r, _ := res.(models.User)
 	err = getDbError(tx.Commit())
-	return err
+	return r, err
+}
+
+func (d *UserDatastore) InsertToken(token models.Token) (models.Token, error) {
+	log.Debugf("Going to insert token for user %s", token.UserID)
+	tx := d.DB.MustBegin()
+
+	f := func(tx *sqlx.Tx) (models.Model, error) {
+		_, err := tx.NamedExec("INSERT INTO token (user_id, fb_token, expires_at) VALUES (:user_id, :fb_token, :expires_at)", token)
+		if err != nil {
+			log.Error(err.Error() + fmt.Sprintf(" inserting token: %v", token))
+			return token, err
+		}
+		return token, err
+	}
+
+	res, err := d.execQuery(tx, f)
+	if err != nil {
+		tx.Rollback()
+		return token, err
+	}
+
+	r, _ := res.(models.Token)
+	err = getDbError(tx.Commit())
+	return r, err
 }

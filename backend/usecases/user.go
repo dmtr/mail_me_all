@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	userCreationError string = "Can not create user"
+	userCreationError   string = "Can not create user"
+	tokenInsertionError string = "Can not save token"
 )
 
 type UserUseCase struct {
@@ -44,12 +45,12 @@ func (u UserUseCase) SignInFB(userID string, accessToken string) error {
 		log.Errorf("Error %s", err)
 	}
 	user := models.User{
-		Name:    userInfo.Name,
-		FbID:    confirmedUser.UserId,
-		FbToken: confirmedUser.AccessToken,
+		Name:  userInfo.Name,
+		FbID:  confirmedUser.UserId,
+		Email: userInfo.Email,
 	}
 
-	if err := u.UserDatastore.CreateUser(&user); err != nil {
+	if newUser, err := u.UserDatastore.InsertUser(user); err != nil {
 		e, ok := err.(*db.DbError)
 		if !ok {
 			log.Errorf("Can not convert error to DbError: %s", err)
@@ -59,7 +60,20 @@ func (u UserUseCase) SignInFB(userID string, accessToken string) error {
 		if e.PqError.Code != db.UniqueViolationErr {
 			return NewUseCaseError(userCreationError)
 		}
-	}
+	} else {
+		log.Debugf("New user %s", newUser)
 
+		t := models.Token{
+			UserID:  newUser.ID,
+			FbToken: confirmedUser.AccessToken,
+		}
+		t.ExpiresAt = t.CalculateExpiresAt(confirmedUser.ExpiresIn)
+
+		if token, err := u.UserDatastore.InsertToken(t); err != nil {
+			return NewUseCaseError(tokenInsertionError)
+		} else {
+			log.Debugf("Token %s", token)
+		}
+	}
 	return nil
 }
