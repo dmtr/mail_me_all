@@ -1,6 +1,10 @@
 <template>
   <div>
-    <v-facebook-login app-id="2288197271493743" v-on:login="login" v-on:logout="logout"></v-facebook-login>
+    <v-facebook-login
+      app-id="2288197271493743"
+      @login="login"
+      @logout="logout"
+    />
   </div>
 </template>
 

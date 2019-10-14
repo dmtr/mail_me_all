@@ -1,7 +1,10 @@
 module.exports = {
-  configureWebpack: {
-    devServer: {
-      disableHostCheck: true
+  "configureWebpack": {
+    "devServer": {
+      "disableHostCheck": true
     }
-  }
-};
+  },
+  "transpileDependencies": [
+    "vuetify"
+  ]
+}
