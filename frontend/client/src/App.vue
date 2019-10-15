@@ -17,18 +17,7 @@
       <v-toolbar-title>Updater</v-toolbar-title>
     </v-app-bar>
     <v-content>
-      <v-container class="fill-height" fluid>
-        <v-row align="center" justify="center">
-          <v-col class="text-center">
-            <div>Updater provides possibility to get Facebook users updates via email.</div>
-          </v-col>
-        </v-row>
-        <v-row align="center" justify="center">
-          <v-col>
-            <SignIn />
-          </v-col>
-        </v-row>
-      </v-container>
+      <Welcome v-if="notSignedIn" />
     </v-content>
     <v-footer color="indigo" app>
       <span class="white--text">&copy; 2019</span>
@@ -37,12 +26,28 @@
 </template>
 
 <script>
-import SignIn from "./components/SignIn";
+import { mapGetters, mapActions } from "vuex";
+import Welcome from "./components/Welcome";
 
 export default {
   name: "App",
+  computed: {
+    ...mapGetters(["isUserSignedIn"]),
+    notSignedIn() {
+      return !this.isUserSignedIn;
+    }
+  },
+  created: function() {
+    console.debug("created!");
+  },
+  beforeMount: function() {
+    console.debug("before mount!");
+  },
+  mounted: function() {
+    console.debug("mounted!");
+  },
   components: {
-    SignIn
+    Welcome
   },
   data: () => ({
     drawer: null
