@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dmtr/mail_me_all/backend/models"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -118,7 +119,11 @@ func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (model
 			}
 		}
 		log.Debugf("Got user id %s", userId)
-		user.ID = userId
+		user.ID, err = uuid.Parse(userId)
+		if err != nil {
+			log.Errorf("Can not parse user id %s", userId)
+			return user, err
+		}
 		return user, nil
 	}
 

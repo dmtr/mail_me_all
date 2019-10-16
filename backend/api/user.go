@@ -19,11 +19,31 @@ type fbuser struct {
 	Token string `json:"fbtoken" binding:"required"`
 }
 
-func setSessionCookie(c *gin.Context, conf *config.Config, userID string) {
+type user struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	SignedIn bool   `json:"signedIn"`
+}
+
+func getUserID(c *gin.Context) string {
 	s := sessions.Default(c)
 	uid := s.Get("userid")
-	log.Debugf("Got from session %s", uid)
 	if uid == nil {
+		return ""
+	}
+	u, ok := uid.(string)
+	if !ok {
+		log.Warningf("Can not convert userid to string %v", uid)
+		return ""
+	}
+	return u
+}
+
+func setSessionCookie(c *gin.Context, conf *config.Config, userID string) {
+	uid := getUserID(c)
+	log.Debugf("Got from session %s", uid)
+	if uid == "" {
+		s := sessions.Default(c)
 		s.Options(sessions.Options{
 			Path:     conf.Path,
 			Domain:   conf.Domain,
@@ -72,8 +92,21 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		} else {
 			log.Debugf("Signed in with Facebook %s", user.ID)
-			setSessionCookie(c, conf, u.ID)
+			setSessionCookie(c, conf, u.ID.String())
 			c.JSON(http.StatusOK, gin.H{"id": u.ID})
+		}
+	}
+}
+
+// GetUser - get user id from session cookie and check if user is valid
+func GetUser(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var u user
+		uid := getUserID(c)
+		if uid == "" {
+			c.JSON(http.StatusOK, u)
+		} else {
+
 		}
 	}
 }

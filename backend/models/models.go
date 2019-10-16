@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Model interface
@@ -13,10 +15,10 @@ type Model interface {
 
 // User - represents user
 type User struct {
-	ID    string `db:"id"`
-	Name  string `db:"name"`
-	Email string `db:"email"`
-	FbID  string `db:"fb_id"`
+	ID    uuid.UUID `db:"id"`
+	Name  string    `db:"name"`
+	Email string    `db:"email"`
+	FbID  string    `db:"fb_id"`
 }
 
 func (u User) String() string {
@@ -25,7 +27,7 @@ func (u User) String() string {
 
 // Token - represents user token
 type Token struct {
-	UserID    string    `db:"user_id"`
+	UserID    uuid.UUID `db:"user_id"`
 	FbToken   string    `db:"fb_token"`
 	ExpiresAt time.Time `db:"expires_at"`
 }
@@ -46,6 +48,8 @@ type UserUseCase interface {
 type UserDatastore interface {
 	InsertUser(ctx context.Context, user User) (User, error)
 	InsertToken(ctx context.Context, token Token) (Token, error)
+
+	// GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 }
 
 type UseCases struct {
