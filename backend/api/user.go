@@ -67,13 +67,13 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 		}
 
 		ctx := context.WithValue(context.Background(), "Tx", tx)
-		err = usecases.User.SignInFB(ctx, user.ID, user.Token)
+		u, err := usecases.User.SignInFB(ctx, user.ID, user.Token)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		} else {
 			log.Debugf("Signed in with Facebook %s", user.ID)
-			setSessionCookie(c, conf, user.ID)
-			c.JSON(http.StatusOK, gin.H{"id": user.ID})
+			setSessionCookie(c, conf, u.ID)
+			c.JSON(http.StatusOK, gin.H{"id": u.ID})
 		}
 	}
 }

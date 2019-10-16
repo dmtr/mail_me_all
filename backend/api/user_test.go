@@ -35,10 +35,9 @@ func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 
 	var response map[string]string
 	err := json.Unmarshal([]byte(w.Body.String()), &response)
-	value, exists := response["id"]
+	_, exists := response["id"]
 	assert.Nil(t, err)
 	assert.True(t, exists)
-	assert.Equal(t, req["fbid"], value)
 }
 
 func testSignUpFBFailedBadToken(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient) {

@@ -24,56 +24,56 @@ func NewUserUseCase(datastore models.UserDatastore, client pb.FbProxyServiceClie
 	return &UserUseCase{UserDatastore: datastore, RpcClient: client}
 }
 
-func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken string) error {
+func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken string) (models.User, error) {
 	log.Debugf("Sign in user %s", userID)
 
 	newUser := pb.UserToken{UserId: userID, AccessToken: accessToken}
 
-	confirmedUser, err := u.RpcClient.GetAccessToken(context.Background(), &newUser)
+	longToken, err := u.RpcClient.GetAccessToken(context.Background(), &newUser)
 	if err != nil {
 		log.Errorf("Can not get user access token, got error: %s", err)
-		return NewUseCaseError(userCreationError)
+		return models.User{}, NewUseCaseError(userCreationError)
 	}
 
-	if userID != confirmedUser.UserId {
-		log.Warningf("Users ids do not match %s %s", confirmedUser.UserId, userID)
-		return NewUseCaseError(userCreationError)
+	if userID != longToken.UserId {
+		log.Warningf("Users ids do not match %s %s", longToken.UserId, userID)
+		return models.User{}, NewUseCaseError(userCreationError)
 	}
 
-	userInfo, err := u.RpcClient.GetUserInfo(context.Background(), confirmedUser)
+	userInfo, err := u.RpcClient.GetUserInfo(context.Background(), longToken)
 	if err != nil {
 		log.Errorf("Error %s", err)
 	}
 	user := models.User{
 		Name:  userInfo.Name,
-		FbID:  confirmedUser.UserId,
+		FbID:  longToken.UserId,
 		Email: userInfo.Email,
 	}
 
-	if newUser, err := u.UserDatastore.InsertUser(ctx, user); err != nil {
+	if user, err = u.UserDatastore.InsertUser(ctx, user); err != nil {
 		e, ok := err.(*db.DbError)
 		if !ok {
 			log.Errorf("Can not convert error to DbError: %s", err)
-			return NewUseCaseError(userCreationError)
+			return models.User{}, NewUseCaseError(userCreationError)
 		}
 
 		if e.PqError.Code != db.UniqueViolationErr {
-			return NewUseCaseError(userCreationError)
+			return models.User{}, NewUseCaseError(userCreationError)
 		}
 	} else {
-		log.Debugf("New user %s", newUser)
+		log.Debugf("New user %s", user)
 
 		t := models.Token{
-			UserID:  newUser.ID,
-			FbToken: confirmedUser.AccessToken,
+			UserID:  user.ID,
+			FbToken: longToken.AccessToken,
 		}
-		t.ExpiresAt = t.CalculateExpiresAt(confirmedUser.ExpiresIn)
+		t.ExpiresAt = t.CalculateExpiresAt(longToken.ExpiresIn)
 
 		if token, err := u.UserDatastore.InsertToken(ctx, t); err != nil {
-			return NewUseCaseError(tokenInsertionError)
+			return models.User{}, NewUseCaseError(tokenInsertionError)
 		} else {
 			log.Debugf("Token %s", token)
 		}
 	}
-	return nil
+	return user, nil
 }

@@ -62,17 +62,17 @@ func NewUserDatastore(db *sqlx.DB) *UserDatastore {
 	return &UserDatastore{DB: db}
 }
 
-func getTransaction(ctx context.Context) (*sqlx.Tx, error) {
+func getTransaction(ctx context.Context) *sqlx.Tx {
 	t := ctx.Value("Tx")
 	if t == nil {
-		return nil, fmt.Errorf("No transaction in context!")
+		return nil
 	}
 
 	tx, ok := t.(*sqlx.Tx)
 	if !ok {
-		return nil, fmt.Errorf("Wrong transaction type!")
+		return nil
 	}
-	return tx, nil
+	return tx
 }
 
 func (d *UserDatastore) execQuery(tx *sqlx.Tx, f queryFunc) (models.Model, error) {
@@ -101,11 +101,7 @@ func (d *UserDatastore) execQuery(tx *sqlx.Tx, f queryFunc) (models.Model, error
 
 func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (models.User, error) {
 	log.Debugf("Going to insert user %s", user.FbID)
-	tx, err := getTransaction(ctx)
-	if err != nil {
-		return models.User{}, err
-	}
-
+	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		res, err := tx.NamedQuery("INSERT INTO user_account (name, fb_id, email) VALUES (:name, :fb_id, :email) RETURNING id", user)
 		if err != nil {
@@ -137,11 +133,7 @@ func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (model
 
 func (d *UserDatastore) InsertToken(ctx context.Context, token models.Token) (models.Token, error) {
 	log.Debugf("Going to insert token for user %s", token.UserID)
-	tx, err := getTransaction(ctx)
-	if err != nil {
-		return models.Token{}, err
-	}
-
+	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		_, err := tx.NamedExec("INSERT INTO token (user_id, fb_token, expires_at) VALUES (:user_id, :fb_token, :expires_at)", token)
 		if err != nil {
