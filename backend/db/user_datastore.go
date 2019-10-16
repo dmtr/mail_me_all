@@ -156,3 +156,21 @@ func (d *UserDatastore) InsertToken(ctx context.Context, token models.Token) (mo
 	r, _ := res.(models.Token)
 	return r, err
 }
+
+func (d *UserDatastore) GetUserByID(ctx context.Context, userID uuid.UUID) (models.User, error) {
+	tx := getTransaction(ctx)
+
+	f := func(tx *sqlx.Tx) (models.Model, error) {
+		var user models.User
+		err := tx.Get(&user, "SELECT id, name, email, fb_id FROM user_account WHERE id=$1", userID)
+		return user, err
+	}
+
+	res, err := d.execQuery(tx, f)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	r, _ := res.(models.User)
+	return r, err
+}

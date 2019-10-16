@@ -44,4 +44,5 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 	})
 
 	router.POST("/api/signin/fb", middlewares.TransactionlMiddleware(db), SignInFB(conf, usecases))
+	router.GET("/api/user", middlewares.TransactionlMiddleware(db), GetUser(usecases))
 }

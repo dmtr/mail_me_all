@@ -43,13 +43,14 @@ func (t Token) CalculateExpiresAt(expiresIn uint64) time.Time {
 
 type UserUseCase interface {
 	SignInFB(ctx context.Context, userID string, accessToken string) (User, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 }
 
 type UserDatastore interface {
 	InsertUser(ctx context.Context, user User) (User, error)
 	InsertToken(ctx context.Context, token Token) (Token, error)
 
-	// GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 }
 
 type UseCases struct {

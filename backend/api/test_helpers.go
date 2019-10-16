@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,14 +24,41 @@ const (
 
 type testFunc func(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient)
 
-func PerformRequest(r http.Handler, method, path string, body io.Reader, json bool) *httptest.ResponseRecorder {
+func PerformRequest(r http.Handler, method, path string, body io.Reader, json bool, cookie *http.Cookie) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, body)
 	if body != nil && json {
 		req.Header.Set("Content-Type", "application/json")
 	}
+
+	if cookie != nil {
+		req.AddCookie(cookie)
+	}
+
 	w := httptest.NewRecorder()
 	r.ServeHTTP(w, req)
 	return w
+}
+
+func PerformPostRequest(r http.Handler, path string, body io.Reader) *httptest.ResponseRecorder {
+	return PerformRequest(r, "POST", path, body, true, nil)
+}
+
+func PerformGetRequest(r http.Handler, path string, cookie *http.Cookie) *httptest.ResponseRecorder {
+	return PerformRequest(r, "GET", path, nil, false, cookie)
+}
+
+func ParseCookie(cookie string) *http.Cookie {
+	c := http.Cookie{}
+	s := strings.Split(cookie, ";")
+	for _, v := range s {
+		keys := strings.Split(v, "=")
+		if len(keys) == 2 && keys[0] == "session" {
+			c.Name = keys[0]
+			c.Value = keys[1]
+			break
+		}
+	}
+	return &c
 }
 
 func RunTests(tests map[string]testFunc, t *testing.T) {

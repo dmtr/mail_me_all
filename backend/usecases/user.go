@@ -5,6 +5,7 @@ import (
 
 	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/dmtr/mail_me_all/backend/models"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
 	pb "github.com/dmtr/mail_me_all/backend/rpc"
@@ -76,4 +77,8 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 		}
 	}
 	return user, nil
+}
+
+func (u UserUseCase) GetUserByID(ctx context.Context, userID uuid.UUID) (models.User, error) {
+	return u.UserDatastore.GetUserByID(ctx, userID)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	log "github.com/sirupsen/logrus"
@@ -19,7 +20,7 @@ type fbuser struct {
 	Token string `json:"fbtoken" binding:"required"`
 }
 
-type user struct {
+type appUser struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
 	SignedIn bool   `json:"signedIn"`
@@ -99,14 +100,35 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 }
 
 // GetUser - get user id from session cookie and check if user is valid
-func GetUser(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
+func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var u user
+		var u appUser
 		uid := getUserID(c)
 		if uid == "" {
 			c.JSON(http.StatusOK, u)
 		} else {
+			tx, err := getTransaction(c)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			}
 
+			ctx := context.WithValue(context.Background(), "Tx", tx)
+
+			userID, err := uuid.Parse(uid)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
+			}
+
+			user, err := usecases.User.GetUserByID(ctx, userID)
+			if err != nil {
+				log.Errorf("Can not get user, got error %s", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			} else {
+				u.ID = user.ID.String()
+				u.Name = user.Name
+				u.SignedIn = true
+				c.JSON(http.StatusOK, u)
+			}
 		}
 	}
 }

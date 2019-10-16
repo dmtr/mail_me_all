@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/dmtr/mail_me_all/backend/mocks"
@@ -24,20 +25,29 @@ func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 	req := map[string]string{"fbid": token.UserId, "fbtoken": "1abc"}
 	reqJson, _ := json.Marshal(req)
 
-	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
+	w := PerformPostRequest(router, "/api/signin/fb", bytes.NewBuffer(reqJson))
 	assert.Equal(t, http.StatusOK, w.Code)
 	h := w.Header()
 	c := h.Get("set-cookie")
-	assert.Contains(t, c, "session")
+	contains := strings.Contains(c, "session")
+	assert.True(t, contains)
 
 	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
 	clientMock.AssertNumberOfCalls(t, "GetUserInfo", 1)
 
 	var response map[string]string
 	err := json.Unmarshal([]byte(w.Body.String()), &response)
-	_, exists := response["id"]
 	assert.Nil(t, err)
+	id, exists := response["id"]
 	assert.True(t, exists)
+
+	w = PerformGetRequest(router, "/api/user", ParseCookie(c))
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var res appUser
+	err = json.Unmarshal([]byte(w.Body.String()), &res)
+	assert.Equal(t, id, res.ID)
+	assert.Equal(t, true, res.SignedIn)
 }
 
 func testSignUpFBFailedBadToken(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient) {
@@ -46,7 +56,7 @@ func testSignUpFBFailedBadToken(t *testing.T, router *gin.Engine, clientMock *mo
 	req := map[string]string{"fbid": "000", "fbtoken": "1abc"}
 	reqJson, _ := json.Marshal(req)
 
-	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
+	w := PerformPostRequest(router, "/api/signin/fb", bytes.NewBuffer(reqJson))
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
@@ -60,7 +70,7 @@ func testSignUpFBFailedUserIDMismatch(t *testing.T, router *gin.Engine, clientMo
 	req := map[string]string{"fbid": "1100", "fbtoken": "1abc"}
 	reqJson, _ := json.Marshal(req)
 
-	w := PerformRequest(router, "POST", "/api/signin/fb", bytes.NewBuffer(reqJson), true)
+	w := PerformPostRequest(router, "/api/signin/fb", bytes.NewBuffer(reqJson))
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 
 	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
