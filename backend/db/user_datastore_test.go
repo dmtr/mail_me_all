@@ -57,11 +57,37 @@ func testGetUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	}
 	u, err := d.InsertUser(ctx, user)
 	assert.NoError(t, err)
+	assert.Equal(t, user.Name, u.Name)
+	assert.Equal(t, user.FbID, u.FbID)
 
 	res, err = d.GetUserByID(ctx, u.ID)
 	assert.NoError(t, err)
+	assert.Equal(t, u, res)
+
+	res, err = d.GetUserByFbID(ctx, u.FbID)
+	assert.NoError(t, err)
+	assert.Equal(t, u, res)
+}
+
+func testUpdateUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	user := models.User{
+		Name: "Test",
+		FbID: "foo-id",
+	}
+	u, err := d.InsertUser(ctx, user)
+	assert.NoError(t, err)
 	assert.Equal(t, user.Name, u.Name)
 	assert.Equal(t, user.FbID, u.FbID)
+
+	u.Email = "test@me.com"
+	res, err := d.UpdateUser(ctx, u)
+	assert.NoError(t, err)
+	assert.Equal(t, u, res)
+
+	res, err = d.GetUserByFbID(ctx, u.FbID)
+	assert.NoError(t, err)
+	assert.Equal(t, u, res)
 }
 
 func testInsertUserToken(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
@@ -120,6 +146,7 @@ func TestUserDatastore(t *testing.T) {
 		"TestInsertUserToken":          testInsertUserToken,
 		"TestInsertAndUpdateUserToken": testInsertAndUpdateUserToken,
 		"TestGetUser":                  testGetUser,
+		"TestUpdateUser":               testUpdateUser,
 	}
 	runTests(tests, t)
 }

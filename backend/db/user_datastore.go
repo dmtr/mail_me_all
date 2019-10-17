@@ -141,12 +141,51 @@ func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (model
 	return r, err
 }
 
+func (d *UserDatastore) UpdateUser(ctx context.Context, user models.User) (models.User, error) {
+	log.Debugf("Going to update user %s", user.ID)
+	tx := getTransaction(ctx)
+	f := func(tx *sqlx.Tx) (models.Model, error) {
+		_, err := tx.NamedExec("UPDATE user_account SET name=:name, email=:email WHERE id = :id", user)
+		if err != nil {
+			log.Error(err.Error() + fmt.Sprintf(" uptating user: %s", user))
+			return models.User{}, err
+		}
+		return user, err
+	}
+
+	res, err := d.execQuery(tx, f)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	r, _ := res.(models.User)
+	return r, err
+}
+
 func (d *UserDatastore) GetUserByID(ctx context.Context, userID uuid.UUID) (models.User, error) {
 	tx := getTransaction(ctx)
 
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		var user models.User
 		err := tx.Get(&user, "SELECT id, name, email, fb_id FROM user_account WHERE id=$1", userID)
+		return user, err
+	}
+
+	res, err := d.execQuery(tx, f)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	r, _ := res.(models.User)
+	return r, err
+}
+
+func (d *UserDatastore) GetUserByFbID(ctx context.Context, fbID string) (models.User, error) {
+	tx := getTransaction(ctx)
+
+	f := func(tx *sqlx.Tx) (models.Model, error) {
+		var user models.User
+		err := tx.Get(&user, "SELECT id, name, email, fb_id FROM user_account WHERE fb_id=$1", fbID)
 		return user, err
 	}
 

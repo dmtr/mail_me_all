@@ -48,9 +48,13 @@ type UserUseCase interface {
 
 type UserDatastore interface {
 	InsertUser(ctx context.Context, user User) (User, error)
-	InsertToken(ctx context.Context, token Token) (Token, error)
-
+	UpdateUser(ctx context.Context, user User) (User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
+	GetUserByFbID(ctx context.Context, fbID string) (User, error)
+
+	InsertToken(ctx context.Context, token Token) (Token, error)
+	UpdateToken(ctx context.Context, token Token) (Token, error)
+	GetToken(ctx context.Context, userID uuid.UUID) (Token, error)
 }
 
 type UseCases struct {
