@@ -41,22 +41,18 @@ func getUserID(c *gin.Context) string {
 }
 
 func setSessionCookie(c *gin.Context, conf *config.Config, userID string) {
-	uid := getUserID(c)
-	log.Debugf("Got from session %s", uid)
-	if uid == "" {
-		s := sessions.Default(c)
-		s.Options(sessions.Options{
-			Path:     conf.Path,
-			Domain:   conf.Domain,
-			MaxAge:   conf.MaxAge,
-			Secure:   conf.Secure,
-			HttpOnly: conf.HttpOnly,
-		})
-		s.Set("userid", userID)
-		err := s.Save()
-		if err != nil {
-			log.Errorf("Can not start session, error %s", err)
-		}
+	s := sessions.Default(c)
+	s.Options(sessions.Options{
+		Path:     conf.Path,
+		Domain:   conf.Domain,
+		MaxAge:   conf.MaxAge,
+		Secure:   conf.Secure,
+		HttpOnly: conf.HttpOnly,
+	})
+	s.Set("userid", userID)
+	err := s.Save()
+	if err != nil {
+		log.Errorf("Can not start session, error %s", err)
 	}
 }
 
@@ -90,6 +86,7 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 		ctx := context.WithValue(context.Background(), "Tx", tx)
 		u, err := usecases.User.SignInFB(ctx, user.ID, user.Token)
 		if err != nil {
+			log.Errorf("Can not sign in %s", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
 		} else {
 			log.Debugf("Signed in with Facebook %s", user.ID)
