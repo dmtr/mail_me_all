@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/dmtr/mail_me_all/backend/models"
@@ -28,6 +29,10 @@ func (e *DbError) Error() string {
 			e.PqError.Code, e.PqError.Message, e.PqError.Detail, e.PqError.Constraint)
 	}
 	return e.Err.Error()
+}
+
+func (e *DbError) HasNoRows() bool {
+	return e.Err == sql.ErrNoRows
 }
 
 func getPqError(err error) *pq.Error {
