@@ -8,6 +8,7 @@ import (
 
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/models"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/stretchr/testify/assert"
@@ -39,6 +40,28 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 		t.Run(name, f)
 		tx.Rollback()
 	}
+}
+
+func testGetUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	uid := uuid.New()
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+
+	res, err := d.GetUserByID(ctx, uid)
+	e, _ := err.(*DbError)
+	assert.True(t, e.HasNoRows())
+	assert.Empty(t, res)
+
+	user := models.User{
+		Name: "Test",
+		FbID: "foo-id",
+	}
+	u, err := d.InsertUser(ctx, user)
+	assert.NoError(t, err)
+
+	res, err = d.GetUserByID(ctx, u.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, user.Name, u.Name)
+	assert.Equal(t, user.FbID, u.FbID)
 }
 
 func testInsertUserToken(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
@@ -94,8 +117,9 @@ func testInsertAndUpdateUserToken(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
-		"testInsertUserToken":          testInsertUserToken,
-		"testInsertAndUpdateUserToken": testInsertAndUpdateUserToken,
+		"TestInsertUserToken":          testInsertUserToken,
+		"TestInsertAndUpdateUserToken": testInsertAndUpdateUserToken,
+		"TestGetUser":                  testGetUser,
 	}
 	runTests(tests, t)
 }
