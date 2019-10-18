@@ -2,7 +2,7 @@
   <v-app>
     <v-navigation-drawer v-model="drawer" app>
       <v-list dense>
-        <v-list-item @click>
+        <v-list-item>
           <v-list-item-action>
             <v-icon>mdi-home</v-icon>
           </v-list-item-action>
@@ -36,15 +36,6 @@ export default {
     notSignedIn() {
       return !this.isUserSignedIn;
     }
-  },
-  created: function() {
-    console.debug("created!");
-  },
-  beforeMount: function() {
-    console.debug("before mount!");
-  },
-  mounted: function() {
-    console.debug("mounted!");
   },
   components: {
     Welcome
