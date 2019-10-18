@@ -33,6 +33,7 @@ type Config struct {
 	HttpOnly      bool
 	AuthKey       string
 	EncryptKey    string
+	Testing       bool
 }
 
 // GetConfig returns app config
@@ -52,6 +53,7 @@ func GetConfig() Config {
 	viper.SetDefault("MAX_AGE", maxAge)
 	viper.SetDefault("SECURE", 0)
 	viper.SetDefault("HTTP_ONLY", 1)
+	viper.SetDefault("TESTING", 0)
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -77,6 +79,7 @@ func GetConfig() Config {
 		HttpOnly:      viper.GetBool("HTTP_ONLY"),
 		AuthKey:       viper.GetString("auth-key"),
 		EncryptKey:    viper.GetString("encrypt-key"),
+		Testing:       viper.GetBool("TESTING"),
 	}
 
 	return conf
