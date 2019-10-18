@@ -63,11 +63,11 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 		if user, err = u.UserDatastore.UpdateUser(ctx, user); err != nil {
 			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
-		var t models.Token
-		t, err = u.UserDatastore.GetToken(ctx, user.ID)
-		if err != nil {
-			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+		t := models.Token{
+			UserID:  user.ID,
+			FbToken: longToken.AccessToken,
 		}
+		t.ExpiresAt = t.CalculateExpiresAt(longToken.ExpiresIn)
 
 		if _, err := u.UserDatastore.UpdateToken(ctx, t); err != nil {
 			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
