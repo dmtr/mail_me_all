@@ -83,6 +83,7 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 		tx, err := getTransaction(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+			return
 		}
 
 		ctx := context.WithValue(context.Background(), "Tx", tx)
@@ -110,6 +111,7 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 			tx, err := getTransaction(c)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+				return
 			}
 
 			ctx := context.WithValue(context.Background(), "Tx", tx)
@@ -117,6 +119,7 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 			userID, err := uuid.Parse(uid)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+				return
 			}
 
 			user, err := usecases.User.GetUserByID(ctx, userID)

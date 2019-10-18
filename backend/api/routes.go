@@ -30,12 +30,12 @@ func GetRouter(conf *config.Config, db *sqlx.DB, usecases *models.UseCases) *gin
 	router := gin.Default()
 	sessionStore := getSessionStore(conf.AuthKey, conf.EncryptKey)
 	router.Use(sessions.Sessions("session", sessionStore))
-	RegisterRoutes(router, conf, db, usecases)
+	RegisterRoutes(router, conf, db, usecases, conf.Testing)
 	return router
 }
 
 //RegisterRoutes setups routes
-func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecases *models.UseCases) {
+func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecases *models.UseCases, testing bool) {
 	router.GET("/healthcheck", func(c *gin.Context) { c.String(http.StatusOK, "Ok") })
 
 	router.GET("/oauth/fb", func(c *gin.Context) {
@@ -43,6 +43,11 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 		log.Debugf("context %+v", c)
 	})
 
-	router.POST("/api/signin/fb", middlewares.TransactionlMiddleware(db), SignInFB(conf, usecases))
-	router.GET("/api/user", middlewares.TransactionlMiddleware(db), GetUser(usecases))
+	if testing { // unit tests
+		router.POST("/api/signin/fb", middlewares.TestTransactionlMiddleware(), SignInFB(conf, usecases))
+		router.GET("/api/user", middlewares.TestTransactionlMiddleware(), GetUser(usecases))
+	} else {
+		router.POST("/api/signin/fb", middlewares.TransactionlMiddleware(db), SignInFB(conf, usecases))
+		router.GET("/api/user", middlewares.TransactionlMiddleware(db), GetUser(usecases))
+	}
 }

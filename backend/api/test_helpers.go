@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/dmtr/mail_me_all/backend/config"
-	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/dmtr/mail_me_all/backend/mocks"
 	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/dmtr/mail_me_all/backend/usecases"
@@ -22,7 +21,7 @@ const (
 	retry time.Duration = 4
 )
 
-type testFunc func(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient)
+type testFunc func(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient, datastoreMock *mocks.UserDatastore)
 
 func PerformRequest(r http.Handler, method, path string, body io.Reader, json bool, cookie *http.Cookie) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, body)
@@ -64,24 +63,24 @@ func ParseCookie(cookie string) *http.Cookie {
 func RunTests(tests map[string]testFunc, t *testing.T) {
 
 	conf := config.GetConfig()
-	db_, err := db.ConnectDb(conf.DSN, retry*time.Second)
-	if err != nil {
-		t.Fatal("Can't connect to database")
-	}
-	defer db_.Close()
+	conf.Testing = true
 
-	userDatastore := db.NewUserDatastore(db_)
+	datastoreMock := new(mocks.UserDatastore)
 	clientMock := new(mocks.FbProxyServiceClient)
-	userUseCase := usecases.NewUserUseCase(userDatastore, clientMock)
+	userUseCase := usecases.NewUserUseCase(datastoreMock, clientMock)
 	usecases := models.NewUseCases(userUseCase)
-	router := GetRouter(&conf, db_, usecases)
+	router := GetRouter(&conf, nil, usecases)
 
 	for name, fn := range tests {
 		fmt.Printf("Running test %s", name)
 		f := func(t *testing.T) {
+			datastoreMock := new(mocks.UserDatastore)
+			userUseCase.UserDatastore = datastoreMock
+
 			clientMock = new(mocks.FbProxyServiceClient)
 			userUseCase.RpcClient = clientMock
-			fn(t, router, clientMock)
+
+			fn(t, router, clientMock, datastoreMock)
 		}
 		t.Run(name, f)
 	}
