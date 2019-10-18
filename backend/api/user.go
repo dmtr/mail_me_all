@@ -6,7 +6,9 @@ import (
 	"net/http"
 
 	"github.com/dmtr/mail_me_all/backend/config"
+	"github.com/dmtr/mail_me_all/backend/errors"
 	"github.com/dmtr/mail_me_all/backend/models"
+	useCases "github.com/dmtr/mail_me_all/backend/usecases"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -73,21 +75,22 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user fbuser
 		if err := c.ShouldBindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest})
 			return
 		}
 		log.Debugf("Id %s", user.ID)
 
 		tx, err := getTransaction(c)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
 		}
 
 		ctx := context.WithValue(context.Background(), "Tx", tx)
 		u, err := usecases.User.SignInFB(ctx, user.ID, user.Token)
 		if err != nil {
 			log.Errorf("Can not sign in %s", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			e, _ := err.(*useCases.UseCaseError)
+			c.JSON(http.StatusInternalServerError, gin.H{"code": e.Code()})
 		} else {
 			log.Debugf("Signed in with Facebook %s", user.ID)
 			setSessionCookie(c, conf, u.ID.String())
@@ -106,20 +109,21 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 		} else {
 			tx, err := getTransaction(c)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+				c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
 			}
 
 			ctx := context.WithValue(context.Background(), "Tx", tx)
 
 			userID, err := uuid.Parse(uid)
 			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"Error": err.Error()})
+				c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
 			}
 
 			user, err := usecases.User.GetUserByID(ctx, userID)
 			if err != nil {
 				log.Errorf("Can not get user, got error %s", err)
-				c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+				e, _ := err.(*useCases.UseCaseError)
+				c.JSON(http.StatusInternalServerError, gin.H{"code": e.Code()})
 			} else {
 				u.ID = user.ID.String()
 				u.Name = user.Name

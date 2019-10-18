@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dmtr/mail_me_all/backend/errors"
 	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -28,24 +29,24 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 	longToken, err := u.RpcClient.GetAccessToken(context.Background(), &newUser)
 
 	if err != nil {
-		return user, NewUseCaseError(err.Error(), cantGetToken)
+		return user, NewUseCaseError(err.Error(), errors.CantGetToken)
 	}
 
 	if userID != longToken.UserId {
 		m := fmt.Sprintf("Users ids do not match %s %s", longToken.UserId, userID)
-		return user, NewUseCaseError(m, cantGetToken)
+		return user, NewUseCaseError(m, errors.CantGetToken)
 	}
 
 	userInfo, err := u.RpcClient.GetUserInfo(context.Background(), longToken)
 	if err != nil {
-		return user, NewUseCaseError(err.Error(), cantGetUserInfo)
+		return user, NewUseCaseError(err.Error(), errors.CantGetUserInfo)
 	}
 
 	var userExists bool
 	user, err = u.UserDatastore.GetUserByFbID(ctx, longToken.UserId)
 	if err != nil {
-		code := getErrorCode(err)
-		if code == notFound {
+		code := errors.GetErrorCode(err)
+		if code == errors.NotFound {
 			userExists = false
 		} else {
 			return models.User{}, NewUseCaseError(err.Error(), code)
@@ -60,20 +61,20 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 
 	if userExists {
 		if user, err = u.UserDatastore.UpdateUser(ctx, user); err != nil {
-			return models.User{}, NewUseCaseError(err.Error(), getErrorCode(err))
+			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
 		var t models.Token
 		t, err = u.UserDatastore.GetToken(ctx, user.ID)
 		if err != nil {
-			return models.User{}, NewUseCaseError(err.Error(), getErrorCode(err))
+			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
 
 		if _, err := u.UserDatastore.UpdateToken(ctx, t); err != nil {
-			return models.User{}, NewUseCaseError(err.Error(), getErrorCode(err))
+			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
 	} else {
 		if user, err = u.UserDatastore.InsertUser(ctx, user); err != nil {
-			return models.User{}, NewUseCaseError(err.Error(), getErrorCode(err))
+			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
 		log.Debugf("New user %s", user)
 
@@ -84,7 +85,7 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 		t.ExpiresAt = t.CalculateExpiresAt(longToken.ExpiresIn)
 
 		if token, err := u.UserDatastore.InsertToken(ctx, t); err != nil {
-			return models.User{}, NewUseCaseError(err.Error(), getErrorCode(err))
+			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		} else {
 			log.Debugf("New token %s", token)
 		}
@@ -95,7 +96,7 @@ func (u UserUseCase) SignInFB(ctx context.Context, userID string, accessToken st
 func (u UserUseCase) GetUserByID(ctx context.Context, userID uuid.UUID) (models.User, error) {
 	user, err := u.UserDatastore.GetUserByID(ctx, userID)
 	if err != nil {
-		return user, NewUseCaseError(err.Error(), getErrorCode(err))
+		return user, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 	}
 	return user, err
 }

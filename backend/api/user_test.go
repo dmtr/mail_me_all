@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dmtr/mail_me_all/backend/errors"
 	"github.com/dmtr/mail_me_all/backend/mocks"
 	"github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/gin-gonic/gin"
@@ -61,6 +62,13 @@ func testSignUpFBFailedBadToken(t *testing.T, router *gin.Engine, clientMock *mo
 
 	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
 	clientMock.AssertNotCalled(t, "GetUserInfo")
+
+	var response map[string]int
+	err := json.Unmarshal([]byte(w.Body.String()), &response)
+	assert.Nil(t, err)
+	code, exists := response["code"]
+	assert.True(t, exists)
+	assert.Equal(t, int(errors.CantGetToken), code)
 }
 
 func testSignUpFBFailedUserIDMismatch(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient) {
@@ -75,9 +83,16 @@ func testSignUpFBFailedUserIDMismatch(t *testing.T, router *gin.Engine, clientMo
 
 	clientMock.AssertNumberOfCalls(t, "GetAccessToken", 1)
 	clientMock.AssertNotCalled(t, "GetUserInfo")
+
+	var response map[string]int
+	err := json.Unmarshal([]byte(w.Body.String()), &response)
+	assert.Nil(t, err)
+	code, exists := response["code"]
+	assert.True(t, exists)
+	assert.Equal(t, int(errors.CantGetToken), code)
 }
 
-func TestUserEndpoinds(t *testing.T) {
+func TestUserEndpoints(t *testing.T) {
 	tests := map[string]testFunc{
 		"testSignUpFB":                     testSignUpFBOk,
 		"testSignUpFBFailedBadToken":       testSignUpFBFailedBadToken,

@@ -1,38 +1,13 @@
 package usecases
 
-import "github.com/dmtr/mail_me_all/backend/db"
-
-type ErrorCode int
-
-const (
-	unknownError    ErrorCode = 1 << iota
-	cantGetToken              = iota
-	cantGetUserInfo           = iota
-	dbError                   = iota
-	notFound                  = iota
-)
-
-func getErrorCode(err error) ErrorCode {
-	var code ErrorCode
-	switch e := err.(type) {
-	case *db.DbError:
-		if e.HasNoRows() == true {
-			code = notFound
-		} else {
-			code = dbError
-		}
-	default:
-		code = unknownError
-	}
-	return code
-}
+import "github.com/dmtr/mail_me_all/backend/errors"
 
 type UseCaseError struct {
 	msg  string
-	code ErrorCode
+	code errors.ErrorCode
 }
 
-func NewUseCaseError(msg string, code ErrorCode) *UseCaseError {
+func NewUseCaseError(msg string, code errors.ErrorCode) *UseCaseError {
 	return &UseCaseError{msg: msg, code: code}
 }
 
@@ -40,6 +15,6 @@ func (e *UseCaseError) Error() string {
 	return e.msg
 }
 
-func (e *UseCaseError) Code() ErrorCode {
+func (e *UseCaseError) Code() errors.ErrorCode {
 	return e.code
 }
