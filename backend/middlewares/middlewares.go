@@ -24,3 +24,12 @@ func TransactionlMiddleware(db *sqlx.DB) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// TestTransactionlMiddleware - must be used in tests
+func TestTransactionlMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tx := &sqlx.Tx{}
+		c.Set("Tx", tx)
+		c.Next()
+	}
+}
