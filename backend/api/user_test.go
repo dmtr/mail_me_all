@@ -34,8 +34,8 @@ func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 	user := models.User{ID: uid, Name: userInfo.Name, Email: userInfo.Email, FbID: userInfo.UserId}
 	datastoreMock.On("InsertUser", mock.Anything, mock.Anything).Return(user, nil)
 
-	tokenDb := models.Token{UserID: uid, FbToken: token.AccessToken}
-	tokenDb.ExpiresAt = tokenDb.CalculateExpiresAt(token.ExpiresIn)
+	tokenDb := models.Token{
+		UserID: uid, FbToken: token.AccessToken, ExpiresAt: models.CalculateExpiresAt(token.ExpiresIn)}
 	datastoreMock.On("InsertToken", mock.Anything, mock.Anything).Return(tokenDb, nil)
 
 	req := map[string]string{"fbid": token.UserId, "fbtoken": "1abc"}
@@ -126,8 +126,8 @@ func testSignInFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 	updatedUser := models.User{ID: uid, Name: user.Name, Email: userInfo.Email, FbID: userInfo.UserId}
 	datastoreMock.On("UpdateUser", mock.Anything, updatedUser).Return(updatedUser, nil)
 
-	updatedToken := models.Token{UserID: uid, FbToken: token.AccessToken}
-	updatedToken.ExpiresAt = updatedToken.CalculateExpiresAt(token.ExpiresIn)
+	updatedToken := models.Token{
+		UserID: uid, FbToken: token.AccessToken, ExpiresAt: models.CalculateExpiresAt(token.ExpiresIn)}
 	datastoreMock.On("UpdateToken", mock.Anything, mock.Anything).Return(updatedToken, nil)
 
 	req := map[string]string{"fbid": token.UserId, "fbtoken": "1abc"}

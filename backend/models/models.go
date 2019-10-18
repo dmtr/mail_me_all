@@ -36,7 +36,7 @@ func (t Token) String() string {
 	return fmt.Sprintf("Token: UserID %s, ExpiresAt %s", t.UserID, t.ExpiresAt)
 }
 
-func (t Token) CalculateExpiresAt(expiresIn uint64) time.Time {
+func CalculateExpiresAt(expiresIn uint64) time.Time {
 	now := time.Now().UTC()
 	return now.Add(time.Duration(expiresIn) * time.Second)
 }
