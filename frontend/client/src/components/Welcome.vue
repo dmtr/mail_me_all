@@ -14,11 +14,18 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from "vuex";
 import SignIn from "./SignIn";
 
 export default {
   name: "Welcome",
-  components: { SignIn }
+  components: { SignIn },
+  methods: {
+    ...mapActions(["getUser"])
+  },
+  mounted: function() {
+    this.getUser();
+  }
 };
 </script>
 
