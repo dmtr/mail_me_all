@@ -5,13 +5,14 @@ import "github.com/dmtr/mail_me_all/backend/db"
 type ErrorCode int
 
 const (
-	UnknownError    ErrorCode = iota
-	ServerError     ErrorCode = iota
-	BadRequest      ErrorCode = iota
-	CantGetToken    ErrorCode = iota
-	CantGetUserInfo ErrorCode = iota
-	DbError         ErrorCode = iota
-	NotFound        ErrorCode = iota
+	UnknownError     ErrorCode = iota
+	ServerError      ErrorCode = iota
+	BadRequest       ErrorCode = iota
+	CantGetToken     ErrorCode = iota
+	CantGetUserInfo  ErrorCode = iota
+	DbError          ErrorCode = iota
+	NotFound         ErrorCode = iota
+	CantStartSession ErrorCode = iota
 )
 
 func GetErrorCode(err error) ErrorCode {

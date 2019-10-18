@@ -54,11 +54,11 @@ func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 	datastoreMock.AssertNumberOfCalls(t, "InsertUser", 1)
 	datastoreMock.AssertNumberOfCalls(t, "InsertToken", 1)
 
-	var response map[string]string
+	var response appUser
 	err := json.Unmarshal([]byte(w.Body.String()), &response)
 	assert.Nil(t, err)
-	id, exists := response["id"]
-	assert.True(t, exists)
+	assert.Equal(t, true, response.SignedIn)
+	assert.NotEmpty(t, response.ID)
 
 	datastoreMock.On("GetUserByID", mock.Anything, mock.Anything).Return(user, nil)
 
@@ -67,7 +67,7 @@ func testSignUpFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 
 	var res appUser
 	err = json.Unmarshal([]byte(w.Body.String()), &res)
-	assert.Equal(t, id, res.ID)
+	assert.Equal(t, response.ID, res.ID)
 	assert.Equal(t, true, res.SignedIn)
 }
 
@@ -148,12 +148,11 @@ func testSignInFBOk(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyS
 	datastoreMock.AssertNumberOfCalls(t, "GetToken", 0)
 	datastoreMock.AssertNumberOfCalls(t, "UpdateToken", 1)
 
-	var response map[string]string
+	var response appUser
 	err := json.Unmarshal([]byte(w.Body.String()), &response)
 	assert.Nil(t, err)
-	_, exists := response["id"]
-	assert.True(t, exists)
-
+	assert.NotEmpty(t, response.ID)
+	assert.Equal(t, true, response.SignedIn)
 }
 
 func TestUserEndpoints(t *testing.T) {

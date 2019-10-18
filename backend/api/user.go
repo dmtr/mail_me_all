@@ -28,6 +28,15 @@ type appUser struct {
 	SignedIn bool   `json:"signedIn"`
 }
 
+func adaptUser(user models.User, signedIn bool) appUser {
+	return appUser{
+		ID:       user.ID.String(),
+		Name:     user.Name,
+		SignedIn: signedIn,
+	}
+
+}
+
 func getUserID(c *gin.Context) string {
 	s := sessions.Default(c)
 	uid := s.Get("userid")
@@ -42,7 +51,7 @@ func getUserID(c *gin.Context) string {
 	return u
 }
 
-func setSessionCookie(c *gin.Context, conf *config.Config, userID string) {
+func setSessionCookie(c *gin.Context, conf *config.Config, userID string) error {
 	s := sessions.Default(c)
 	s.Options(sessions.Options{
 		Path:     conf.Path,
@@ -56,6 +65,7 @@ func setSessionCookie(c *gin.Context, conf *config.Config, userID string) {
 	if err != nil {
 		log.Errorf("Can not start session, error %s", err)
 	}
+	return err
 }
 
 func getTransaction(c *gin.Context) (*sqlx.Tx, error) {
@@ -94,8 +104,13 @@ func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"code": e.Code()})
 		} else {
 			log.Debugf("Signed in with Facebook %s", user.ID)
-			setSessionCookie(c, conf, u.ID.String())
-			c.JSON(http.StatusOK, gin.H{"id": u.ID})
+			err = setSessionCookie(c, conf, u.ID.String())
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"code": errors.CantStartSession})
+				return
+			}
+
+			c.JSON(http.StatusOK, adaptUser(u, true))
 		}
 	}
 }
@@ -128,10 +143,7 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 				e, _ := err.(*useCases.UseCaseError)
 				c.JSON(http.StatusInternalServerError, gin.H{"code": e.Code()})
 			} else {
-				u.ID = user.ID.String()
-				u.Name = user.Name
-				u.SignedIn = true
-				c.JSON(http.StatusOK, u)
+				c.JSON(http.StatusOK, adaptUser(user, true))
 			}
 		}
 	}
