@@ -1,13 +1,22 @@
 import axios from "axios";
-import { STATUS_CODES } from "http";
 
 const state = {
-  user: null
+  user: null,
+  subscriptionsList: [
+    {
+      id: 1,
+      title: "foo",
+      day: "monday",
+      email: "foo@bar.com",
+      userList: [{ id: "1", name: "john" }]
+    }
+  ]
 };
 
 const getters = {
   isUserLoaded: state => (state.user ? true : false),
-  isUserSignedIn: state => state.user && state.user.signedIn
+  isUserSignedIn: state => state.user && state.user.signedIn,
+  subscriptionsList: state => state.subscriptionsList
 };
 
 const actions = {
