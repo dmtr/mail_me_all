@@ -1,12 +1,13 @@
 import axios from "axios";
+import { STATUS_CODES } from "http";
 
 const state = {
-  user: { signedIn: false },
-  userLists: []
+  user: null
 };
 
 const getters = {
-  isUserSignedIn: state => state.user.signedIn
+  isUserLoaded: state => (state.user ? true : false),
+  isUserSignedIn: state => state.user && state.user.signedIn
 };
 
 const actions = {
@@ -14,7 +15,6 @@ const actions = {
     const res = axios
       .get("api/user")
       .then(function(response) {
-        console.log(response.data);
         commit("setUser", response.data);
       })
       .catch(function(error) {

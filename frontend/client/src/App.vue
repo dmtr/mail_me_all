@@ -17,7 +17,13 @@
       <v-toolbar-title>Updater</v-toolbar-title>
     </v-app-bar>
     <v-content>
-      <Welcome v-if="notSignedIn" />
+      <div v-if="isUserLoaded">
+        <div v-if="isUserSignedIn"></div>
+        <div v-else>
+          <Welcome />
+        </div>
+      </div>
+      <div v-else>Loading...</div>
     </v-content>
     <v-footer color="indigo" app>
       <span class="white--text">&copy; 2019</span>
@@ -32,13 +38,16 @@ import Welcome from "./components/Welcome";
 export default {
   name: "App",
   computed: {
-    ...mapGetters(["isUserSignedIn"]),
-    notSignedIn() {
-      return !this.isUserSignedIn;
-    }
+    ...mapGetters(["isUserSignedIn", "isUserLoaded"])
   },
   components: {
     Welcome
+  },
+  methods: {
+    ...mapActions(["getUser"])
+  },
+  created: function() {
+    this.getUser();
   },
   data: () => ({
     drawer: null

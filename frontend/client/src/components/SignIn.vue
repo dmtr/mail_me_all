@@ -1,15 +1,12 @@
 <template>
   <div>
-    <v-facebook-login
-      app-id="2288197271493743"
-      @login="login"
-      @logout="logout"
-    />
+    <v-facebook-login app-id="2288197271493743" @login="login" />
   </div>
 </template>
 
 <script>
 import axios from "axios";
+import { mapGetters, mapActions } from "vuex";
 import { VFBLogin as VFacebookLogin } from "vue-facebook-login-component";
 
 export default {
@@ -18,12 +15,13 @@ export default {
     VFacebookLogin
   },
   methods: {
+    ...mapActions(["getUser"]),
     login: function(event) {
       console.debug("login");
       if (event.status !== "connected") {
         return;
       }
-
+      const this_ = this;
       const data = event.authResponse;
       const res = axios
         .post("api/signin/fb", {
@@ -31,20 +29,11 @@ export default {
           fbtoken: data.accessToken
         })
         .then(function(response) {
-          // handle success
-          console.log(response);
+          this_.getUser();
         })
         .catch(function(error) {
-          // handle error
           console.log(error);
-        })
-        .finally(function() {
-          // always executed
         });
-      console.debug(res);
-    },
-    logout: function(event) {
-      console.debug("logout");
     }
   }
 };
