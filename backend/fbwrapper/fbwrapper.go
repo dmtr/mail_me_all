@@ -61,16 +61,7 @@ func (f Facebook) addSession(accessToken string) *fb.Session {
 
 	s := f.App.Session(accessToken)
 	userID, err := s.User()
-	if err != nil {
-		return s
-	}
 
-	userSession, ok := f.sessions[userID]
-	if ok {
-		return userSession
-	}
-
-	err = s.Validate()
 	if err == nil {
 		f.addSessionWithExpiration(userID, s)
 	}
