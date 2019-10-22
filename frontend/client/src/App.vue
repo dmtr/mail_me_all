@@ -12,7 +12,7 @@
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
-    <v-app-bar app color="light-blue" dark>
+    <v-app-bar app color="blue" dark>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title>Updater</v-toolbar-title>
     </v-app-bar>
@@ -27,7 +27,7 @@
       </div>
       <div v-else>Loading...</div>
     </v-content>
-    <v-footer color="light-blue" app>
+    <v-footer color="blue" app>
       <span class="white--text">&copy; 2019</span>
     </v-footer>
   </v-app>
