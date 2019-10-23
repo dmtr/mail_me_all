@@ -37,6 +37,7 @@
             <v-card-text>
               <v-text-field label="Subscription title"></v-text-field>
             </v-card-text>
+
             <v-card-actions>
               <v-spacer></v-spacer>
               <v-btn text color="primary" @click="dialog = false">Cancel</v-btn>
@@ -50,11 +51,13 @@
 
 <script>
 import Subscription from "./Subscription";
+import axios from "axios";
 
 export default {
   name: "SubscriptionsList",
   components: { Subscription },
   props: { subscriptionsList: Array },
+
   data: () => ({
     dialog: false
   })

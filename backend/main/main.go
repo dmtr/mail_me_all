@@ -24,6 +24,7 @@ const (
 	verifyFbLogin   string = "verify-fb-login"
 	generateFbToken string = "generate-fb-token"
 	runFBProxy      string = "run-fb-proxy"
+	searchFBUser    string = "search-fb-user"
 )
 
 func startAPIServer(app *app.App) {
@@ -75,6 +76,8 @@ func main() {
 	flag.String("auth-key", "", "auth key")
 	flag.String("encrypt-key", "", "encryption key")
 	var accessToken *string = flag.String("access-token", "", "access token")
+	var userID *string = flag.String("user-id", "", "user id")
+	var query *string = flag.String("query", "", "query")
 	flag.Parse()
 
 	viper.BindPFlags(flag.CommandLine)
@@ -101,6 +104,10 @@ func main() {
 	} else if cmd == runFBProxy {
 		a = app.GetApp(false)
 		startFBProxy(a)
+	} else if cmd == searchFBUser {
+		a = app.GetApp(false)
+		f := fbwrapper.NewFacebook(a.Conf.FbAppID, a.Conf.AppSecret, a.Conf.FbRedirectURI)
+		SearchFBUser(*accessToken, f, *userID, *query)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)

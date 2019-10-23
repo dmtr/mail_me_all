@@ -22,3 +22,10 @@ func GenerateFbToken(accessToken string, f fbwrapper.Facebook) {
 		log.Debugf("Got token %v", token)
 	}
 }
+
+func SearchFBUser(accessToken string, f fbwrapper.Facebook, userID string, query string) {
+	err := f.SearchUser(userID, accessToken, query)
+	if err != nil {
+		log.Errorf("Got error %s", err)
+	}
+}

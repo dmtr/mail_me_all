@@ -9,6 +9,13 @@ const state = {
       day: "monday",
       email: "foo@bar.com",
       userList: [{ id: "1", name: "john" }]
+    },
+    {
+      id: 2,
+      title: "bar",
+      day: "sunday",
+      email: "foo@bar.com",
+      userList: [{ id: "2", name: "snow" }]
     }
   ]
 };

@@ -128,7 +128,7 @@ func (f Facebook) GenerateLongLivedToken(accessToken string) (AccessTokenRespons
 
 	resp, err := client.Do(req)
 	if err != nil || resp.StatusCode != http.StatusOK {
-		log.Errorf("Response code %s, error %s", resp.Status, err)
+		log.Errorf("Response code %s, error %s, resp %v", resp.Status, err, resp)
 		return response, err
 	}
 
@@ -159,4 +159,31 @@ func (f Facebook) GetUserInfo(userID string, accessToken string) (UserInfo, erro
 	u.UserID = userID
 	log.Debugf("User info %v", u)
 	return u, err
+}
+
+//SearchUser - searches user by name
+func (f Facebook) SearchUser(userID string, accessToken string, name string) error {
+	log.Debugf("Searching user %s (userID %s, token %s)", name, userID, accessToken)
+	s := f.getSession(userID, accessToken)
+	res, err := s.Get("/search", fb.Params{
+		"access_token": accessToken,
+		"type":         "profile",
+		"q":            name,
+	})
+	if err != nil {
+		return err
+	}
+
+	var items []fb.Result
+
+	err = res.DecodeField("data", &items)
+
+	if err != nil {
+		return err
+	}
+
+	for _, item := range items {
+		fmt.Printf("%v \n", item)
+	}
+	return nil
 }
