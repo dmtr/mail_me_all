@@ -11,7 +11,7 @@
 
 <script>
 export default {
-  name: "FBUser",
+  name: "TwUser",
   props: {
     fbuser: Object
   }

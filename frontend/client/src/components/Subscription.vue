@@ -17,12 +17,12 @@
 </template>
 
 <script>
-import FBUserList from "./FBUserList";
+import TwUserList from "./TwUserList";
 
 export default {
   name: "Subscription",
   components: {
-    FBUserList
+    TwUserList
   },
   props: {
     subscription: Object

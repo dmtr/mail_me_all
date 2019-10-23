@@ -10,11 +10,11 @@
 </template>
 
 <script>
-import FBUser from "./FBUser";
+import TwUser from "./TwUser";
 
 export default {
-  name: "FBUserList",
-  components: { FBUser },
+  name: "TwUserList",
+  components: { TwUser },
   props: {
     userList: Array
   }
