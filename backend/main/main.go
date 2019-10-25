@@ -72,6 +72,9 @@ func startFBProxy(app *app.App) {
 }
 
 func main() {
+	flag.String("tw-consumer-key", "", "twitter consumer key")
+	flag.String("tw-consumer-secret", "", "twitter consumer secret")
+
 	flag.String("app-secret", "", "app secret")
 	flag.String("auth-key", "", "auth key")
 	flag.String("encrypt-key", "", "encryption key")
