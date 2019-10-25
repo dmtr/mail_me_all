@@ -106,10 +106,9 @@ func (d *UserDatastore) execQuery(tx *sqlx.Tx, f queryFunc) (models.Model, error
 }
 
 func (d *UserDatastore) InsertUser(ctx context.Context, user models.User) (models.User, error) {
-	log.Debugf("Going to insert user %s", user.FbID)
 	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
-		res, err := tx.NamedQuery("INSERT INTO user_account (name, fb_id, email) VALUES (:name, :fb_id, :email) RETURNING id", user)
+		res, err := tx.NamedQuery("INSERT INTO user_account (name, email) VALUES (:name, :email) RETURNING id", user)
 		if err != nil {
 			log.Error(err.Error() + fmt.Sprintf(" inserting user: %s", user))
 			return user, err
@@ -162,12 +161,12 @@ func (d *UserDatastore) UpdateUser(ctx context.Context, user models.User) (model
 	return r, err
 }
 
-func (d *UserDatastore) GetUserByID(ctx context.Context, userID uuid.UUID) (models.User, error) {
+func (d *UserDatastore) GetUser(ctx context.Context, userID uuid.UUID) (models.User, error) {
 	tx := getTransaction(ctx)
 
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		var user models.User
-		err := tx.Get(&user, "SELECT id, name, email, fb_id FROM user_account WHERE id=$1", userID)
+		err := tx.Get(&user, "SELECT id, name, email FROM user_account WHERE id=$1", userID)
 		return user, err
 	}
 
@@ -180,79 +179,79 @@ func (d *UserDatastore) GetUserByID(ctx context.Context, userID uuid.UUID) (mode
 	return r, err
 }
 
-func (d *UserDatastore) GetUserByFbID(ctx context.Context, fbID string) (models.User, error) {
+func (d *UserDatastore) GetTwitterUserByID(ctx context.Context, twitterUserID string) (models.TwitterUser, error) {
 	tx := getTransaction(ctx)
 
 	f := func(tx *sqlx.Tx) (models.Model, error) {
-		var user models.User
-		err := tx.Get(&user, "SELECT id, name, email, fb_id FROM user_account WHERE fb_id=$1", fbID)
+		var user models.TwitterUser
+		err := tx.Get(
+			&user, "SELECT user_id, social_account_id, access_token, token_secret FROM tw_account WHERE social_account_id=$1", twitterUserID)
 		return user, err
 	}
 
 	res, err := d.execQuery(tx, f)
 	if err != nil {
-		return models.User{}, err
+		return models.TwitterUser{}, err
 	}
 
-	r, _ := res.(models.User)
+	r, _ := res.(models.TwitterUser)
 	return r, err
 }
 
-func (d *UserDatastore) InsertToken(ctx context.Context, token models.Token) (models.Token, error) {
-	log.Debugf("Going to insert token for user %s", token.UserID)
+func (d *UserDatastore) InsertTwitterUser(ctx context.Context, twitterUser models.TwitterUser) (models.TwitterUser, error) {
 	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
-		_, err := tx.NamedExec("INSERT INTO token (user_id, fb_token, expires_at) VALUES (:user_id, :fb_token, :expires_at)", token)
+		_, err := tx.NamedExec("INSERT INTO tw_account (user_id, social_account_id, access_token, token_secret) VALUES (:user_id, :social_account_id, :access_token, :token_secret)", twitterUser)
 		if err != nil {
-			log.Error(err.Error() + fmt.Sprintf(" inserting token: %s", token))
-			return models.Token{}, err
+			log.Error(err.Error() + fmt.Sprintf(" inserting twitterUser: %s", twitterUser))
+			return models.TwitterUser{}, err
 		}
-		return token, err
+		return twitterUser, err
 	}
 
 	res, err := d.execQuery(tx, f)
 	if err != nil {
-		return models.Token{}, err
+		return models.TwitterUser{}, err
 	}
 
-	r, _ := res.(models.Token)
+	r, _ := res.(models.TwitterUser)
 	return r, err
 }
 
-func (d *UserDatastore) UpdateToken(ctx context.Context, token models.Token) (models.Token, error) {
-	log.Debugf("Going to update token for user %s", token.UserID)
+func (d *UserDatastore) UpdateTwitterUser(ctx context.Context, twitterUser models.TwitterUser) (models.TwitterUser, error) {
+	log.Debugf("Going to update twitterUser for user %s", twitterUser.UserID)
 	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
-		_, err := tx.NamedExec("UPDATE token SET fb_token=:fb_token, expires_at=:expires_at WHERE user_id = :user_id", token)
+		_, err := tx.NamedExec("UPDATE tw_account SET access_token=:access_token, token_secret=:token_secret WHERE user_id = :user_id", twitterUser)
 		if err != nil {
-			log.Error(err.Error() + fmt.Sprintf(" uptating token: %s", token))
-			return models.Token{}, err
+			log.Error(err.Error() + fmt.Sprintf(" uptating twitterUser: %s", twitterUser))
+			return models.TwitterUser{}, err
 		}
-		return token, err
+		return twitterUser, err
 	}
 
 	res, err := d.execQuery(tx, f)
 	if err != nil {
-		return models.Token{}, err
+		return models.TwitterUser{}, err
 	}
 
-	r, _ := res.(models.Token)
+	r, _ := res.(models.TwitterUser)
 	return r, err
 }
 
-func (d *UserDatastore) GetToken(ctx context.Context, userID uuid.UUID) (models.Token, error) {
+func (d *UserDatastore) GetTwitterUser(ctx context.Context, userID uuid.UUID) (models.TwitterUser, error) {
 	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
-		var token models.Token
-		err := tx.Get(&token, "SELECT user_id, fb_token, expires_at FROM token WHERE user_id = $1", userID)
-		return token, err
+		var twitterUser models.TwitterUser
+		err := tx.Get(&twitterUser, "SELECT user_id, social_account_id, access_token, token_secret FROM tw_account WHERE user_id = $1", userID)
+		return twitterUser, err
 	}
 
 	res, err := d.execQuery(tx, f)
 	if err != nil {
-		return models.Token{}, err
+		return models.TwitterUser{}, err
 	}
 
-	r, _ := res.(models.Token)
+	r, _ := res.(models.TwitterUser)
 	return r, err
 }

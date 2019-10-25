@@ -46,25 +46,21 @@ func testGetUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	uid := uuid.New()
 	ctx := context.WithValue(context.Background(), "Tx", tx)
 
-	res, err := d.GetUserByID(ctx, uid)
+	res, err := d.GetUser(ctx, uid)
 	e, _ := err.(*DbError)
 	assert.True(t, e.HasNoRows())
 	assert.Empty(t, res)
 
 	user := models.User{
-		Name: "Test",
-		FbID: "foo-id",
+		Name:  "Test",
+		Email: "foo@bar.com",
 	}
 	u, err := d.InsertUser(ctx, user)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Name, u.Name)
-	assert.Equal(t, user.FbID, u.FbID)
+	assert.Equal(t, user.Email, u.Email)
 
-	res, err = d.GetUserByID(ctx, u.ID)
-	assert.NoError(t, err)
-	assert.Equal(t, u, res)
-
-	res, err = d.GetUserByFbID(ctx, u.FbID)
+	res, err = d.GetUser(ctx, u.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, u, res)
 }
@@ -72,81 +68,84 @@ func testGetUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 func testUpdateUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	ctx := context.WithValue(context.Background(), "Tx", tx)
 	user := models.User{
-		Name: "Test",
-		FbID: "foo-id",
+		Name:  "Test",
+		Email: "foo@bar.com",
 	}
 	u, err := d.InsertUser(ctx, user)
 	assert.NoError(t, err)
 	assert.Equal(t, user.Name, u.Name)
-	assert.Equal(t, user.FbID, u.FbID)
+	assert.Equal(t, user.Email, u.Email)
 
 	u.Email = "test@me.com"
 	res, err := d.UpdateUser(ctx, u)
 	assert.NoError(t, err)
 	assert.Equal(t, u, res)
 
-	res, err = d.GetUserByFbID(ctx, u.FbID)
+	res, err = d.GetUser(ctx, u.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, u, res)
 }
 
-func testInsertUserToken(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+func testInsertTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	user := models.User{
-		Name: "Test",
-		FbID: "some-id",
+		Name:  "Test",
+		Email: "some@body.com",
 	}
 	ctx := context.WithValue(context.Background(), "Tx", tx)
 	u, err := d.InsertUser(ctx, user)
 	assert.NoError(t, err)
 
-	token := models.Token{
-		UserID:    u.ID,
-		FbToken:   "some-token",
-		ExpiresAt: time.Now().UTC(),
+	twitterUser := models.TwitterUser{
+		UserID:      u.ID,
+		TwitterID:   "111",
+		AccessToken: "some-token",
+		TokenSecret: "some-secret",
 	}
-	res, err := d.InsertToken(ctx, token)
+	res, err := d.InsertTwitterUser(ctx, twitterUser)
 	assert.NoError(t, err)
-	assert.Equal(t, token, res)
+	assert.Equal(t, twitterUser, res)
 
-	fromDb, err := d.GetToken(ctx, u.ID)
+	fromDb, err := d.GetTwitterUserByID(ctx, twitterUser.TwitterID)
 	assert.NoError(t, err)
-	assert.Equal(t, token, fromDb)
+	assert.Equal(t, twitterUser, fromDb)
 }
 
-func testInsertAndUpdateUserToken(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+func testInsertAndUpdateTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	user := models.User{
-		Name: "Test",
-		FbID: "another-id",
+		Name:  "Test",
+		Email: "another@mail.com",
 	}
 	ctx := context.WithValue(context.Background(), "Tx", tx)
 	u, err := d.InsertUser(ctx, user)
 	assert.NoError(t, err)
 
-	token := models.Token{
-		UserID:    u.ID,
-		FbToken:   "some-token",
-		ExpiresAt: time.Now().UTC(),
+	twitterUser := models.TwitterUser{
+		UserID:      u.ID,
+		TwitterID:   "111",
+		AccessToken: "some-token",
+		TokenSecret: "some-secret",
 	}
-	res, err := d.InsertToken(ctx, token)
-	assert.NoError(t, err)
-	assert.Equal(t, token, res)
 
-	token.FbToken = "another-token"
-	updated, err := d.UpdateToken(ctx, token)
+	res, err := d.InsertTwitterUser(ctx, twitterUser)
 	assert.NoError(t, err)
-	assert.Equal(t, token, updated)
+	assert.Equal(t, twitterUser, res)
 
-	fromDb, err := d.GetToken(ctx, u.ID)
+	twitterUser.AccessToken = "new-token"
+	updated, err := d.UpdateTwitterUser(ctx, twitterUser)
 	assert.NoError(t, err)
-	assert.Equal(t, token, fromDb)
+	assert.Equal(t, twitterUser, updated)
+
+	fromDb, err := d.GetTwitterUser(ctx, u.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, twitterUser, fromDb)
 }
 
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
-		"TestInsertUserToken":          testInsertUserToken,
-		"TestInsertAndUpdateUserToken": testInsertAndUpdateUserToken,
-		"TestGetUser":                  testGetUser,
-		"TestUpdateUser":               testUpdateUser,
+		"TestInsertTwitterUser":          testInsertTwitterUser,
+		"TestInsertAndUpdateTwitterUser": testInsertAndUpdateTwitterUser,
+		"TestGetUser":                    testGetUser,
+		"TestUpdateUser":                 testUpdateUser,
 	}
 	runTests(tests, t)
 }

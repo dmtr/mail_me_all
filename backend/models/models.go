@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -13,48 +12,43 @@ type Model interface {
 	String() string
 }
 
+// TwitterUser - represents twitter account
+type TwitterUser struct {
+	UserID      uuid.UUID `db:"user_id"`
+	TwitterID   string    `db:"social_account_id"`
+	AccessToken string    `db:"access_token"`
+	TokenSecret string    `db:"token_secret"`
+}
+
+func (t TwitterUser) String() string {
+	return fmt.Sprintf("TwitterUser: UserID %s, TwitterID %s", t.UserID, t.TwitterID)
+}
+
 // User - represents user
 type User struct {
 	ID    uuid.UUID `db:"id"`
 	Name  string    `db:"name"`
 	Email string    `db:"email"`
-	FbID  string    `db:"fb_id"`
 }
 
 func (u User) String() string {
-	return fmt.Sprintf("User: Name %s, FbID %s", u.Name, u.FbID)
+	return fmt.Sprintf("User: Name %s, ID %s", u.Name, u.ID)
 }
 
-// Token - represents user token
-type Token struct {
-	UserID    uuid.UUID `db:"user_id"`
-	FbToken   string    `db:"fb_token"`
-	ExpiresAt time.Time `db:"expires_at"`
-}
-
-func (t Token) String() string {
-	return fmt.Sprintf("Token: UserID %s, ExpiresAt %s", t.UserID, t.ExpiresAt)
-}
-
-func CalculateExpiresAt(expiresIn uint64) time.Time {
-	now := time.Now().UTC()
-	return now.Add(time.Duration(expiresIn) * time.Second)
-}
-
+// UserUseCase - represents user use cases
 type UserUseCase interface {
-	SignInFB(ctx context.Context, userID string, accessToken string) (User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 }
 
 type UserDatastore interface {
 	InsertUser(ctx context.Context, user User) (User, error)
 	UpdateUser(ctx context.Context, user User) (User, error)
-	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
-	GetUserByFbID(ctx context.Context, fbID string) (User, error)
+	GetUser(ctx context.Context, userID uuid.UUID) (User, error)
 
-	InsertToken(ctx context.Context, token Token) (Token, error)
-	UpdateToken(ctx context.Context, token Token) (Token, error)
-	GetToken(ctx context.Context, userID uuid.UUID) (Token, error)
+	InsertTwitterUser(ctx context.Context, twitterUser TwitterUser) (TwitterUser, error)
+	UpdateTwitterUser(ctx context.Context, twitterUser TwitterUser) (TwitterUser, error)
+	GetTwitterUserByID(ctx context.Context, twitterUserID string) (TwitterUser, error)
+	GetTwitterUser(ctx context.Context, userID uuid.UUID) (TwitterUser, error)
 }
 
 type UseCases struct {
