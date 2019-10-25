@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
+	oauth1Login "github.com/dghubble/gologin/v2/oauth1"
+	"github.com/dghubble/gologin/v2/twitter"
+	"github.com/dghubble/oauth1"
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/errors"
 	"github.com/dmtr/mail_me_all/backend/models"
@@ -80,38 +83,48 @@ func getTransaction(c *gin.Context) (*sqlx.Tx, error) {
 	return tx, nil
 }
 
-// SignInFB - sign in with Facebook
-func SignInFB(conf *config.Config, usecases *models.UseCases) gin.HandlerFunc {
+func ProcessTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var user fbuser
-		if err := c.ShouldBindJSON(&user); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest})
-			return
-		}
-		log.Debugf("Id %s", user.ID)
 
-		tx, err := getTransaction(c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
-			return
-		}
+		success := func(w http.ResponseWriter, req *http.Request) {
+			ctx := req.Context()
+			twitterUser, err := twitter.UserFromContext(ctx)
+			log.Debugf("Twitter user: %v", twitterUser)
 
-		ctx := context.WithValue(context.Background(), "Tx", tx)
-		u, err := usecases.User.SignInFB(ctx, user.ID, user.Token)
-		if err != nil {
-			log.Errorf("Can not sign in %s", err)
-			e, _ := err.(*useCases.UseCaseError)
-			c.JSON(http.StatusInternalServerError, gin.H{"code": e.Code()})
-		} else {
-			log.Debugf("Signed in with Facebook %s", user.ID)
-			err = setSessionCookie(c, conf, u.ID.String())
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"code": errors.CantStartSession})
+				log.Errorf("Callback error %s", err.Error())
+				c.String(http.StatusInternalServerError, "Server Error")
 				return
 			}
 
-			c.JSON(http.StatusOK, adaptUser(u, true))
+			accessToken, accessSecret, err := oauth1Login.AccessTokenFromContext(ctx)
+			if err != nil {
+				c.String(http.StatusInternalServerError, "Server Error")
+				return
+			}
+
+			tx, err := getTransaction(c)
+			if err != nil {
+				c.String(http.StatusInternalServerError, "Server Error")
+				return
+			}
+
+			contxt := context.WithValue(context.Background(), "Tx", tx)
+
+			user, err := usecases.User.SignInWithTwitter(
+				contxt, twitterUser.IDStr, twitterUser.Name, twitterUser.Email, accessToken, accessSecret)
+
+			if err != nil {
+				c.String(http.StatusInternalServerError, "Server Error")
+				return
+			}
+
+			setSessionCookie(c, conf, user.ID.String())
+			c.Redirect(http.StatusFound, "/")
 		}
+
+		h := twitter.CallbackHandler(oauth1Config, http.HandlerFunc(success), nil)
+		h.ServeHTTP(c.Writer, c.Request)
 	}
 }
 

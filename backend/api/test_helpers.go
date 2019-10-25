@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/mocks"
@@ -17,13 +16,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const (
-	retry time.Duration = 4
-)
+type testFunc func(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore)
 
-type testFunc func(t *testing.T, router *gin.Engine, clientMock *mocks.FbProxyServiceClient, datastoreMock *mocks.UserDatastore)
-
-func PerformRequest(r http.Handler, method, path string, body io.Reader, json bool, cookie *http.Cookie) *httptest.ResponseRecorder {
+func performRequest(r http.Handler, method, path string, body io.Reader, json bool, cookie *http.Cookie) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, body)
 	if body != nil && json {
 		req.Header.Set("Content-Type", "application/json")
@@ -38,15 +33,15 @@ func PerformRequest(r http.Handler, method, path string, body io.Reader, json bo
 	return w
 }
 
-func PerformPostRequest(r http.Handler, path string, body io.Reader) *httptest.ResponseRecorder {
-	return PerformRequest(r, "POST", path, body, true, nil)
+func performPostRequest(r http.Handler, path string, body io.Reader) *httptest.ResponseRecorder {
+	return performRequest(r, "POST", path, body, true, nil)
 }
 
-func PerformGetRequest(r http.Handler, path string, cookie *http.Cookie) *httptest.ResponseRecorder {
-	return PerformRequest(r, "GET", path, nil, false, cookie)
+func performGetRequest(r http.Handler, path string, cookie *http.Cookie) *httptest.ResponseRecorder {
+	return performRequest(r, "GET", path, nil, false, cookie)
 }
 
-func ParseCookie(cookie string) *http.Cookie {
+func parseCookie(cookie string) *http.Cookie {
 	c := http.Cookie{}
 	s := strings.Split(cookie, ";")
 	for _, v := range s {
@@ -60,7 +55,7 @@ func ParseCookie(cookie string) *http.Cookie {
 	return &c
 }
 
-func RunTests(tests map[string]testFunc, t *testing.T) {
+func runTests(tests map[string]testFunc, t *testing.T) {
 
 	conf := config.GetConfig()
 	conf.Testing = true
@@ -80,7 +75,7 @@ func RunTests(tests map[string]testFunc, t *testing.T) {
 			clientMock = new(mocks.FbProxyServiceClient)
 			userUseCase.RpcClient = clientMock
 
-			fn(t, router, clientMock, datastoreMock)
+			fn(t, router, datastoreMock)
 		}
 		t.Run(name, f)
 	}
