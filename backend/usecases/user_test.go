@@ -70,9 +70,47 @@ func testSignUpWithTwitterOk(t *testing.T, usecases *models.UseCases, datastoreM
 	datastoreMock.AssertNumberOfCalls(t, "InsertTwitterUser", 1)
 }
 
+func testSignInWithTwitterOk(t *testing.T, usecases *models.UseCases, datastoreMock *mocks.UserDatastore) {
+	twitterUserID := "123"
+	tokenSecret := "token secret"
+	accessToken := "access token"
+	uid := uuid.New()
+
+	twitterUser := models.TwitterUser{
+		UserID:      uid,
+		TwitterID:   twitterUserID,
+		AccessToken: "old token",
+		TokenSecret: "old secret",
+	}
+
+	datastoreMock.On("GetTwitterUserByID", mock.Anything, twitterUserID).Return(twitterUser, nil)
+
+	name := "Test"
+	email := "test@example.com"
+	user := models.User{ID: uid, Name: name, Email: email}
+	datastoreMock.On("UpdateUser", mock.Anything, user).Return(user, nil)
+
+	updatedTwitterUser := models.TwitterUser{
+		UserID:      twitterUser.UserID,
+		TwitterID:   twitterUser.TwitterID,
+		AccessToken: accessToken,
+		TokenSecret: tokenSecret,
+	}
+	datastoreMock.On("UpdateTwitterUser", mock.Anything, updatedTwitterUser).Return(updatedTwitterUser, nil)
+
+	u, err := usecases.User.SignInWithTwitter(context.Background(), twitterUserID, name, email, accessToken, tokenSecret)
+	assert.NoError(t, err)
+	assert.Equal(t, user, u)
+
+	datastoreMock.AssertNumberOfCalls(t, "GetTwitterUserByID", 1)
+	datastoreMock.AssertNumberOfCalls(t, "UpdateTwitterUser", 1)
+	datastoreMock.AssertNumberOfCalls(t, "UpdateUser", 1)
+}
+
 func TestUseCases(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestSignUpWithTwitterOk": testSignUpWithTwitterOk,
+		"TestSignInWithTwitterOk": testSignInWithTwitterOk,
 	}
 	runTests(tests, t)
 }

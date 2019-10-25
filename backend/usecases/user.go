@@ -51,6 +51,8 @@ func (u UserUseCase) SignInWithTwitter(ctx context.Context, twitterID, name, ema
 	}
 
 	if userExists {
+		user.ID = twitterUser.UserID
+
 		if user, err = u.UserDatastore.UpdateUser(ctx, user); err != nil {
 			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
