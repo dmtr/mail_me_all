@@ -11,7 +11,8 @@ services:
         - MAILME_APP_FB_APP_ID=2288197271493743
         - MAILME_APP_HTTP_ONLY=1
         - MAILME_APP_MAX_AGE=43200
-      command: /app/mailmeapp --app-secret=${APP_SECRET} --auth-key=${AUTH_KEY:-secret} --encrypt-key=${ENCRYPT_KEY}
+        - MAILME_APP_TW_CALLBACK_URL=https://localhost/oauth/tw/callback
+      command: /app/mailmeapp --tw-consumer-key=${TW_KEY} --tw-consumer-secret=${TW_SECRET} --auth-key=${AUTH_KEY:-secret} --encrypt-key=${ENCRYPT_KEY}
       depends_on:
         - postgresql
         - fbproxy
