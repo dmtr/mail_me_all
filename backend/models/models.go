@@ -37,9 +37,11 @@ func (u User) String() string {
 
 // UserUseCase - represents user use cases
 type UserUseCase interface {
+	SignInWithTwitter(ctx context.Context, twitterID, name, email, accessToken, tokenSecret string) (User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 }
 
+// UserDatastore - represents all user related database methods
 type UserDatastore interface {
 	InsertUser(ctx context.Context, user User) (User, error)
 	UpdateUser(ctx context.Context, user User) (User, error)
@@ -51,10 +53,12 @@ type UserDatastore interface {
 	GetTwitterUser(ctx context.Context, userID uuid.UUID) (TwitterUser, error)
 }
 
+// UseCases - represents all use cases
 type UseCases struct {
 	User UserUseCase
 }
 
+// NewUseCases - returns new UseCases struct
 func NewUseCases(user UserUseCase) *UseCases {
 	return &UseCases{User: user}
 }
