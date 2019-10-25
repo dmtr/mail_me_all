@@ -1,6 +1,12 @@
 <template>
   <div>
-    <button @click="authenticate('twitter')">auth Twitter</button>
+    <button text="Sign in with Twitter">
+      <a href="/oauth/tw/signin">
+        <img
+          src="https://cdn.cms-twdigitalassets.com/content/dam/developer-twitter/images/sign-in-with-twitter-gray.png"
+        />
+      </a>
+    </button>
   </div>
 </template>
 
