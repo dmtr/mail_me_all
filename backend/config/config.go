@@ -16,24 +16,27 @@ const (
 
 // Config - app config
 type Config struct {
-	Host          string
-	Port          int
-	Debug         int
-	Loglevel      log.Level
-	DSN           string
-	FbAppID       string
-	FbRedirectURI string
-	AppSecret     string
-	FBProxyPort   int
-	FBProxyHost   string
-	Path          string
-	Domain        string
-	MaxAge        int
-	Secure        bool
-	HttpOnly      bool
-	AuthKey       string
-	EncryptKey    string
-	Testing       bool
+	Host             string
+	Port             int
+	Debug            int
+	Loglevel         log.Level
+	DSN              string
+	FbAppID          string
+	FbRedirectURI    string
+	AppSecret        string
+	FBProxyPort      int
+	FBProxyHost      string
+	Path             string
+	Domain           string
+	MaxAge           int
+	Secure           bool
+	HttpOnly         bool
+	AuthKey          string
+	EncryptKey       string
+	Testing          bool
+	TwConsumerKey    string
+	TwConsumerSecret string
+	TwCallbackURL    string
 }
 
 // GetConfig returns app config
@@ -54,6 +57,7 @@ func GetConfig() Config {
 	viper.SetDefault("SECURE", 0)
 	viper.SetDefault("HTTP_ONLY", 1)
 	viper.SetDefault("TESTING", 0)
+	viper.SetDefault("TW_CALLBACK_URL", "")
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -62,24 +66,27 @@ func GetConfig() Config {
 	}
 
 	conf := Config{
-		Host:          viper.GetString("HOST"),
-		Port:          viper.GetInt("PORT"),
-		Debug:         viper.GetInt("DEBUG"),
-		Loglevel:      loglevel,
-		DSN:           viper.GetString("DSN"),
-		FbAppID:       viper.GetString("FB_APP_ID"),
-		FbRedirectURI: viper.GetString("FB_REDIRECT_URI"),
-		AppSecret:     viper.GetString("app-secret"),
-		FBProxyPort:   viper.GetInt("FB_PROXY_PORT"),
-		FBProxyHost:   viper.GetString("FB_PROXY_HOST"),
-		Path:          viper.GetString("PATH"),
-		Domain:        viper.GetString("DOMAIN"),
-		MaxAge:        viper.GetInt("MAX_AGE"),
-		Secure:        viper.GetBool("SECURE"),
-		HttpOnly:      viper.GetBool("HTTP_ONLY"),
-		AuthKey:       viper.GetString("auth-key"),
-		EncryptKey:    viper.GetString("encrypt-key"),
-		Testing:       viper.GetBool("TESTING"),
+		Host:             viper.GetString("HOST"),
+		Port:             viper.GetInt("PORT"),
+		Debug:            viper.GetInt("DEBUG"),
+		Loglevel:         loglevel,
+		DSN:              viper.GetString("DSN"),
+		FbAppID:          viper.GetString("FB_APP_ID"),
+		FbRedirectURI:    viper.GetString("FB_REDIRECT_URI"),
+		AppSecret:        viper.GetString("app-secret"),
+		FBProxyPort:      viper.GetInt("FB_PROXY_PORT"),
+		FBProxyHost:      viper.GetString("FB_PROXY_HOST"),
+		Path:             viper.GetString("PATH"),
+		Domain:           viper.GetString("DOMAIN"),
+		MaxAge:           viper.GetInt("MAX_AGE"),
+		Secure:           viper.GetBool("SECURE"),
+		HttpOnly:         viper.GetBool("HTTP_ONLY"),
+		AuthKey:          viper.GetString("auth-key"),
+		EncryptKey:       viper.GetString("encrypt-key"),
+		Testing:          viper.GetBool("TESTING"),
+		TwConsumerKey:    viper.GetString("tw-consumer-key"),
+		TwConsumerSecret: viper.GetString("tw-consumer-secret"),
+		TwCallbackURL:    viper.GetString("TW_CALLBACK_URL"),
 	}
 
 	return conf
