@@ -12,15 +12,15 @@ type UserDatastore struct {
 	mock.Mock
 }
 
-// GetToken provides a mock function with given fields: ctx, userID
-func (_m *UserDatastore) GetToken(ctx context.Context, userID uuid.UUID) (models.Token, error) {
+// GetTwitterUser provides a mock function with given fields: ctx, userID
+func (_m *UserDatastore) GetTwitterUser(ctx context.Context, userID uuid.UUID) (models.TwitterUser, error) {
 	ret := _m.Called(ctx, userID)
 
-	var r0 models.Token
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) models.Token); ok {
+	var r0 models.TwitterUser
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) models.TwitterUser); ok {
 		r0 = rf(ctx, userID)
 	} else {
-		r0 = ret.Get(0).(models.Token)
+		r0 = ret.Get(0).(models.TwitterUser)
 	}
 
 	var r1 error
@@ -33,20 +33,20 @@ func (_m *UserDatastore) GetToken(ctx context.Context, userID uuid.UUID) (models
 	return r0, r1
 }
 
-// GetUserByFbID provides a mock function with given fields: ctx, fbID
-func (_m *UserDatastore) GetUserByFbID(ctx context.Context, fbID string) (models.User, error) {
-	ret := _m.Called(ctx, fbID)
+// GetTwitterUserByID provides a mock function with given fields: ctx, twitterUserID
+func (_m *UserDatastore) GetTwitterUserByID(ctx context.Context, twitterUserID string) (models.TwitterUser, error) {
+	ret := _m.Called(ctx, twitterUserID)
 
-	var r0 models.User
-	if rf, ok := ret.Get(0).(func(context.Context, string) models.User); ok {
-		r0 = rf(ctx, fbID)
+	var r0 models.TwitterUser
+	if rf, ok := ret.Get(0).(func(context.Context, string) models.TwitterUser); ok {
+		r0 = rf(ctx, twitterUserID)
 	} else {
-		r0 = ret.Get(0).(models.User)
+		r0 = ret.Get(0).(models.TwitterUser)
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, fbID)
+		r1 = rf(ctx, twitterUserID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -54,8 +54,8 @@ func (_m *UserDatastore) GetUserByFbID(ctx context.Context, fbID string) (models
 	return r0, r1
 }
 
-// GetUserByID provides a mock function with given fields: ctx, userID
-func (_m *UserDatastore) GetUserByID(ctx context.Context, userID uuid.UUID) (models.User, error) {
+// GetUser provides a mock function with given fields: ctx, userID
+func (_m *UserDatastore) GetUser(ctx context.Context, userID uuid.UUID) (models.User, error) {
 	ret := _m.Called(ctx, userID)
 
 	var r0 models.User
@@ -75,20 +75,20 @@ func (_m *UserDatastore) GetUserByID(ctx context.Context, userID uuid.UUID) (mod
 	return r0, r1
 }
 
-// InsertToken provides a mock function with given fields: ctx, token
-func (_m *UserDatastore) InsertToken(ctx context.Context, token models.Token) (models.Token, error) {
-	ret := _m.Called(ctx, token)
+// InsertTwitterUser provides a mock function with given fields: ctx, twitterUser
+func (_m *UserDatastore) InsertTwitterUser(ctx context.Context, twitterUser models.TwitterUser) (models.TwitterUser, error) {
+	ret := _m.Called(ctx, twitterUser)
 
-	var r0 models.Token
-	if rf, ok := ret.Get(0).(func(context.Context, models.Token) models.Token); ok {
-		r0 = rf(ctx, token)
+	var r0 models.TwitterUser
+	if rf, ok := ret.Get(0).(func(context.Context, models.TwitterUser) models.TwitterUser); ok {
+		r0 = rf(ctx, twitterUser)
 	} else {
-		r0 = ret.Get(0).(models.Token)
+		r0 = ret.Get(0).(models.TwitterUser)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, models.Token) error); ok {
-		r1 = rf(ctx, token)
+	if rf, ok := ret.Get(1).(func(context.Context, models.TwitterUser) error); ok {
+		r1 = rf(ctx, twitterUser)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -117,20 +117,20 @@ func (_m *UserDatastore) InsertUser(ctx context.Context, user models.User) (mode
 	return r0, r1
 }
 
-// UpdateToken provides a mock function with given fields: ctx, token
-func (_m *UserDatastore) UpdateToken(ctx context.Context, token models.Token) (models.Token, error) {
-	ret := _m.Called(ctx, token)
+// UpdateTwitterUser provides a mock function with given fields: ctx, twitterUser
+func (_m *UserDatastore) UpdateTwitterUser(ctx context.Context, twitterUser models.TwitterUser) (models.TwitterUser, error) {
+	ret := _m.Called(ctx, twitterUser)
 
-	var r0 models.Token
-	if rf, ok := ret.Get(0).(func(context.Context, models.Token) models.Token); ok {
-		r0 = rf(ctx, token)
+	var r0 models.TwitterUser
+	if rf, ok := ret.Get(0).(func(context.Context, models.TwitterUser) models.TwitterUser); ok {
+		r0 = rf(ctx, twitterUser)
 	} else {
-		r0 = ret.Get(0).(models.Token)
+		r0 = ret.Get(0).(models.TwitterUser)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, models.Token) error); ok {
-		r1 = rf(ctx, token)
+	if rf, ok := ret.Get(1).(func(context.Context, models.TwitterUser) error); ok {
+		r1 = rf(ctx, twitterUser)
 	} else {
 		r1 = ret.Error(1)
 	}
