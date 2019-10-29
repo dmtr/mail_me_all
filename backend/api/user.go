@@ -129,7 +129,7 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 		var u appUser
 		uid := getUserID(c)
 		if uid == "" {
-			c.JSON(http.StatusOK, u)
+			c.JSON(http.StatusNotFound, u)
 		} else {
 			tx, err := getTransaction(c)
 			if err != nil {
