@@ -34,7 +34,11 @@ const actions = {
         commit("setUser", response.data);
       })
       .catch(function(error) {
-        console.log(error);
+        if (error.response && error.response.status === 404) {
+          commit("setUser", { signedIn: false, name: "", id: "" });
+        } else {
+          console.log(error.message);
+        }
       });
   }
 };
