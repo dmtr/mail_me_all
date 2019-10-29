@@ -14,10 +14,11 @@ type Model interface {
 
 // TwitterUser - represents twitter account
 type TwitterUser struct {
-	UserID      uuid.UUID `db:"user_id"`
-	TwitterID   string    `db:"social_account_id"`
-	AccessToken string    `db:"access_token"`
-	TokenSecret string    `db:"token_secret"`
+	UserID        uuid.UUID `db:"user_id"`
+	TwitterID     string    `db:"social_account_id"`
+	AccessToken   string    `db:"access_token"`
+	TokenSecret   string    `db:"token_secret"`
+	ProfileIMGURL string    `db:"profile_image_url"`
 }
 
 func (t TwitterUser) String() string {
@@ -37,7 +38,7 @@ func (u User) String() string {
 
 // UserUseCase - represents user use cases
 type UserUseCase interface {
-	SignInWithTwitter(ctx context.Context, twitterID, name, email, accessToken, tokenSecret string) (User, error)
+	SignInWithTwitter(ctx context.Context, twitterID, name, email, screenName, accessToken, tokenSecret string) (User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 }
 

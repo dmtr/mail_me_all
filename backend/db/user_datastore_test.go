@@ -96,10 +96,11 @@ func testInsertTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	assert.NoError(t, err)
 
 	twitterUser := models.TwitterUser{
-		UserID:      u.ID,
-		TwitterID:   "111",
-		AccessToken: "some-token",
-		TokenSecret: "some-secret",
+		UserID:        u.ID,
+		TwitterID:     "111",
+		AccessToken:   "some-token",
+		TokenSecret:   "some-secret",
+		ProfileIMGURL: "https://some_url",
 	}
 	res, err := d.InsertTwitterUser(ctx, twitterUser)
 	assert.NoError(t, err)
@@ -131,6 +132,7 @@ func testInsertAndUpdateTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore)
 	assert.Equal(t, twitterUser, res)
 
 	twitterUser.AccessToken = "new-token"
+	twitterUser.ProfileIMGURL = "new-url"
 	updated, err := d.UpdateTwitterUser(ctx, twitterUser)
 	assert.NoError(t, err)
 	assert.Equal(t, twitterUser, updated)

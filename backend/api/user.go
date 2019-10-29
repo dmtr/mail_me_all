@@ -94,12 +94,14 @@ func ProcessTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, us
 
 			accessToken, accessSecret, err := oauth1Login.AccessTokenFromContext(ctx)
 			if err != nil {
+				log.Errorf("Error, no tokens: %s", err.Error())
 				c.String(http.StatusInternalServerError, "Server Error")
 				return
 			}
 
 			tx, err := getTransaction(c)
 			if err != nil {
+				log.Errorf("Error, no transaction in context: %s", err.Error())
 				c.String(http.StatusInternalServerError, "Server Error")
 				return
 			}
@@ -107,9 +109,10 @@ func ProcessTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, us
 			contxt := context.WithValue(context.Background(), "Tx", tx)
 
 			user, err := usecases.User.SignInWithTwitter(
-				contxt, twitterUser.IDStr, twitterUser.Name, twitterUser.Email, accessToken, accessSecret)
+				contxt, twitterUser.IDStr, twitterUser.Name, twitterUser.Email, twitterUser.ScreenName, accessToken, accessSecret)
 
 			if err != nil {
+				log.Errorf("Can not sign in with Twitter: %s", err.Error())
 				c.String(http.StatusInternalServerError, "Server Error")
 				return
 			}

@@ -16,10 +16,11 @@ const (
 
 // UserInfo represents twitter user information
 type UserInfo struct {
-	TwitterID  string
-	Name       string
-	Email      string
-	ScreenName string
+	TwitterID     string
+	Name          string
+	Email         string
+	ScreenName    string
+	ProfileIMGURL string
 }
 
 type Twitter struct {
@@ -81,19 +82,20 @@ func (t Twitter) getSession(accessToken, accessSecret, twitterID string) *tw.Cli
 
 func (t Twitter) GetUserInfo(accessToken, accessSecret, twitterID, screenName string) (UserInfo, error) {
 	client := t.getSession(accessToken, accessSecret, twitterID)
-	user, resp, err := client.Users.Show(&tw.UserShowParams{
+	user, _, err := client.Users.Show(&tw.UserShowParams{
 		ScreenName: screenName,
 	})
-	log.Debugf("user: %s, resp: %, err: %s", user, resp, err)
 	if err != nil {
+		log.Errorf("Got error calling twitter api: %s", err)
 		return UserInfo{}, err
 	}
 
 	u := UserInfo{
-		TwitterID:  user.IDStr,
-		Name:       user.Name,
-		Email:      user.Email,
-		ScreenName: user.ScreenName,
+		TwitterID:     user.IDStr,
+		Name:          user.Name,
+		Email:         user.Email,
+		ScreenName:    user.ScreenName,
+		ProfileIMGURL: user.ProfileImageURLHttps,
 	}
 	return u, err
 }

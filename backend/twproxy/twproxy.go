@@ -25,10 +25,11 @@ func (s *ServiceServer) GetUserInfo(ctx context.Context, request *pb.UserInfoReq
 	}
 
 	u := pb.UserInfo{
-		TwitterId:  res.TwitterID,
-		Name:       res.Name,
-		Email:      res.Email,
-		ScreenName: res.ScreenName,
+		TwitterId:       res.TwitterID,
+		Name:            res.Name,
+		Email:           res.Email,
+		ScreenName:      res.ScreenName,
+		ProfileImageUrl: res.ProfileIMGURL,
 	}
 
 	return &u, nil

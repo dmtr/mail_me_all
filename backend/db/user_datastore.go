@@ -185,7 +185,7 @@ func (d *UserDatastore) GetTwitterUserByID(ctx context.Context, twitterUserID st
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		var user models.TwitterUser
 		err := tx.Get(
-			&user, "SELECT user_id, social_account_id, access_token, token_secret FROM tw_account WHERE social_account_id=$1", twitterUserID)
+			&user, "SELECT user_id, social_account_id, access_token, token_secret, profile_image_url FROM tw_account WHERE social_account_id=$1", twitterUserID)
 		return user, err
 	}
 
@@ -201,7 +201,7 @@ func (d *UserDatastore) GetTwitterUserByID(ctx context.Context, twitterUserID st
 func (d *UserDatastore) InsertTwitterUser(ctx context.Context, twitterUser models.TwitterUser) (models.TwitterUser, error) {
 	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
-		_, err := tx.NamedExec("INSERT INTO tw_account (user_id, social_account_id, access_token, token_secret) VALUES (:user_id, :social_account_id, :access_token, :token_secret)", twitterUser)
+		_, err := tx.NamedExec("INSERT INTO tw_account (user_id, social_account_id, access_token, token_secret, profile_image_url) VALUES (:user_id, :social_account_id, :access_token, :token_secret, :profile_image_url)", twitterUser)
 		if err != nil {
 			log.Error(err.Error() + fmt.Sprintf(" inserting twitterUser: %s", twitterUser))
 			return models.TwitterUser{}, err
@@ -222,7 +222,7 @@ func (d *UserDatastore) UpdateTwitterUser(ctx context.Context, twitterUser model
 	log.Debugf("Going to update twitterUser for user %s", twitterUser.UserID)
 	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
-		_, err := tx.NamedExec("UPDATE tw_account SET access_token=:access_token, token_secret=:token_secret WHERE user_id = :user_id", twitterUser)
+		_, err := tx.NamedExec("UPDATE tw_account SET access_token=:access_token, token_secret=:token_secret, profile_image_url=:profile_image_url WHERE user_id = :user_id", twitterUser)
 		if err != nil {
 			log.Error(err.Error() + fmt.Sprintf(" uptating twitterUser: %s", twitterUser))
 			return models.TwitterUser{}, err
@@ -243,7 +243,7 @@ func (d *UserDatastore) GetTwitterUser(ctx context.Context, userID uuid.UUID) (m
 	tx := getTransaction(ctx)
 	f := func(tx *sqlx.Tx) (models.Model, error) {
 		var twitterUser models.TwitterUser
-		err := tx.Get(&twitterUser, "SELECT user_id, social_account_id, access_token, token_secret FROM tw_account WHERE user_id = $1", userID)
+		err := tx.Get(&twitterUser, "SELECT user_id, social_account_id, access_token, token_secret, profile_image_url FROM tw_account WHERE user_id = $1", userID)
 		return twitterUser, err
 	}
 

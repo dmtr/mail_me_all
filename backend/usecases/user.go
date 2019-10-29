@@ -31,10 +31,22 @@ func (u UserUseCase) GetUserByID(ctx context.Context, userID uuid.UUID) (models.
 }
 
 // SignInWithTwitter implementation
-func (u UserUseCase) SignInWithTwitter(ctx context.Context, twitterID, name, email, accessToken, tokenSecret string) (models.User, error) {
-	var user models.User
-	user.Name = name
-	user.Email = email
+func (u UserUseCase) SignInWithTwitter(ctx context.Context, twitterID, name, email, screenName, accessToken, tokenSecret string) (models.User, error) {
+	user := models.User{Name: name}
+	var profileUrl string
+
+	req := pb.UserInfoRequest{
+		TwitterId:    twitterID,
+		AccessToken:  accessToken,
+		AccessSecret: tokenSecret,
+		ScreenName:   screenName,
+	}
+	if userInfo, err := u.RpcClient.GetUserInfo(context.Background(), &req); err != nil {
+		log.Errorf("Can not get user info: %s", err)
+	} else {
+		user.Email = userInfo.Email
+		profileUrl = userInfo.ProfileImageUrl
+	}
 
 	var userExists bool
 
@@ -59,6 +71,7 @@ func (u UserUseCase) SignInWithTwitter(ctx context.Context, twitterID, name, ema
 
 		twitterUser.AccessToken = accessToken
 		twitterUser.TokenSecret = tokenSecret
+		twitterUser.ProfileIMGURL = profileUrl
 
 		if _, err = u.UserDatastore.UpdateTwitterUser(ctx, twitterUser); err != nil {
 			return models.User{}, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
@@ -70,10 +83,11 @@ func (u UserUseCase) SignInWithTwitter(ctx context.Context, twitterID, name, ema
 		log.Debugf("New user %s", user)
 
 		twUser := models.TwitterUser{
-			UserID:      user.ID,
-			TwitterID:   twitterID,
-			AccessToken: accessToken,
-			TokenSecret: tokenSecret,
+			UserID:        user.ID,
+			TwitterID:     twitterID,
+			AccessToken:   accessToken,
+			TokenSecret:   tokenSecret,
+			ProfileIMGURL: profileUrl,
 		}
 
 		if _, err = u.UserDatastore.InsertTwitterUser(ctx, twUser); err != nil {
