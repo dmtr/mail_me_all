@@ -20,11 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type fbuser struct {
-	ID    string `json:"fbid" binding:"required"`
-	Token string `json:"fbtoken" binding:"required"`
-}
-
 type appUser struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
