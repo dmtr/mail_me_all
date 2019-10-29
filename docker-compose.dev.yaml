@@ -23,8 +23,6 @@ services:
         args:
           - APP_PORT=5000
       container_name: mailmeapp.twproxy
-      environment:
-        - MAILME_APP_FB_APP_ID=2288197271493743
       command: /app/mailmeapp run-tw-proxy --tw-consumer-key=${TW_KEY} --tw-consumer-secret=${TW_SECRET} 
       networks:
         - mailmeapp 
