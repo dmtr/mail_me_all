@@ -10,7 +10,7 @@ const (
 	appHost     string = "127.0.0.1"
 	appPort     int    = 8080
 	twProxyPort int    = 5000
-	twProxyHost string = "fbproxy"
+	twProxyHost string = "twproxy"
 	maxAge      int    = 60 * 60
 )
 
