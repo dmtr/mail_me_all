@@ -23,7 +23,7 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 	conf.Testing = true
 
 	datastoreMock := new(mocks.UserDatastore)
-	clientMock := new(mocks.FbProxyServiceClient)
+	clientMock := new(mocks.TwProxyServiceClient)
 	userUseCase := NewUserUseCase(datastoreMock, clientMock)
 	usecases := models.NewUseCases(userUseCase)
 
