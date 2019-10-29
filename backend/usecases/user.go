@@ -13,11 +13,11 @@ import (
 // UserUseCase implementation
 type UserUseCase struct {
 	UserDatastore models.UserDatastore
-	RpcClient     pb.FbProxyServiceClient
+	RpcClient     pb.TwProxyServiceClient
 }
 
 // NewUserUseCase implementation
-func NewUserUseCase(datastore models.UserDatastore, client pb.FbProxyServiceClient) *UserUseCase {
+func NewUserUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient) *UserUseCase {
 	return &UserUseCase{UserDatastore: datastore, RpcClient: client}
 }
 

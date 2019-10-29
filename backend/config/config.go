@@ -9,8 +9,8 @@ const (
 	appPrefix   string = "MAILME_APP"
 	appHost     string = "127.0.0.1"
 	appPort     int    = 8080
-	fbProxyPort int    = 5000
-	fbProxyHost string = "fbproxy"
+	twProxyPort int    = 5000
+	twProxyHost string = "fbproxy"
 	maxAge      int    = 60 * 60
 )
 
@@ -21,11 +21,8 @@ type Config struct {
 	Debug            int
 	Loglevel         log.Level
 	DSN              string
-	FbAppID          string
-	FbRedirectURI    string
-	AppSecret        string
-	FBProxyPort      int
-	FBProxyHost      string
+	TwProxyPort      int
+	TwProxyHost      string
 	Path             string
 	Domain           string
 	MaxAge           int
@@ -47,10 +44,8 @@ func GetConfig() Config {
 	viper.SetDefault("DEBUG", 0)
 	viper.SetDefault("Loglevel", "debug")
 	viper.SetDefault("DSN", "")
-	viper.SetDefault("FB_APP_ID", "")
-	viper.SetDefault("FB_REDIRECT_URI", "")
-	viper.SetDefault("FB_PROXY_PORT", fbProxyPort)
-	viper.SetDefault("FB_PROXY_HOST", fbProxyHost)
+	viper.SetDefault("TW_PROXY_PORT", twProxyPort)
+	viper.SetDefault("TW_PROXY_HOST", twProxyHost)
 	viper.SetDefault("PATH", "/")
 	viper.SetDefault("DOMAIN", "localhost")
 	viper.SetDefault("MAX_AGE", maxAge)
@@ -71,11 +66,8 @@ func GetConfig() Config {
 		Debug:            viper.GetInt("DEBUG"),
 		Loglevel:         loglevel,
 		DSN:              viper.GetString("DSN"),
-		FbAppID:          viper.GetString("FB_APP_ID"),
-		FbRedirectURI:    viper.GetString("FB_REDIRECT_URI"),
-		AppSecret:        viper.GetString("app-secret"),
-		FBProxyPort:      viper.GetInt("FB_PROXY_PORT"),
-		FBProxyHost:      viper.GetString("FB_PROXY_HOST"),
+		TwProxyPort:      viper.GetInt("TW_PROXY_PORT"),
+		TwProxyHost:      viper.GetString("TW_PROXY_HOST"),
 		Path:             viper.GetString("PATH"),
 		Domain:           viper.GetString("DOMAIN"),
 		MaxAge:           viper.GetInt("MAX_AGE"),

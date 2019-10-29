@@ -11,11 +11,11 @@ import (
 func GetRpcConection(conf *config.Config) (*grpc.ClientConn, error) {
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
-	serverAddr := fmt.Sprintf("%s:%d", conf.FBProxyHost, conf.FBProxyPort)
+	serverAddr := fmt.Sprintf("%s:%d", conf.TwProxyHost, conf.TwProxyPort)
 	return grpc.Dial(serverAddr, opts...)
 }
 
 //GetRpcClient - returns grpc client
-func GetRpcClient(conn *grpc.ClientConn) FbProxyServiceClient {
-	return NewFbProxyServiceClient(conn)
+func GetRpcClient(conn *grpc.ClientConn) TwProxyServiceClient {
+	return NewTwProxyServiceClient(conn)
 }

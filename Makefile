@@ -27,11 +27,11 @@ all: build-backend up-backend
 restart: restart-all
 build-backend:
 	$(info Running target $(MAKECMDGOALS))
-	docker-compose -f docker-compose.dev.yaml build fbproxy 
+	docker-compose -f docker-compose.dev.yaml build twproxy 
 	docker-compose -f docker-compose.dev.yaml build backend
 restart-backend:
 	$(info Running target $(MAKECMDGOALS))
-	docker-compose -f docker-compose.dev.yaml restart fbproxy
+	docker-compose -f docker-compose.dev.yaml restart twproxy
 	docker-compose -f docker-compose.dev.yaml restart backend
 up-backend:
 	docker-compose -f docker-compose.dev.yaml up -d backend
@@ -61,4 +61,4 @@ test-backend:
 	docker stop $(TEST_DB_CONTAINER) || echo already stopped
 proto: 
 	$(info Running target $(MAKECMDGOALS))
-        cd backend && protoc -I rpc rpc/fbproxy.proto --go_out=plugins=grpc:rpc
+        cd backend && protoc -I rpc rpc/twproxy.proto --go_out=plugins=grpc:rpc

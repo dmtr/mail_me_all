@@ -61,7 +61,7 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 	conf.Testing = true
 
 	datastoreMock := new(mocks.UserDatastore)
-	clientMock := new(mocks.FbProxyServiceClient)
+	clientMock := new(mocks.TwProxyServiceClient)
 	userUseCase := usecases.NewUserUseCase(datastoreMock, clientMock)
 	usecases := models.NewUseCases(userUseCase)
 	router := GetRouter(&conf, nil, usecases)
@@ -72,7 +72,7 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 			datastoreMock := new(mocks.UserDatastore)
 			userUseCase.UserDatastore = datastoreMock
 
-			clientMock = new(mocks.FbProxyServiceClient)
+			clientMock = new(mocks.TwProxyServiceClient)
 			userUseCase.RpcClient = clientMock
 
 			fn(t, router, datastoreMock)

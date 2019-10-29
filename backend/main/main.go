@@ -8,8 +8,8 @@ import (
 	"os/signal"
 
 	"github.com/dmtr/mail_me_all/backend/app"
-	"github.com/dmtr/mail_me_all/backend/fbproxy"
-	"github.com/dmtr/mail_me_all/backend/fbwrapper"
+	"github.com/dmtr/mail_me_all/backend/twapi"
+	"github.com/dmtr/mail_me_all/backend/twproxy"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 
@@ -20,11 +20,8 @@ import (
 )
 
 const (
-	runAPI          string = "api"
-	verifyFbLogin   string = "verify-fb-login"
-	generateFbToken string = "generate-fb-token"
-	runFBProxy      string = "run-fb-proxy"
-	searchFBUser    string = "search-fb-user"
+	runAPI     string = "api"
+	runTwProxy string = "run-tw-proxy"
 )
 
 func startAPIServer(app *app.App) {
@@ -56,17 +53,17 @@ func startAPIServer(app *app.App) {
 	log.Info("Exiting")
 }
 
-func startFBProxy(app *app.App) {
+func startTwProxy(app *app.App) {
 	log.Info("Starting FB proxy server")
-	lsnr, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", app.Conf.FBProxyPort))
+	lsnr, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", app.Conf.TwProxyPort))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
-	f := fbwrapper.NewFacebook(app.Conf.FbAppID, app.Conf.AppSecret, app.Conf.FbRedirectURI)
-	s := fbproxy.NewServiceServer(f)
-	pb.RegisterFbProxyServiceServer(grpcServer, s)
+	t := twapi.NewTwitter(app.Conf.TwConsumerKey, app.Conf.TwConsumerSecret)
+	s := twproxy.NewServiceServer(t)
+	pb.RegisterTwProxyServiceServer(grpcServer, s)
 	reflection.Register(grpcServer)
 	grpcServer.Serve(lsnr)
 }
@@ -75,12 +72,8 @@ func main() {
 	flag.String("tw-consumer-key", "", "twitter consumer key")
 	flag.String("tw-consumer-secret", "", "twitter consumer secret")
 
-	flag.String("app-secret", "", "app secret")
 	flag.String("auth-key", "", "auth key")
 	flag.String("encrypt-key", "", "encryption key")
-	var accessToken *string = flag.String("access-token", "", "access token")
-	var userID *string = flag.String("user-id", "", "user id")
-	var query *string = flag.String("query", "", "query")
 	flag.Parse()
 
 	viper.BindPFlags(flag.CommandLine)
@@ -96,21 +89,9 @@ func main() {
 	if cmd == runAPI {
 		a = app.GetApp(true)
 		startAPIServer(a)
-	} else if cmd == verifyFbLogin {
+	} else if cmd == runTwProxy {
 		a = app.GetApp(false)
-		f := fbwrapper.NewFacebook(a.Conf.FbAppID, a.Conf.AppSecret, a.Conf.FbRedirectURI)
-		VerifyFbLogin(*accessToken, f)
-	} else if cmd == generateFbToken {
-		a = app.GetApp(false)
-		f := fbwrapper.NewFacebook(a.Conf.FbAppID, a.Conf.AppSecret, a.Conf.FbRedirectURI)
-		GenerateFbToken(*accessToken, f)
-	} else if cmd == runFBProxy {
-		a = app.GetApp(false)
-		startFBProxy(a)
-	} else if cmd == searchFBUser {
-		a = app.GetApp(false)
-		f := fbwrapper.NewFacebook(a.Conf.FbAppID, a.Conf.AppSecret, a.Conf.FbRedirectURI)
-		SearchFBUser(*accessToken, f, *userID, *query)
+		startTwProxy(a)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)

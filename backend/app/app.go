@@ -43,7 +43,7 @@ func initLogger(loglevel log.Level) {
 	log.SetReportCaller(true)
 }
 
-func getUseCases(db_ *sqlx.DB, client pb.FbProxyServiceClient) *models.UseCases {
+func getUseCases(db_ *sqlx.DB, client pb.TwProxyServiceClient) *models.UseCases {
 	userDatastore := db.NewUserDatastore(db_)
 	userUseCase := usecases.NewUserUseCase(userDatastore, client)
 	return models.NewUseCases(userUseCase)
