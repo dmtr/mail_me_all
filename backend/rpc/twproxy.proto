@@ -5,6 +5,7 @@ package rpc;
 
 service TwProxyService {
 	  rpc GetUserInfo(UserInfoRequest) returns (UserInfo) {}
+	  rpc SearchUsers(UserSearchRequest) returns (UserSearchResult) {}
 }
 
 
@@ -21,4 +22,16 @@ message UserInfo {
 	string email = 3;
 	string screen_name = 4;
 	string profile_image_url = 5;
+}
+
+message UserSearchRequest {
+	string access_token = 1;
+	string access_secret = 2;
+	string twitter_id = 3;
+	string query = 4;
+}
+
+
+message UserSearchResult {
+	repeated UserInfo users = 1;
 }
