@@ -119,7 +119,7 @@ func (u UserUseCase) SearchTwitterUsers(ctx context.Context, userID uuid.UUID, q
 		return nil, err
 	}
 
-	users := make([]models.TwitterUser, len(res.Users), len(res.Users))
+	users := make([]models.TwitterUser, 0, len(res.Users))
 	for _, user := range res.Users {
 		u := models.TwitterUser{
 			TwitterID:     user.TwitterId,
