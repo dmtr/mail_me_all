@@ -18,7 +18,7 @@ import (
 
 const testUserID string = "15b24dd0-1f38-4e0a-8d6f-8df509051279"
 
-type testFunc func(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore)
+type testFunc func(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient)
 
 func performRequest(r http.Handler, method, path string, body io.Reader, json bool, cookie *http.Cookie) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, body)
@@ -77,7 +77,7 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 			clientMock = new(mocks.TwProxyServiceClient)
 			userUseCase.RpcClient = clientMock
 
-			fn(t, router, datastoreMock)
+			fn(t, router, datastoreMock, clientMock)
 		}
 		t.Run(name, f)
 	}
