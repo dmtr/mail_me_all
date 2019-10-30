@@ -207,7 +207,7 @@ func SearchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		res := make([]twitterUser, len(users), len(users))
+		res := make([]twitterUser, 0, len(users))
 		for _, user := range users {
 			res = append(res, adaptTwitterUser(user))
 		}
