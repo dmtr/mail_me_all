@@ -12,6 +12,8 @@ import (
 
 const (
 	sessionExpiresIn = 60 * 10
+	page             = 1
+	count            = 10
 )
 
 // UserInfo represents twitter user information
@@ -98,4 +100,29 @@ func (t Twitter) GetUserInfo(accessToken, accessSecret, twitterID, screenName st
 		ProfileIMGURL: user.ProfileImageURLHttps,
 	}
 	return u, err
+}
+
+func (t Twitter) SearchUsers(accessToken, accessSecret, twitterID, query string) ([]UserInfo, error) {
+	client := t.getSession(accessToken, accessSecret, twitterID)
+	includeEntities := false
+	users, _, err := client.Users.Search(query, &tw.UserSearchParams{Page: page, Count: count, IncludeEntities: &includeEntities})
+
+	if err != nil {
+		log.Errorf("Got error calling twitter api: %s", err)
+		return make([]UserInfo, 0, 0), err
+	}
+
+	res := make([]UserInfo, len(users), len(users))
+	for _, user := range users {
+		u := UserInfo{
+			TwitterID:     user.IDStr,
+			Name:          user.Name,
+			Email:         user.Email,
+			ScreenName:    user.ScreenName,
+			ProfileIMGURL: user.ProfileImageURLHttps,
+		}
+		res = append(res, u)
+	}
+
+	return res, err
 }
