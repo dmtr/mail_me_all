@@ -19,6 +19,7 @@ type TwitterUser struct {
 	AccessToken   string    `db:"access_token"`
 	TokenSecret   string    `db:"token_secret"`
 	ProfileIMGURL string    `db:"profile_image_url"`
+	ScreenName    string
 }
 
 func (t TwitterUser) String() string {
@@ -40,6 +41,7 @@ func (u User) String() string {
 type UserUseCase interface {
 	SignInWithTwitter(ctx context.Context, twitterID, name, email, screenName, accessToken, tokenSecret string) (User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
+	SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]TwitterUser, error)
 }
 
 // UserDatastore - represents all user related database methods
