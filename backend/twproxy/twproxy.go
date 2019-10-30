@@ -35,6 +35,7 @@ func (s *ServiceServer) GetUserInfo(ctx context.Context, request *pb.UserInfoReq
 	return &u, nil
 }
 
+//SearchUsers searches twitter users
 func (s *ServiceServer) SearchUsers(ctx context.Context, request *pb.UserSearchRequest) (*pb.UserSearchResult, error) {
 	users, err := s.twitter.SearchUsers(request.AccessToken, request.AccessSecret, request.TwitterId, request.Query)
 	if err != nil {
@@ -42,7 +43,7 @@ func (s *ServiceServer) SearchUsers(ctx context.Context, request *pb.UserSearchR
 	}
 
 	res := pb.UserSearchResult{
-		Users: make([]*pb.UserInfo, len(users), len(users)),
+		Users: make([]*pb.UserInfo, 0, len(users)),
 	}
 
 	for _, user := range users {
