@@ -28,13 +28,15 @@ const getters = {
 
 const actions = {
   getUser({ commit, state }) {
+    const errors = [401, 404, 500];
+
     const res = axios
       .get("api/user")
       .then(function(response) {
         commit("setUser", response.data);
       })
       .catch(function(error) {
-        if (error.response && error.response.status === 404) {
+        if (error.response && errors.indexOf(error.response.status) != -1) {
           commit("setUser", { signedIn: false, name: "", id: "" });
         } else {
           console.log(error.message);
