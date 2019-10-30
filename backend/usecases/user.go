@@ -98,3 +98,36 @@ func (u UserUseCase) SignInWithTwitter(ctx context.Context, twitterID, name, ema
 	return user, err
 
 }
+
+func (u UserUseCase) SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]models.TwitterUser, error) {
+	twitterUser, err := u.UserDatastore.GetTwitterUser(ctx, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	req := pb.UserSearchRequest{
+		TwitterId:    twitterUser.TwitterID,
+		AccessToken:  twitterUser.AccessToken,
+		AccessSecret: twitterUser.TokenSecret,
+		Query:        query,
+	}
+
+	res, err := u.RpcClient.SearchUsers(context.Background(), &req)
+	if err != nil {
+		log.Errorf("Can not find users: %s", err)
+		return nil, err
+	}
+
+	users := make([]models.TwitterUser, len(res.Users), len(res.Users))
+	for _, user := range res.Users {
+		u := models.TwitterUser{
+			TwitterID:     user.TwitterId,
+			ScreenName:    user.ScreenName,
+			ProfileIMGURL: user.ProfileImageUrl,
+		}
+		users = append(users, u)
+	}
+
+	return users, err
+}
