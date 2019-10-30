@@ -26,6 +26,12 @@ type appUser struct {
 	SignedIn bool   `json:"signedIn"`
 }
 
+type twitterUser struct {
+	ID            string `json:"id"`
+	ScreenName    string `json:"screen_name"`
+	ProfileIMGURL string `json:"profile_image_url"`
+}
+
 func adaptUser(user models.User, signedIn bool) appUser {
 	return appUser{
 		ID:       user.ID.String(),
@@ -35,10 +41,17 @@ func adaptUser(user models.User, signedIn bool) appUser {
 
 }
 
+func adaptTwitterUser(user models.TwitterUser) twitterUser {
+	return twitterUser{
+		ID:            user.TwitterID,
+		ScreenName:    user.ScreenName,
+		ProfileIMGURL: user.ProfileIMGURL,
+	}
+}
+
 func getUserID(c *gin.Context) string {
-	s := sessions.Default(c)
-	uid := s.Get("userid")
-	if uid == nil {
+	uid, exists := c.Get("UserID")
+	if !exists {
 		return ""
 	}
 	u, ok := uid.(string)
@@ -133,29 +146,72 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 		uid := getUserID(c)
 		if uid == "" {
 			c.JSON(http.StatusNotFound, u)
-		} else {
-			tx, err := getTransaction(c)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
-				return
-			}
-
-			ctx := context.WithValue(context.Background(), "Tx", tx)
-
-			userID, err := uuid.Parse(uid)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
-				return
-			}
-
-			user, err := usecases.User.GetUserByID(ctx, userID)
-			if err != nil {
-				log.Errorf("Can not get user, got error %s", err)
-				e, _ := err.(*useCases.UseCaseError)
-				c.JSON(http.StatusInternalServerError, gin.H{"code": e.Code()})
-			} else {
-				c.JSON(http.StatusOK, adaptUser(user, true))
-			}
+			return
 		}
+
+		tx, err := getTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+			return
+		}
+
+		ctx := context.WithValue(context.Background(), "Tx", tx)
+
+		userID, err := uuid.Parse(uid)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		user, err := usecases.User.GetUserByID(ctx, userID)
+		if err != nil {
+			log.Errorf("Can not get user, got error %s", err)
+			e, _ := err.(*useCases.UseCaseError)
+			status := http.StatusInternalServerError
+			if e.Code() == errors.NotFound {
+				status = http.StatusNotFound
+			}
+			c.JSON(status, gin.H{"code": e.Code()})
+			return
+		}
+
+		c.JSON(http.StatusOK, adaptUser(user, true))
+	}
+}
+
+func SearchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid := getUserID(c)
+		if uid == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest})
+			return
+		}
+
+		userID, err := uuid.Parse(uid)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		query := c.Query("q")
+		if query == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest})
+			return
+		}
+
+		users, err := usecases.User.SearchTwitterUsers(context.Background(), userID, query)
+		if err != nil {
+			log.Errorf("Got error searching users %s", err)
+			e, _ := err.(*useCases.UseCaseError)
+			c.JSON(http.StatusInternalServerError, gin.H{"code": e.Code()})
+			return
+		}
+
+		res := make([]twitterUser, len(users), len(users))
+		for _, user := range users {
+			res = append(res, adaptTwitterUser(user))
+		}
+
+		c.JSON(http.StatusOK, gin.H{"users": res})
 	}
 }

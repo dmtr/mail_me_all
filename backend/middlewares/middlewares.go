@@ -25,8 +25,8 @@ func getUserID(c *gin.Context) string {
 	return u
 }
 
-// SessionlMiddleware adds user id to the context if session exists, otherwise returns 401
-func SessionlMiddleware() gin.HandlerFunc {
+// SessionMiddleware adds user id to the context if session exists, otherwise returns 401
+func SessionMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getUserID(c)
 		if uid != "" {

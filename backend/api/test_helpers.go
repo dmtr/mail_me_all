@@ -16,6 +16,8 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const testUserID string = "15b24dd0-1f38-4e0a-8d6f-8df509051279"
+
 type testFunc func(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore)
 
 func performRequest(r http.Handler, method, path string, body io.Reader, json bool, cookie *http.Cookie) *httptest.ResponseRecorder {

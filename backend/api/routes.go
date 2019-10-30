@@ -47,11 +47,15 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 	}
 
 	if testing { // unit tests
-		router.GET("/api/user", middlewares.TestTransactionlMiddleware(), GetUser(usecases))
+		api := router.Group("/api", middlewares.TestSessionMiddleware(testUserID))
+		api.GET("/user", middlewares.TestTransactionlMiddleware(), GetUser(usecases))
+		api.GET("/twitter-users", SearchTwitterUsers(usecases))
 	} else {
 		router.GET("/oauth/tw/signin", gin.WrapH(twitter.LoginHandler(oauth1Config, nil)))
 		router.GET("/oauth/tw/callback", middlewares.TransactionlMiddleware(db), ProcessTwitterCallback(conf, oauth1Config, usecases))
 
-		router.GET("/api/user", middlewares.TransactionlMiddleware(db), GetUser(usecases))
+		api := router.Group("/api", middlewares.SessionMiddleware())
+		api.GET("/user", middlewares.TransactionlMiddleware(db), GetUser(usecases))
+		api.GET("/twitter-users", SearchTwitterUsers(usecases))
 	}
 }
