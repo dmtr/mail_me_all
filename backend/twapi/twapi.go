@@ -112,7 +112,7 @@ func (t Twitter) SearchUsers(accessToken, accessSecret, twitterID, query string)
 		return make([]UserInfo, 0, 0), err
 	}
 
-	res := make([]UserInfo, len(users), len(users))
+	res := make([]UserInfo, 0, len(users))
 	for _, user := range users {
 		u := UserInfo{
 			TwitterID:     user.IDStr,
