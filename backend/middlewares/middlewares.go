@@ -32,7 +32,7 @@ func SessionMiddleware() gin.HandlerFunc {
 		if uid != "" {
 			c.Set("UserID", uid)
 		} else {
-			c.JSON(http.StatusUnauthorized, gin.H{"code": errors.AuthRequired})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"code": errors.AuthRequired})
 		}
 	}
 }
