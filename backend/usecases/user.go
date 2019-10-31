@@ -99,7 +99,7 @@ func (u UserUseCase) SignInWithTwitter(ctx context.Context, twitterID, name, ema
 
 }
 
-func (u UserUseCase) SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]models.TwitterUser, error) {
+func (u UserUseCase) SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]models.TwitterUserSearchResult, error) {
 	twitterUser, err := u.UserDatastore.GetTwitterUser(ctx, userID)
 
 	if err != nil {
@@ -119,10 +119,11 @@ func (u UserUseCase) SearchTwitterUsers(ctx context.Context, userID uuid.UUID, q
 		return nil, err
 	}
 
-	users := make([]models.TwitterUser, 0, len(res.Users))
+	users := make([]models.TwitterUserSearchResult, 0, len(res.Users))
 	for _, user := range res.Users {
-		u := models.TwitterUser{
+		u := models.TwitterUserSearchResult{
 			TwitterID:     user.TwitterId,
+			Name:          user.Name,
 			ScreenName:    user.ScreenName,
 			ProfileIMGURL: user.ProfileImageUrl,
 		}

@@ -37,11 +37,23 @@ func (u User) String() string {
 	return fmt.Sprintf("User: Name %s, ID %s", u.Name, u.ID)
 }
 
+// TwitterUser - represents twitter account
+type TwitterUserSearchResult struct {
+	Name          string
+	TwitterID     string
+	ProfileIMGURL string
+	ScreenName    string
+}
+
+func (t TwitterUserSearchResult) String() string {
+	return fmt.Sprintf("TwitterUserSearchResult: TwitterID %s, Name %s", t.TwitterID, t.Name)
+}
+
 // UserUseCase - represents user use cases
 type UserUseCase interface {
 	SignInWithTwitter(ctx context.Context, twitterID, name, email, screenName, accessToken, tokenSecret string) (User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
-	SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]TwitterUser, error)
+	SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]TwitterUserSearchResult, error)
 }
 
 // UserDatastore - represents all user related database methods

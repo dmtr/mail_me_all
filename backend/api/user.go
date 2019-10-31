@@ -28,6 +28,7 @@ type appUser struct {
 
 type twitterUser struct {
 	ID            string `json:"id"`
+	Name          string `json:"name"`
 	ScreenName    string `json:"screen_name"`
 	ProfileIMGURL string `json:"profile_image_url"`
 }
@@ -41,9 +42,10 @@ func adaptUser(user models.User, signedIn bool) appUser {
 
 }
 
-func adaptTwitterUser(user models.TwitterUser) twitterUser {
+func adaptTwitterUserSearchResult(user models.TwitterUserSearchResult) twitterUser {
 	return twitterUser{
 		ID:            user.TwitterID,
+		Name:          user.Name,
 		ScreenName:    user.ScreenName,
 		ProfileIMGURL: user.ProfileIMGURL,
 	}
@@ -209,7 +211,7 @@ func SearchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
 
 		res := make([]twitterUser, 0, len(users))
 		for _, user := range users {
-			res = append(res, adaptTwitterUser(user))
+			res = append(res, adaptTwitterUserSearchResult(user))
 		}
 
 		c.JSON(http.StatusOK, gin.H{"users": res})
