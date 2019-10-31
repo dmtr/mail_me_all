@@ -70,7 +70,8 @@ func testSearchTwitterUsersOk(t *testing.T, router *gin.Engine, datastoreMock *m
 	assert.NoError(t, err)
 	fmt.Printf("res %v", r)
 	assert.Equal(t, 2, len(r.Users))
-
+	assert.Equal(t, res.Users[0].TwitterId, r.Users[0].ID)
+	assert.Equal(t, res.Users[1].TwitterId, r.Users[1].ID)
 }
 
 func testSearchTwitterUsersBadRequest(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
