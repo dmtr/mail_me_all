@@ -14,7 +14,7 @@
         </a>
       </v-list-item-content>
       <v-list-item-action>
-        <v-btn icon @click="removeUser">
+        <v-btn icon v-on:click="$emit('removeUser', item)">
           <v-icon color="grey lighten-1">mdi-account-remove</v-icon>
         </v-btn>
       </v-list-item-action>
@@ -27,17 +27,6 @@ export default {
   name: "TwUserList",
   props: {
     userList: Array
-  },
-  methods: {
-    removeUser(e) {
-      console.debug(e);
-    }
-  },
-  computed: {
-    getTwitterUrl: function() {
-      console.log(this);
-      return;
-    }
   }
 };
 </script>

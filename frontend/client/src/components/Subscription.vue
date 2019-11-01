@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-text-field :label="getSubscriptionTitle"></v-text-field>
-    <TwUserList v-bind:userList="selectedUsers" />
+    <TwUserList v-bind:userList="selectedUsers" v-on:removeUser="removeUser" :key="componentKey" />
     <v-autocomplete
       v-model="selected"
       :loading="loading"
@@ -53,7 +53,8 @@ export default {
     selected: null,
     twitterUsers: [],
     query: null,
-    selectedUsers: []
+    selectedUsers: [],
+    componentKey: 0
   }),
   watch: {
     search(val) {
@@ -90,12 +91,16 @@ export default {
         .head()
         .value();
 
-      if (user) {
+      if (user && -1 === _.findIndex(this.selectedUsers, ["id", user.id])) {
         this.selectedUsers.push(user);
         this.$nextTick(() => {
           this.selected = null;
         });
       }
+    },
+    removeUser: function(user) {
+      _.remove(this.selectedUsers, e => e.id === user.id);
+      this.componentKey += 1;
     }
   }
 };
