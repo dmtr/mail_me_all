@@ -1,6 +1,8 @@
 <template>
   <div>
     <v-text-field :label="getSubscriptionTitle"></v-text-field>
+    <v-text-field label="E-mail" v-model="email" :rules="emailRules"></v-text-field>
+    <v-select :items="days" label="Subscription delivery day"></v-select>
     <TwUserList v-bind:userList="selectedUsers" v-on:removeUser="removeUser" />
     <v-autocomplete
       v-model="selected"
@@ -53,7 +55,27 @@ export default {
     selected: null,
     twitterUsers: [],
     query: null,
-    selectedUsers: []
+    selectedUsers: [],
+    days: [
+      "Monday",
+      "Tuedasy",
+      "Wensday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    email: "",
+    emailRules: [
+      value => {
+        if (value.length > 0) {
+          const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+          return re.test(value.toLowerCase()) || "Invalid e-mail.";
+        } else {
+          return "";
+        }
+      }
+    ]
   }),
   watch: {
     search(val) {
