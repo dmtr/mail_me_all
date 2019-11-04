@@ -33,11 +33,7 @@
         </v-list>
         <v-dialog v-model="dialog" max-width="500px">
           <v-card class="pa-md-4 mx-md-auto">
-            <Subscription v-bind:subscription="null" />
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text color="primary" @click="dialog = false">Cancel</v-btn>
-            </v-card-actions>
+            <Subscription v-on:cancelSubscriptionEdit="cancelSubscriptionEdit" />
           </v-card>
         </v-dialog>
       </v-card>
@@ -54,6 +50,11 @@ export default {
   props: { subscriptionsList: Array },
   data: () => ({
     dialog: false
-  })
+  }),
+  methods: {
+    cancelSubscriptionEdit: function() {
+      this.dialog = false;
+    }
+  }
 };
 </script>

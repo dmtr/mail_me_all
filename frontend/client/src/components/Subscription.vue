@@ -1,9 +1,9 @@
 <template>
-  <div>
-    <v-text-field :label="getSubscriptionTitle"></v-text-field>
-    <v-text-field label="E-mail" v-model="email" :rules="emailRules"></v-text-field>
-    <v-select :items="days" label="Subscription delivery day"></v-select>
-    <TwUserList v-bind:userList="selectedUsers" v-on:removeUser="removeUser" />
+  <v-card flat>
+    <v-text-field v-model="subscription.title" :label="getSubscriptionTitle"></v-text-field>
+    <v-text-field v-model="subscription.email" :rules="emailRules" label="E-mail"></v-text-field>
+    <v-select :items="days" v-model="subscription.day" label="Subscription delivery day"></v-select>
+    <TwUserList v-bind:userList="subscription.userList" v-on:removeUser="removeUser" />
     <v-autocomplete
       v-model="selected"
       :loading="loading"
@@ -27,7 +27,12 @@
         </v-list-item-content>
       </template>
     </v-autocomplete>
-  </div>
+    <v-card-actions>
+      <v-spacer></v-spacer>
+      <v-btn text color="primary" @click="saveSubscription">Save</v-btn>
+      <v-btn text color="primary" v-on:click="$emit('cancelSubscriptionEdit')">Cancel</v-btn>
+    </v-card-actions>
+  </v-card>
 </template>
 
 <script>
@@ -41,11 +46,18 @@ export default {
     TwUserList
   },
   props: {
-    subscription: Object
+    subscription: {
+      type: Object,
+      default: function() {
+        return { id: null, title: "", email: "", day: null, userList: [] };
+      }
+    }
   },
   computed: {
     getSubscriptionTitle: function() {
-      return this.subscription ? this.subscription.title : "Subscription title";
+      return this.subscription.title
+        ? this.subscription.title
+        : "Subscription title";
     }
   },
   data: () => ({
@@ -55,7 +67,6 @@ export default {
     selected: null,
     twitterUsers: [],
     query: null,
-    selectedUsers: [],
     days: [
       "Monday",
       "Tuedasy",
@@ -112,15 +123,25 @@ export default {
         .head()
         .value();
 
-      if (user && -1 === _.findIndex(this.selectedUsers, ["id", user.id])) {
-        this.selectedUsers.push(user);
+      if (
+        user &&
+        -1 === _.findIndex(this.subscription.userList, ["id", user.id])
+      ) {
+        this.subscription.userList.push(user);
         this.$nextTick(() => {
           this.selected = null;
         });
       }
     },
     removeUser: function(user) {
-      this.selectedUsers = _.filter(this.selectedUsers, e => e.id !== user.id);
+      this.subscription.userList = _.filter(
+        this.subscription.userList,
+        e => e.id !== user.id
+      );
+    },
+    saveSubscription: function() {
+      console.debug(this.subscription);
+      this.$emit("cancelSubscriptionEdit");
     }
   }
 };
