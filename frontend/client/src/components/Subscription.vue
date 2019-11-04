@@ -1,6 +1,11 @@
 <template>
   <v-card flat>
-    <v-text-field v-model="subscription.title" :label="getSubscriptionTitle"></v-text-field>
+    <v-text-field
+      v-model="subscription.title"
+      :rules="titleRules"
+      :label="getSubscriptionTitle"
+      @input="up"
+    ></v-text-field>
     <v-text-field v-model="subscription.email" :rules="emailRules" label="E-mail"></v-text-field>
     <v-select :items="days" v-model="subscription.day" label="Subscription delivery day"></v-select>
     <TwUserList v-bind:userList="subscription.userList" v-on:removeUser="removeUser" />
@@ -27,6 +32,7 @@
         </v-list-item-content>
       </template>
     </v-autocomplete>
+    <v-alert dense border="right" type="warning" v-if="!valid">{{ validationErrors}}</v-alert>
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-btn text color="primary" @click="saveSubscription">Save</v-btn>
@@ -39,6 +45,39 @@
 import axios from "axios";
 import _ from "lodash";
 import TwUserList from "./TwUserList";
+
+const days = [
+  "Monday",
+  "Tuedasy",
+  "Wensday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday"
+];
+
+const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+const validateEmail = e => {
+  return re.test(e.toLowerCase());
+};
+
+const validateSubscription = s => {
+  var errors = [];
+  if (s.title.length === 0) {
+    errors.push({ field: "title", msg: "Empty title" });
+  }
+  if (!validateEmail(s.email)) {
+    errors.push({ field: "email", msg: "Invalid email" });
+  }
+  if (s.userList.length === 0) {
+    errors.push({ field: "userList", msg: "Empty user list" });
+  }
+  if (_.indexOf(days, s.day) === -1) {
+    errors.push({ field: "day", msg: "Invalid day" });
+  }
+  return errors;
+};
 
 export default {
   name: "Subscription",
@@ -58,35 +97,46 @@ export default {
       return this.subscription.title
         ? this.subscription.title
         : "Subscription title";
+    },
+    valid: {
+      get: function() {
+        return this.validationErrors.length > 0 ? false : true;
+      },
+      set: function(errors) {
+        this.validationErrors = _.chain(errors)
+          .map("msg")
+          .join(", ")
+          .value();
+      }
     }
   },
   data: () => ({
-    dialog: false,
     loading: false,
     search: null,
     selected: null,
     twitterUsers: [],
     query: null,
-    days: [
-      "Monday",
-      "Tuedasy",
-      "Wensday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-      "Sunday"
-    ],
+    days: days,
     email: "",
     emailRules: [
       value => {
         if (value.length > 0) {
-          const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-          return re.test(value.toLowerCase()) || "Invalid e-mail.";
+          return validateEmail(value) || "Invalid e-mail.";
         } else {
           return "";
         }
       }
-    ]
+    ],
+    titleRules: [
+      value => {
+        if (value.length > 0) {
+          return true;
+        } else {
+          return "Invalid title";
+        }
+      }
+    ],
+    validationErrors: []
   }),
   watch: {
     search(val) {
@@ -140,8 +190,13 @@ export default {
       );
     },
     saveSubscription: function() {
-      console.debug(this.subscription);
-      this.$emit("cancelSubscriptionEdit");
+      this.valid = validateSubscription(this.subscription);
+      if (this.valid) {
+        this.$emit("cancelSubscriptionEdit");
+      }
+    },
+    up: function() {
+      this.valid = validateSubscription(this.subscription);
     }
   }
 };
