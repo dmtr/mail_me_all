@@ -1,7 +1,7 @@
 <template>
   <div>
     <v-text-field :label="getSubscriptionTitle"></v-text-field>
-    <TwUserList v-bind:userList="selectedUsers" v-on:removeUser="removeUser" :key="componentKey" />
+    <TwUserList v-bind:userList="selectedUsers" v-on:removeUser="removeUser" />
     <v-autocomplete
       v-model="selected"
       :loading="loading"
@@ -53,8 +53,7 @@ export default {
     selected: null,
     twitterUsers: [],
     query: null,
-    selectedUsers: [],
-    componentKey: 0
+    selectedUsers: []
   }),
   watch: {
     search(val) {
@@ -99,8 +98,7 @@ export default {
       }
     },
     removeUser: function(user) {
-      _.remove(this.selectedUsers, e => e.id === user.id);
-      this.componentKey += 1;
+      this.selectedUsers = _.filter(this.selectedUsers, e => e.id !== user.id);
     }
   }
 };
