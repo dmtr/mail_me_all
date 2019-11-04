@@ -2,22 +2,7 @@ import axios from "axios";
 
 const state = {
   user: null,
-  subscriptionsList: [
-    {
-      id: 1,
-      title: "foo",
-      day: "monday",
-      email: "foo@bar.com",
-      userList: [{ id: "1", name: "john" }]
-    },
-    {
-      id: 2,
-      title: "bar",
-      day: "sunday",
-      email: "foo@bar.com",
-      userList: [{ id: "2", name: "snow" }]
-    }
-  ]
+  subscriptionsList: []
 };
 
 const getters = {
