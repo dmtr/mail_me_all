@@ -1,4 +1,5 @@
 import axios from "axios";
+import _ from "lodash";
 
 const state = {
   user: null,
@@ -27,12 +28,32 @@ const actions = {
           console.log(error.message);
         }
       });
+  },
+
+  createSubscription({ commit, state }, subscription) {
+    const res = axios
+      .post(`api/user/${state.user.id}/subscriptions`)
+      .then(function(response) {
+        commit("addSubscription", response.data);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   }
 };
 
 const mutations = {
   setUser(state, user) {
     state.user = user;
+  },
+
+  addSubscription(state, subscription) {
+    if (
+      subscription &&
+      -1 === _.indexOf(state.subscriptions, ["id", subscription.id])
+    ) {
+      state.subscriptions.push(subscription);
+    }
   }
 };
 

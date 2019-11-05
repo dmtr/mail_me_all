@@ -39,6 +39,7 @@
 <script>
 import axios from "axios";
 import _ from "lodash";
+import { mapActions } from "vuex";
 import TwUserList from "./TwUserList";
 
 const days = [
@@ -147,6 +148,8 @@ export default {
     this.init();
   },
   methods: {
+    ...mapActions(["createSubscription"]),
+
     init() {
       const customizer = (objValue, srcValue) => {
         return _.isArray(srcValue) ? [...srcValue] : srcValue;
@@ -199,6 +202,7 @@ export default {
       console.log(s);
       this.valid = validateSubscription(s);
       if (this.valid) {
+        this.createSubscription(s);
         this.$emit("cancelSubscriptionEdit");
       }
     },
