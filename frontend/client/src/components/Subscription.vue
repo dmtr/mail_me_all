@@ -1,14 +1,9 @@
 <template>
   <v-card flat>
-    <v-text-field
-      v-model="subscription.title"
-      :rules="titleRules"
-      :label="getSubscriptionTitle"
-      @input="up"
-    ></v-text-field>
-    <v-text-field v-model="subscription.email" :rules="emailRules" label="E-mail"></v-text-field>
-    <v-select :items="days" v-model="subscription.day" label="Subscription delivery day"></v-select>
-    <TwUserList v-bind:userList="subscription.userList" v-on:removeUser="removeUser" />
+    <v-text-field v-model="title" :rules="titleRules" label="Subscription title"></v-text-field>
+    <v-text-field v-model="email" :rules="emailRules" label="E-mail"></v-text-field>
+    <v-select v-model="day" :items="days" label="Subscription delivery day"></v-select>
+    <TwUserList v-bind:userList="userList" v-on:removeUser="removeUser" />
     <v-autocomplete
       v-model="selected"
       :loading="loading"
@@ -36,7 +31,7 @@
     <v-card-actions>
       <v-spacer></v-spacer>
       <v-btn text color="primary" @click="saveSubscription">Save</v-btn>
-      <v-btn text color="primary" v-on:click="$emit('cancelSubscriptionEdit')">Cancel</v-btn>
+      <v-btn text color="primary" @click="cancelSubscriptionEdit">Cancel</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -93,11 +88,6 @@ export default {
     }
   },
   computed: {
-    getSubscriptionTitle: function() {
-      return this.subscription.title
-        ? this.subscription.title
-        : "Subscription title";
-    },
     valid: {
       get: function() {
         return this.validationErrors.length > 0 ? false : true;
@@ -116,7 +106,11 @@ export default {
     selected: null,
     twitterUsers: [],
     query: null,
+    id: null,
+    title: "",
+    day: null,
     days: days,
+    userList: [],
     email: "",
     emailRules: [
       value => {
@@ -149,7 +143,17 @@ export default {
   created: function() {
     this.debouncedQuery = _.debounce(this.querySelections, 200);
   },
+  beforeMount: function() {
+    this.init();
+  },
   methods: {
+    init() {
+      const customizer = (objValue, srcValue) => {
+        return _.isArray(srcValue) ? [...srcValue] : srcValue;
+      };
+      _.assignWith(this, this.subscription, customizer);
+    },
+
     querySelections() {
       if (!this.query) {
         return;
@@ -167,36 +171,42 @@ export default {
           this_.loading = false;
         });
     },
+
     inputHandler(e) {
       const user = _.chain(this.twitterUsers)
         .filter({ id: e })
         .head()
         .value();
 
-      if (
-        user &&
-        -1 === _.findIndex(this.subscription.userList, ["id", user.id])
-      ) {
-        this.subscription.userList.push(user);
+      if (user && -1 === _.findIndex(this.userList, ["id", user.id])) {
+        this.userList.push(user);
         this.$nextTick(() => {
           this.selected = null;
         });
       }
     },
+
     removeUser: function(user) {
-      this.subscription.userList = _.filter(
-        this.subscription.userList,
-        e => e.id !== user.id
-      );
+      this.userList = _.filter(this.userList, e => e.id !== user.id);
     },
+
+    getSubscriptionDetails: function({ id, title, email, day, userList }) {
+      return { id, title, email, day, userList };
+    },
+
     saveSubscription: function() {
-      this.valid = validateSubscription(this.subscription);
+      var s = this.getSubscriptionDetails(this);
+      console.log(s);
+      this.valid = validateSubscription(s);
       if (this.valid) {
         this.$emit("cancelSubscriptionEdit");
       }
     },
-    up: function() {
-      this.valid = validateSubscription(this.subscription);
+
+    cancelSubscriptionEdit: function() {
+      this.init();
+      this.valid = [];
+      this.$emit("cancelSubscriptionEdit");
     }
   }
 };
