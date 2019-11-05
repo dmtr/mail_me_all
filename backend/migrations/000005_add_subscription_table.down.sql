@@ -1,0 +1,7 @@
+BEGIN;
+
+DROP TABLE IF EXISTS subscription;
+
+DROP TYPE IF EXISTS weekday;
+
+COMMIT;
