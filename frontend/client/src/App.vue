@@ -19,7 +19,7 @@
     <v-content>
       <div v-if="isUserLoaded">
         <div v-if="isUserSignedIn">
-          <SubscriptionsList v-bind:subscriptionsList="subscriptionsList" />
+          <SubscriptionsList v-bind:subscriptions="subscriptions" />
         </div>
         <div v-else>
           <Welcome />
@@ -41,7 +41,7 @@ import SubscriptionsList from "./components/SubscriptionsList";
 export default {
   name: "App",
   computed: {
-    ...mapGetters(["isUserSignedIn", "isUserLoaded", "subscriptionsList"])
+    ...mapGetters(["isUserSignedIn", "isUserLoaded", "subscriptions"])
   },
   components: {
     Welcome,

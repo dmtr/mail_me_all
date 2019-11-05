@@ -12,7 +12,7 @@
         </v-toolbar>
         <v-list>
           <v-list-item
-            v-for="subscription in subscriptionsList"
+            v-for="subscription in subscriptions"
             :key="subscription.id"
             :subscription="subscription"
           >
@@ -47,7 +47,7 @@ import Subscription from "./Subscription";
 export default {
   name: "SubscriptionsList",
   components: { Subscription },
-  props: { subscriptionsList: Array },
+  props: { subscriptions: Array },
   data: () => ({
     dialog: false
   }),

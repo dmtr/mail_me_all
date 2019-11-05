@@ -2,13 +2,13 @@ import axios from "axios";
 
 const state = {
   user: null,
-  subscriptionsList: []
+  subscriptions: []
 };
 
 const getters = {
   isUserLoaded: state => (state.user ? true : false),
   isUserSignedIn: state => state.user && state.user.signedIn,
-  subscriptionsList: state => state.subscriptionsList
+  subscriptions: state => state.subscriptions
 };
 
 const actions = {
