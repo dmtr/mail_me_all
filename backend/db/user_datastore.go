@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	UniqueViolationErr pq.ErrorCode = "23505"
+	uniqueViolationErr pq.ErrorCode = "23505"
 )
 
 type queryFunc func(tx *sqlx.Tx) (models.Model, error)
@@ -33,6 +33,10 @@ func (e *DbError) Error() string {
 
 func (e *DbError) HasNoRows() bool {
 	return e.Err == sql.ErrNoRows
+}
+
+func (e *DbError) IsUniqueViolationError() bool {
+	return e.PqError.Code == uniqueViolationErr
 }
 
 func getPqError(err error) *pq.Error {
@@ -58,6 +62,32 @@ func rollbackOnError(tx *sqlx.Tx, err error) {
 		log.Info("Rollback")
 		tx.Rollback()
 	}
+}
+
+type subscriptionUser struct {
+	ID            uint   `db:"id"`
+	Name          string `db:"name"`
+	TwitterID     string `db:"twitter_id"`
+	ProfileIMGURL string `db:"profile_image_url"`
+	ScreenName    string `db:"screen_name"`
+}
+
+func (s *subscriptionUser) insertSubscriptionUser(tx *sqlx.Tx) error {
+	res, err := tx.NamedQuery("INSERT INTO subscription_user (twitter_id, name, profile_image_url, screen_name) VALUES (:twitter_id, :name, :profile_image_url, :screen_name) RETURNING id", *s)
+	if err != nil {
+		return err
+	}
+
+	var id uint
+	for res.Next() {
+		err = res.Scan(&id)
+		if err != nil {
+			log.Errorf("Scan error: %s", err)
+			return err
+		}
+	}
+	s.ID = id
+	return err
 }
 
 type UserDatastore struct {
@@ -253,5 +283,82 @@ func (d *UserDatastore) GetTwitterUser(ctx context.Context, userID uuid.UUID) (m
 	}
 
 	r, _ := res.(models.TwitterUser)
+	return r, err
+}
+
+func (d *UserDatastore) InsertSubscription(ctx context.Context, subscription models.Subscription) (models.Subscription, error) {
+	tx := getTransaction(ctx)
+	f := func(tx *sqlx.Tx) (models.Model, error) {
+		res, err := tx.NamedQuery("INSERT INTO subscription (user_id, title, email, day) VALUES (:user_id, :title, :email, :day) RETURNING id", subscription)
+		if err != nil {
+			log.Error(err.Error() + fmt.Sprintf(" inserting subscription: %s", subscription))
+			return models.Subscription{}, err
+		}
+
+		var id string
+		for res.Next() {
+			err = res.Scan(&id)
+			if err != nil {
+				log.Errorf("Scan error: %s", err)
+				return subscription, err
+			}
+		}
+		subscription.ID, err = uuid.Parse(id)
+		if err != nil {
+			log.Errorf("Can not parse subscription id %s", id)
+			return subscription, err
+		}
+
+		for _, u := range subscription.UserList {
+			su := &subscriptionUser{
+				TwitterID:     u.TwitterID,
+				Name:          u.Name,
+				ProfileIMGURL: u.ProfileIMGURL,
+				ScreenName:    u.ScreenName,
+			}
+
+			_, err = tx.Exec("SAVEPOINT save1")
+			if err != nil {
+				break
+			}
+
+			err = su.insertSubscriptionUser(tx)
+
+			if err != nil {
+				e := getDbError(err).(*DbError)
+				if e.IsUniqueViolationError() {
+					_, err = tx.Exec("ROLLBACK TO SAVEPOINT save1")
+					if err != nil {
+						break
+					}
+
+					err = nil
+					continue
+				} else {
+					break
+				}
+			}
+			m2m := struct {
+				Subscription_id uuid.UUID `db:"subscription_id"`
+				User_id         uint      `db:"user_id"`
+			}{
+				subscription.ID,
+				su.ID,
+			}
+			_, err = tx.NamedExec("INSERT INTO subscription_user_m2m (subscription_id, user_id) VALUES(:subscription_id, :user_id)", m2m)
+			if err != nil {
+				break
+			}
+		}
+
+		return subscription, err
+	}
+
+	res, err := d.execQuery(tx, f)
+	if err != nil {
+		return models.Subscription{}, err
+	}
+
+	r, _ := res.(models.Subscription)
 	return r, err
 }

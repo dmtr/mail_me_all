@@ -142,12 +142,55 @@ func testInsertAndUpdateTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore)
 	assert.Equal(t, twitterUser, fromDb)
 }
 
+func testInsertSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	user := models.User{
+		Name:  "Test",
+		Email: "another@mail.com",
+	}
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	u, err := d.InsertUser(ctx, user)
+	assert.NoError(t, err)
+
+	s := models.Subscription{
+		UserID: u.ID,
+		Title:  "test",
+		Email:  "test@mail.com",
+		Day:    "monday",
+		UserList: []models.TwitterUserSearchResult{
+			models.TwitterUserSearchResult{TwitterID: "121", Name: "foo", ProfileIMGURL: "some_url", ScreenName: "foo_name"},
+			models.TwitterUserSearchResult{TwitterID: "322", Name: "bar", ProfileIMGURL: "other_url", ScreenName: "bar_name"}},
+	}
+
+	res, err := d.InsertSubscription(ctx, s)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, res.ID)
+	assert.Equal(t, s.UserID, res.UserID)
+	assert.Equal(t, s.Title, res.Title)
+	assert.Equal(t, s.Email, res.Email)
+	assert.Equal(t, s.Day, res.Day)
+	assert.Equal(t, s.UserList, res.UserList)
+
+	_, err = d.InsertSubscription(ctx, s)
+	assert.NoError(t, err)
+
+	var count int
+	err = tx.Get(&count, "SELECT COUNT(*) FROM subscription_user")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, count)
+
+	err = tx.Get(&count, "SELECT COUNT(*) FROM subscription_user_m2m")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, count)
+
+}
+
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestInsertTwitterUser":          testInsertTwitterUser,
 		"TestInsertAndUpdateTwitterUser": testInsertAndUpdateTwitterUser,
 		"TestGetUser":                    testGetUser,
 		"TestUpdateUser":                 testUpdateUser,
+		"TestInsertSubscription":         testInsertSubscription,
 	}
 	runTests(tests, t)
 }

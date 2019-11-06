@@ -39,14 +39,28 @@ func (u User) String() string {
 
 // TwitterUser - represents twitter account
 type TwitterUserSearchResult struct {
-	Name          string
-	TwitterID     string
-	ProfileIMGURL string
-	ScreenName    string
+	Name          string `db:"name"`
+	TwitterID     string `db:"twitter_id"`
+	ProfileIMGURL string `db:"profile_image_url"`
+	ScreenName    string `db:"screen_name"`
 }
 
 func (t TwitterUserSearchResult) String() string {
 	return fmt.Sprintf("TwitterUserSearchResult: TwitterID %s, Name %s", t.TwitterID, t.Name)
+}
+
+// Subscription represents user subscription
+type Subscription struct {
+	ID       uuid.UUID `db:"id"`
+	UserID   uuid.UUID `db:"user_id"`
+	Title    string    `db:"title"`
+	Email    string    `db:"email"`
+	Day      string    `db:"day"`
+	UserList []TwitterUserSearchResult
+}
+
+func (s Subscription) String() string {
+	return fmt.Sprintf("Subscription: ID %s, UserID %s, Title %s", s.ID, s.UserID, s.Title)
 }
 
 // UserUseCase - represents user use cases
@@ -66,6 +80,8 @@ type UserDatastore interface {
 	UpdateTwitterUser(ctx context.Context, twitterUser TwitterUser) (TwitterUser, error)
 	GetTwitterUserByID(ctx context.Context, twitterUserID string) (TwitterUser, error)
 	GetTwitterUser(ctx context.Context, userID uuid.UUID) (TwitterUser, error)
+
+	InsertSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
 }
 
 // UseCases - represents all use cases
