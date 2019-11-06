@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE TABLE subscription_user(
     id SERIAL PRIMARY KEY,
-    twitter_id VARCHAR NOT NULL,
+    twitter_id VARCHAR NOT NULL UNIQUE,
     name VARCHAR NOT NULL,
     profile_image_url VARCHAR NOT NULL,
     screen_name VARCHAR NOT NULL,
