@@ -11,6 +11,7 @@ type subscription struct {
 	Title          string    `db:"title"`
 	Email          string    `db:"email"`
 	Day            string    `db:"day"`
+	UserID         uuid.UUID `db:"user_id"`
 }
 
 type subscriptionUser struct {
