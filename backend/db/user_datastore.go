@@ -276,15 +276,49 @@ func (d *UserDatastore) GetSubscriptions(ctx context.Context, userID uuid.UUID) 
 	}
 
 	rows, err := t.tx.Queryx(
-		"SELECT s.id AS subscription_id, s.title, s.email, s.day, u.id, u.name, u.twitter_id, u.screen_name, u.profile_image_url FROM subscription s INNER JOIN subscription_user_m2m m2m ON m2m.subscription_id = s.id INNER JOIN subscription_user u ON u.id = m2m.user_id WHERE s.user_id = :user_id", userID)
+		"SELECT s.id AS subscription_id, s.user_id, s.title, s.email, s.day, u.id, u.name, u.twitter_id, u.screen_name, u.profile_image_url "+
+			"FROM subscription s "+
+			"INNER JOIN subscription_user_m2m m2m ON m2m.subscription_id = s.id "+
+			"INNER JOIN subscription_user u ON u.id = m2m.user_id "+
+			"WHERE s.user_id = $1", userID)
+
 	if err != nil {
 		return []models.Subscription{}, t.getError()
 	}
 
+	processed := make(map[uuid.UUID]models.Subscription)
+
 	for rows.Next() {
 		var row subscriptionRow
 		err = rows.StructScan(&row)
+
+		s := models.Subscription{
+			ID:     row.SubscriptionID,
+			Title:  row.Title,
+			Email:  row.Email,
+			Day:    row.Day,
+			UserID: row.UserID,
+		}
+		u := models.TwitterUserSearchResult{
+			TwitterID:     row.TwitterID,
+			Name:          row.Name,
+			ProfileIMGURL: row.ProfileIMGURL,
+			ScreenName:    row.ScreenName,
+		}
+		processedSubscription, ok := processed[s.ID]
+		if ok {
+			processedSubscription.UserList = append(processedSubscription.UserList, u)
+			processed[s.ID] = processedSubscription
+		} else {
+			s.UserList = append(s.UserList, u)
+			processed[s.ID] = s
+		}
 	}
 
-	return []models.Subscription{}, t.getError()
+	res := make([]models.Subscription, 0, len(processed))
+	for _, s := range processed {
+		res = append(res, s)
+	}
+
+	return res, t.getError()
 }
