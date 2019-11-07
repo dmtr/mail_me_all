@@ -82,6 +82,7 @@ type UserDatastore interface {
 	GetTwitterUser(ctx context.Context, userID uuid.UUID) (TwitterUser, error)
 
 	InsertSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
+	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
 }
 
 // UseCases - represents all use cases
