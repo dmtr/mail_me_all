@@ -60,7 +60,7 @@ type Subscription struct {
 }
 
 func (s Subscription) String() string {
-	return fmt.Sprintf("Subscription: ID %s, UserID %s, Title %s", s.ID, s.UserID, s.Title)
+	return fmt.Sprintf("Subscription: ID %s, UserID %s, Title %s, users amount %d", s.ID, s.UserID, s.Title, len(s.UserList))
 }
 
 // UserUseCase - represents user use cases
