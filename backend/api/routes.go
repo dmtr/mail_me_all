@@ -57,5 +57,6 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 		api := router.Group("/api", middlewares.SessionMiddleware())
 		api.GET("/user", middlewares.TransactionlMiddleware(db), GetUser(usecases))
 		api.GET("/twitter-users", SearchTwitterUsers(usecases))
+		api.POST("/user/:id/subscriptions", middlewares.TransactionlMiddleware(db), addSubscription(usecases))
 	}
 }

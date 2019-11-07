@@ -12,6 +12,29 @@ type UserDatastore struct {
 	mock.Mock
 }
 
+// GetSubscriptions provides a mock function with given fields: ctx, userID
+func (_m *UserDatastore) GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]models.Subscription, error) {
+	ret := _m.Called(ctx, userID)
+
+	var r0 []models.Subscription
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []models.Subscription); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Subscription)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetTwitterUser provides a mock function with given fields: ctx, userID
 func (_m *UserDatastore) GetTwitterUser(ctx context.Context, userID uuid.UUID) (models.TwitterUser, error) {
 	ret := _m.Called(ctx, userID)
@@ -68,6 +91,27 @@ func (_m *UserDatastore) GetUser(ctx context.Context, userID uuid.UUID) (models.
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
 		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// InsertSubscription provides a mock function with given fields: ctx, subscription
+func (_m *UserDatastore) InsertSubscription(ctx context.Context, subscription models.Subscription) (models.Subscription, error) {
+	ret := _m.Called(ctx, subscription)
+
+	var r0 models.Subscription
+	if rf, ok := ret.Get(0).(func(context.Context, models.Subscription) models.Subscription); ok {
+		r0 = rf(ctx, subscription)
+	} else {
+		r0 = ret.Get(0).(models.Subscription)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, models.Subscription) error); ok {
+		r1 = rf(ctx, subscription)
 	} else {
 		r1 = ret.Error(1)
 	}

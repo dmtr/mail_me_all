@@ -132,3 +132,17 @@ func (u UserUseCase) SearchTwitterUsers(ctx context.Context, userID uuid.UUID, q
 
 	return users, err
 }
+
+func (u UserUseCase) AddSubscription(ctx context.Context, subscription models.Subscription) (models.Subscription, error) {
+	_, err := u.UserDatastore.GetUser(ctx, subscription.UserID)
+	if err != nil {
+		return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	s, err := u.UserDatastore.InsertSubscription(ctx, subscription)
+	if err != nil {
+		return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	return s, nil
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	oauth1Login "github.com/dghubble/gologin/v2/oauth1"
 	"github.com/dghubble/gologin/v2/twitter"
@@ -33,6 +34,14 @@ type twitterUser struct {
 	ProfileIMGURL string `json:"profile_image_url"`
 }
 
+type subscription struct {
+	ID       string        `json:"id"`
+	Title    string        `json:"title"`
+	Email    string        `json:"email"`
+	Day      string        `json:"day"`
+	UserList []twitterUser `json:"userList"`
+}
+
 func adaptUser(user models.User, signedIn bool) appUser {
 	return appUser{
 		ID:       user.ID.String(),
@@ -49,6 +58,20 @@ func adaptTwitterUserSearchResult(user models.TwitterUserSearchResult) twitterUs
 		ScreenName:    user.ScreenName,
 		ProfileIMGURL: user.ProfileIMGURL,
 	}
+}
+
+func adaptSubscription(s models.Subscription) subscription {
+	subcr := subscription{
+		ID:    s.ID.String(),
+		Title: s.Title,
+		Email: s.Email,
+		Day:   s.Day,
+	}
+
+	for _, u := range s.UserList {
+		subcr.UserList = append(subcr.UserList, adaptTwitterUserSearchResult(u))
+	}
+	return subcr
 }
 
 func getUserID(c *gin.Context) string {
@@ -215,5 +238,59 @@ func SearchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"users": res})
+	}
+}
+
+func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, err := uuid.Parse(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		var s subscription
+		if err := c.ShouldBindJSON(&s); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest})
+			return
+		}
+
+		newSubscription := models.Subscription{
+			UserID: userID,
+			Title:  s.Title,
+			Email:  s.Email,
+			Day:    strings.ToLower(s.Day),
+		}
+
+		for _, u := range s.UserList {
+			newSubscription.UserList = append(
+				newSubscription.UserList, models.TwitterUserSearchResult{
+					TwitterID:     u.ID,
+					Name:          u.Name,
+					ProfileIMGURL: u.ProfileIMGURL,
+					ScreenName:    u.ScreenName})
+		}
+
+		tx, err := getTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+			return
+		}
+
+		ctx := context.WithValue(context.Background(), "Tx", tx)
+		newSubscription, err = usecases.User.AddSubscription(ctx, newSubscription)
+
+		if err != nil {
+			log.Errorf("Can not add subscription %s, got error %s", s, err)
+			e, _ := err.(*useCases.UseCaseError)
+			status := http.StatusInternalServerError
+			if e.Code() == errors.NotFound {
+				status = http.StatusNotFound
+			}
+			c.JSON(status, gin.H{"code": e.Code()})
+			return
+		}
+
+		c.JSON(http.StatusOK, adaptSubscription(newSubscription))
 	}
 }
