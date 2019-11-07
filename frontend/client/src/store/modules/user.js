@@ -32,7 +32,7 @@ const actions = {
 
   createSubscription({ commit, state }, subscription) {
     const res = axios
-      .post(`api/user/${state.user.id}/subscriptions`)
+      .post(`api/user/${state.user.id}/subscriptions`, subscription)
       .then(function(response) {
         commit("addSubscription", response.data);
       })
