@@ -48,15 +48,16 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 
 	if testing { // unit tests
 		api := router.Group("/api", middlewares.TestSessionMiddleware(testUserID))
-		api.GET("/user", middlewares.TestTransactionlMiddleware(), GetUser(usecases))
-		api.GET("/twitter-users", SearchTwitterUsers(usecases))
+		api.GET("/user", middlewares.TestTransactionlMiddleware(), getUser(usecases))
+		api.GET("/twitter-users", searchTwitterUsers(usecases))
 	} else {
 		router.GET("/oauth/tw/signin", gin.WrapH(twitter.LoginHandler(oauth1Config, nil)))
-		router.GET("/oauth/tw/callback", middlewares.TransactionlMiddleware(db), ProcessTwitterCallback(conf, oauth1Config, usecases))
+		router.GET("/oauth/tw/callback", middlewares.TransactionlMiddleware(db), processTwitterCallback(conf, oauth1Config, usecases))
 
 		api := router.Group("/api", middlewares.SessionMiddleware())
-		api.GET("/user", middlewares.TransactionlMiddleware(db), GetUser(usecases))
-		api.GET("/twitter-users", SearchTwitterUsers(usecases))
+		api.GET("/user", middlewares.TransactionlMiddleware(db), getUser(usecases))
+		api.GET("/twitter-users", searchTwitterUsers(usecases))
 		api.POST("/user/:id/subscriptions", middlewares.TransactionlMiddleware(db), addSubscription(usecases))
+		api.GET("/user/:id/subscriptions", middlewares.TransactionlMiddleware(db), getSubscriptions(usecases))
 	}
 }

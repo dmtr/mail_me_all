@@ -69,6 +69,7 @@ type UserUseCase interface {
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 	SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]TwitterUserSearchResult, error)
 	AddSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
+	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
 }
 
 // UserDatastore - represents all user related database methods

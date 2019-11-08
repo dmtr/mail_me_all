@@ -146,3 +146,12 @@ func (u UserUseCase) AddSubscription(ctx context.Context, subscription models.Su
 
 	return s, nil
 }
+
+func (u UserUseCase) GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]models.Subscription, error) {
+	s, err := u.UserDatastore.GetSubscriptions(ctx, userID)
+	if err != nil {
+		return s, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	return s, nil
+}

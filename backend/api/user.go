@@ -116,7 +116,16 @@ func getTransaction(c *gin.Context) (*sqlx.Tx, error) {
 	return tx, nil
 }
 
-func ProcessTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, usecases *models.UseCases) gin.HandlerFunc {
+func getContextWithTransaction(c *gin.Context) (context.Context, error) {
+	tx, err := getTransaction(c)
+	if err != nil {
+		return nil, err
+	}
+
+	return context.WithValue(context.Background(), "Tx", tx), nil
+}
+
+func processTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		success := func(w http.ResponseWriter, req *http.Request) {
@@ -137,14 +146,11 @@ func ProcessTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, us
 				return
 			}
 
-			tx, err := getTransaction(c)
+			contxt, err := getContextWithTransaction(c)
 			if err != nil {
-				log.Errorf("Error, no transaction in context: %s", err.Error())
-				c.String(http.StatusInternalServerError, "Server Error")
+				c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
 				return
 			}
-
-			contxt := context.WithValue(context.Background(), "Tx", tx)
 
 			user, err := usecases.User.SignInWithTwitter(
 				contxt, twitterUser.IDStr, twitterUser.Name, twitterUser.Email, twitterUser.ScreenName, accessToken, accessSecret)
@@ -165,7 +171,7 @@ func ProcessTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, us
 }
 
 // GetUser - get user id from session cookie and check if user is valid
-func GetUser(usecases *models.UseCases) gin.HandlerFunc {
+func getUser(usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var u appUser
 		uid := getUserID(c)
@@ -174,17 +180,15 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		tx, err := getTransaction(c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
-			return
-		}
-
-		ctx := context.WithValue(context.Background(), "Tx", tx)
-
 		userID, err := uuid.Parse(uid)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		ctx, err := getContextWithTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
 			return
 		}
 
@@ -204,7 +208,7 @@ func GetUser(usecases *models.UseCases) gin.HandlerFunc {
 	}
 }
 
-func SearchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
+func searchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getUserID(c)
 		if uid == "" {
@@ -271,13 +275,12 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 					ScreenName:    u.ScreenName})
 		}
 
-		tx, err := getTransaction(c)
+		ctx, err := getContextWithTransaction(c)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
 			return
 		}
 
-		ctx := context.WithValue(context.Background(), "Tx", tx)
 		newSubscription, err = usecases.User.AddSubscription(ctx, newSubscription)
 
 		if err != nil {
@@ -292,5 +295,40 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, adaptSubscription(newSubscription))
+	}
+}
+
+func getSubscriptions(usecases *models.UseCases) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, err := uuid.Parse(c.Param("id"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		ctx, err := getContextWithTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+			return
+		}
+
+		subscriptions, err := usecases.User.GetSubscriptions(ctx, userID)
+		if err != nil {
+			log.Errorf("Can not find subscriptions for user %s, got error %s", userID, err)
+			e, _ := err.(*useCases.UseCaseError)
+			status := http.StatusInternalServerError
+			if e.Code() == errors.NotFound {
+				status = http.StatusNotFound
+			}
+			c.JSON(status, gin.H{"code": e.Code()})
+			return
+		}
+
+		res := make([]subscription, 0, len(subscriptions))
+		for _, s := range subscriptions {
+			res = append(res, adaptSubscription(s))
+		}
+
+		c.JSON(http.StatusOK, gin.H{"subscriptions": res})
 	}
 }
