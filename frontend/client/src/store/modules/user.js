@@ -1,5 +1,5 @@
-import axios from "axios";
 import _ from "lodash";
+import { getUser, getSubscriptions, createSubscription } from "../../api";
 
 const state = {
   user: null,
@@ -13,32 +13,26 @@ const getters = {
 };
 
 const actions = {
-  getUser({ commit, state }) {
-    const errors = [401, 404, 500];
-
-    const res = axios
-      .get("api/user")
-      .then(function(response) {
-        commit("setUser", response.data);
-      })
-      .catch(function(error) {
-        if (error.response && errors.indexOf(error.response.status) != -1) {
-          commit("setUser", { signedIn: false, name: "", id: "" });
-        } else {
-          console.log(error.message);
-        }
-      });
+  async getUser({ dispatch, commit, state }) {
+    const res = await getUser();
+    if (!res.error) {
+      commit("setUser", res.data);
+    }
   },
 
-  createSubscription({ commit, state }, subscription) {
-    const res = axios
-      .post(`api/user/${state.user.id}/subscriptions`, subscription)
-      .then(function(response) {
-        commit("addSubscription", response.data);
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
+  async createSubscription({ dispatch, commit, state }, subscription) {
+    const res = await createSubscription(state.user.id, subscription);
+    return true;
+  },
+
+  async getSubscriptions({ commit, state }) {
+    const res = await getSubscriptions(state.user.id);
+    if (!res.error) {
+      commit("setSubscriptions", res.data);
+      return true;
+    } else {
+      return false;
+    }
   }
 };
 
@@ -54,6 +48,10 @@ const mutations = {
     ) {
       state.subscriptions.push(subscription);
     }
+  },
+
+  setSubscriptions(state, subscriptions) {
+    state.subscriptions = subscriptions;
   }
 };
 

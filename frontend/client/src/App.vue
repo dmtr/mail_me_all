@@ -48,10 +48,14 @@ export default {
     SubscriptionsList
   },
   methods: {
-    ...mapActions(["getUser"])
+    ...mapActions(["getUser", "getSubscriptions"]),
+    async loadData() {
+      await this.getUser();
+      await this.getSubscriptions();
+    }
   },
   created: function() {
-    this.getUser();
+    this.loadData();
   },
   data: () => ({
     drawer: null

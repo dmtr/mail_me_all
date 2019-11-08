@@ -197,13 +197,16 @@ export default {
       return { id, title, email, day, userList };
     },
 
-    saveSubscription: function() {
+    saveSubscription: async function() {
       var s = this.getSubscriptionDetails(this);
       console.log(s);
       this.valid = validateSubscription(s);
       if (this.valid) {
-        this.createSubscription(s);
-        this.$emit("cancelSubscriptionEdit");
+        var res = await this.createSubscription(s);
+
+        if (res) {
+          this.$emit("cancelSubscriptionEdit");
+        }
       }
     },
 
