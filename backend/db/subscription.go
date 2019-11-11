@@ -39,3 +39,9 @@ func (s *subscriptionUser) insertSubscriptionUser(tx *sqlx.Tx) error {
 	s.ID = id
 	return err
 }
+
+func getSubscriptionUser(tx *sqlx.Tx, twitterID string) (subscriptionUser, error) {
+	var user subscriptionUser
+	err := tx.Get(&user, "SELECT id, name, twitter_id, profile_image_url, screen_name FROM subscription_user WHERE twitter_id=$1", twitterID)
+	return user, err
+}

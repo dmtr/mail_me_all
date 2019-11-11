@@ -180,11 +180,11 @@ func testInsertSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 
 	err = tx.Get(&count, "SELECT COUNT(*) FROM subscription_user_m2m")
 	assert.NoError(t, err)
-	assert.Equal(t, 2, count)
+	assert.Equal(t, 4, count)
 
 	fromDb, err := d.GetSubscriptions(ctx, u.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, 1, len(fromDb))
+	assert.Equal(t, 2, len(fromDb))
 	assert.Equal(t, res, fromDb[0])
 }
 

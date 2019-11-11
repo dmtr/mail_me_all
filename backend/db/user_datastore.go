@@ -240,8 +240,13 @@ func (d *UserDatastore) InsertSubscription(ctx context.Context, subscription mod
 					break
 				}
 
+				*su, err = getSubscriptionUser(tx, su.TwitterID)
+				if err != nil {
+					break
+				}
+
 				err = nil
-				continue
+
 			} else {
 				break
 			}
