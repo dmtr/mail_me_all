@@ -1,32 +1,34 @@
 <template>
   <v-card flat>
-    <v-text-field v-model="title" :rules="titleRules" label="Subscription title"></v-text-field>
-    <v-text-field v-model="email" :rules="emailRules" label="E-mail"></v-text-field>
-    <v-select v-model="day" :items="days" label="Subscription delivery day"></v-select>
-    <TwUserList v-bind:userList="userList" v-on:removeUser="removeUser" />
-    <v-autocomplete
-      v-model="selected"
-      :loading="loading"
-      :items="twitterUsers"
-      :search-input.sync="search"
-      item-text="name"
-      item-value="id"
-      label="User name or screen name"
-      hide-no-data
-      no-filter
-      auto-select-first
-      @input="inputHandler"
-    >
-      <template v-slot:item="data">
-        <v-list-item-avatar>
-          <img :src="data.item.profile_image_url" />
-        </v-list-item-avatar>
-        <v-list-item-content>
-          <v-list-item-title>{{data.item.name}}</v-list-item-title>
-          <v-list-item-title>{{data.item.screen_name}}</v-list-item-title>
-        </v-list-item-content>
-      </template>
-    </v-autocomplete>
+    <v-form ref="form">
+      <v-text-field v-model="title" :rules="titleRules" label="Subscription title"></v-text-field>
+      <v-text-field v-model="email" :rules="emailRules" label="E-mail"></v-text-field>
+      <v-select v-model="day" :items="days" label="Subscription delivery day"></v-select>
+      <TwUserList v-bind:userList="userList" v-on:removeUser="removeUser" />
+      <v-autocomplete
+        v-model="selected"
+        :loading="loading"
+        :items="twitterUsers"
+        :search-input.sync="search"
+        item-text="name"
+        item-value="id"
+        label="User name or screen name"
+        hide-no-data
+        no-filter
+        auto-select-first
+        @input="inputHandler"
+      >
+        <template v-slot:item="data">
+          <v-list-item-avatar>
+            <img :src="data.item.profile_image_url" />
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>{{data.item.name}}</v-list-item-title>
+            <v-list-item-title>{{data.item.screen_name}}</v-list-item-title>
+          </v-list-item-content>
+        </template>
+      </v-autocomplete>
+    </v-form>
     <v-alert dense border="right" type="warning" v-if="!valid">{{ validationErrors}}</v-alert>
     <v-card-actions>
       <v-spacer></v-spacer>
@@ -131,7 +133,7 @@ export default {
         }
       }
     ],
-    validationErrors: []
+    validationErrors: ""
   }),
   watch: {
     search(val) {
@@ -145,16 +147,20 @@ export default {
     this.debouncedQuery = _.debounce(this.querySelections, 200);
   },
   beforeMount: function() {
-    this.init();
+    this.init(false);
   },
   methods: {
     ...mapActions(["createSubscription", "getSubscriptions"]),
 
-    init() {
+    init(resetForm) {
       const customizer = (objValue, srcValue) => {
         return _.isArray(srcValue) ? [...srcValue] : srcValue;
       };
       _.assignWith(this, this.subscription, customizer);
+      this.validationErrors = "";
+      if (resetForm) {
+        this.$refs.form.resetValidation();
+      }
     },
 
     querySelections() {
@@ -205,6 +211,7 @@ export default {
         var res = await this.createSubscription(s);
         if (!res.error) {
           await this.getSubscriptions();
+          this.init(true);
           this.$emit("cancelSubscriptionEdit");
         } else {
           this.validationErrors = res.error.message;
@@ -213,8 +220,7 @@ export default {
     },
 
     cancelSubscriptionEdit: function() {
-      this.init();
-      this.valid = [];
+      this.init(true);
       this.$emit("cancelSubscriptionEdit");
     }
   }
