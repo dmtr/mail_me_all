@@ -280,13 +280,15 @@ func (d *UserDatastore) GetSubscriptions(ctx context.Context, userID uuid.UUID) 
 			"FROM subscription s "+
 			"INNER JOIN subscription_user_m2m m2m ON m2m.subscription_id = s.id "+
 			"INNER JOIN subscription_user u ON u.id = m2m.user_id "+
-			"WHERE s.user_id = $1", userID)
+			"WHERE s.user_id = $1 "+
+			"ORDER BY s.updated_at DESC", userID)
 
 	if err != nil {
 		return []models.Subscription{}, t.getError()
 	}
 
 	processed := make(map[uuid.UUID]models.Subscription)
+	processedKeys := make([]uuid.UUID, 0)
 
 	for rows.Next() {
 		var row subscriptionRow
@@ -312,12 +314,13 @@ func (d *UserDatastore) GetSubscriptions(ctx context.Context, userID uuid.UUID) 
 		} else {
 			s.UserList = append(s.UserList, u)
 			processed[s.ID] = s
+			processedKeys = append(processedKeys, s.ID)
 		}
 	}
 
 	res := make([]models.Subscription, 0, len(processed))
-	for _, s := range processed {
-		res = append(res, s)
+	for _, k := range processedKeys {
+		res = append(res, processed[k])
 	}
 
 	return res, t.getError()
