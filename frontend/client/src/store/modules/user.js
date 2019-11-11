@@ -18,21 +18,20 @@ const actions = {
     if (!res.error) {
       commit("setUser", res.data);
     }
+    return res;
   },
 
   async createSubscription({ dispatch, commit, state }, subscription) {
     const res = await createSubscription(state.user.id, subscription);
-    return true;
+    return res;
   },
 
   async getSubscriptions({ commit, state }) {
     const res = await getSubscriptions(state.user.id);
     if (!res.error) {
       commit("setSubscriptions", res.data);
-      return true;
-    } else {
-      return false;
     }
+    return res;
   }
 };
 

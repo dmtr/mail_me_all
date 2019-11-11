@@ -148,7 +148,7 @@ export default {
     this.init();
   },
   methods: {
-    ...mapActions(["createSubscription"]),
+    ...mapActions(["createSubscription", "getSubscriptions"]),
 
     init() {
       const customizer = (objValue, srcValue) => {
@@ -163,7 +163,7 @@ export default {
       }
       var this_ = this;
       this.loading = true;
-      const res = axios
+      axios
         .get("api/twitter-users?q=" + this_.query)
         .then(function(response) {
           this_.twitterUsers = response.data.users;
@@ -199,13 +199,15 @@ export default {
 
     saveSubscription: async function() {
       var s = this.getSubscriptionDetails(this);
-      console.log(s);
       this.valid = validateSubscription(s);
+
       if (this.valid) {
         var res = await this.createSubscription(s);
-
-        if (res) {
+        if (!res.error) {
+          await this.getSubscriptions();
           this.$emit("cancelSubscriptionEdit");
+        } else {
+          this.validationErrors = res.error.message;
         }
       }
     },

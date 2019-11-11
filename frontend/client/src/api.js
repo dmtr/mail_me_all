@@ -3,10 +3,20 @@ import _ from "lodash";
 
 const defaultErorr = "Server Error";
 
-const getError = e => ({
-  code: e.code,
-  message: _.get(e, "message", defaultErorr)
-});
+function getError(e) {
+  if (e.response) {
+    const data = e.response.data;
+    return {
+      code: data.code,
+      message: data.message
+    };
+  } else {
+    return {
+      code: null,
+      message: _.get(e, "message", defaultErorr)
+    };
+  }
+}
 
 class ApiResult {
   constructor(data, error) {
@@ -24,7 +34,7 @@ export async function getUser() {
     if (error.response && errors.indexOf(error.response.status) != -1) {
       return new ApiResult({ signedIn: false, name: "", id: "" }, null);
     } else {
-      console.log(error);
+      console.log(error.toJSON());
       return new ApiResult(null, error);
     }
   }
@@ -35,7 +45,7 @@ export async function getSubscriptions(userId) {
     const response = await axios.get(`api/user/${userId}/subscriptions`);
     return new ApiResult(response.data["subscriptions"], null);
   } catch (error) {
-    console.log(error);
+    console.log(error.toJSON());
     return new ApiResult(null, error);
   }
 }
@@ -49,7 +59,7 @@ export async function createSubscription(userId, subscription) {
     );
     return new ApiResult(response.data, null);
   } catch (error) {
-    console.log(error);
+    console.log(error.toJSON());
     return new ApiResult(null, error);
   }
 }
