@@ -36,10 +36,10 @@ type twitterUser struct {
 
 type subscription struct {
 	ID       string        `json:"id"`
-	Title    string        `json:"title"`
-	Email    string        `json:"email"`
-	Day      string        `json:"day"`
-	UserList []twitterUser `json:"userList"`
+	Title    string        `json:"title" binding:"required"`
+	Email    string        `json:"email" binding:"required"`
+	Day      string        `json:"day" binding:"required"`
+	UserList []twitterUser `json:"userList" binding:"required"`
 }
 
 func adaptUser(user models.User, signedIn bool) appUser {
@@ -255,7 +255,7 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 
 		var s subscription
 		if err := c.ShouldBindJSON(&s); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest})
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
 			return
 		}
 
