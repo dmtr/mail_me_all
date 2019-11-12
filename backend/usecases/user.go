@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/dmtr/mail_me_all/backend/errors"
 	"github.com/dmtr/mail_me_all/backend/models"
@@ -149,6 +150,20 @@ func (u UserUseCase) AddSubscription(ctx context.Context, subscription models.Su
 
 func (u UserUseCase) GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]models.Subscription, error) {
 	s, err := u.UserDatastore.GetSubscriptions(ctx, userID)
+	if err != nil {
+		return s, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	return s, nil
+}
+
+func (u UserUseCase) UpdateSubscription(ctx context.Context, userID uuid.UUID, subscription models.Subscription) (models.Subscription, error) {
+	if userID != subscription.UserID {
+		err := fmt.Errorf("User %s can not edit subscription %s", userID, subscription)
+		return subscription, NewUseCaseError(err.Error(), errors.AuthRequired)
+	}
+
+	s, err := u.UserDatastore.UpdateSubscription(ctx, subscription)
 	if err != nil {
 		return s, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 	}
