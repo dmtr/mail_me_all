@@ -330,3 +330,88 @@ func (d *UserDatastore) GetSubscriptions(ctx context.Context, userID uuid.UUID) 
 
 	return res, t.getError()
 }
+
+func (d *UserDatastore) GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (models.Subscription, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	var subscription models.Subscription
+
+	err = t.tx.Get(&subscription, "SELECT id, user_id, title, email, day FROM subscription WHERE id=$1", subscriptionID)
+
+	if err != nil {
+		return subscription, t.getError()
+	}
+
+	rows, err := t.tx.Queryx("SELECT u.id, u.name, u.twitter_id, u.profile_image_url, u.screen_name FROM subscription_user u "+
+		"INNER JOIN subscription_user_m2m m ON u.id = m.user_id "+
+		"WHERE m.subscription_id=$1", subscriptionID)
+
+	if err != nil {
+		return subscription, t.getError()
+	}
+
+	for rows.Next() {
+		var row subscriptionUser
+		err = rows.StructScan(&row)
+
+		u := models.TwitterUserSearchResult{
+			TwitterID:     row.TwitterID,
+			Name:          row.Name,
+			ProfileIMGURL: row.ProfileIMGURL,
+			ScreenName:    row.ScreenName,
+		}
+
+		subscription.UserList = append(subscription.UserList, u)
+	}
+
+	return subscription, t.getError()
+}
+
+func (d *UserDatastore) UpdateSubscription(ctx context.Context, subscription models.Subscription) (models.Subscription, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	fromDb, err := d.GetSubscription(ctx, subscription.ID)
+	if err != nil {
+		return subscription, err
+	}
+
+	if subscription.Equal(fromDb) {
+		return subscription, t.getError()
+	}
+
+	tx := t.tx
+	_, err = tx.NamedExec("UPDATE subscription SET title=:title, email=:email, day=:day WHERE id = :id", subscription)
+	if err != nil {
+		return subscription, t.getError()
+	}
+
+	toInsert := subscription.UserList.Diff(fromDb.UserList)
+	err = insertUserList(tx, toInsert, subscription.ID)
+	if err != nil {
+		return subscription, t.getError()
+	}
+
+	toRemove := fromDb.UserList.Diff(subscription.UserList)
+	for _, u := range toRemove {
+		su, err := getSubscriptionUser(tx, u.TwitterID)
+		if err != nil {
+			return subscription, t.getError()
+		}
+
+		_, err = tx.Exec("DELETE FROM subscription_user_m2m WHERE subscription_id=$1 AND user_id=$2", subscription.ID, su.ID)
+		if err != nil {
+			return subscription, t.getError()
+		}
+	}
+	return subscription, t.getError()
+}

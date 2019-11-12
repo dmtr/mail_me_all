@@ -170,6 +170,10 @@ func testInsertSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	assert.Equal(t, s.Day, res.Day)
 	assert.Equal(t, s.UserList, res.UserList)
 
+	saved, err := d.GetSubscription(ctx, res.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, res, saved)
+
 	_, err = d.InsertSubscription(ctx, s)
 	assert.NoError(t, err)
 
