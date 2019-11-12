@@ -51,7 +51,9 @@ export default {
     ...mapActions(["getUser", "getSubscriptions"]),
     async loadData() {
       await this.getUser();
-      await this.getSubscriptions();
+      if (this.isUserSignedIn) {
+        await this.getSubscriptions();
+      }
     }
   },
   created: function() {
