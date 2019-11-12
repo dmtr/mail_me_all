@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/google/uuid"
 )
@@ -49,6 +50,30 @@ func (t TwitterUserSearchResult) String() string {
 	return fmt.Sprintf("TwitterUserSearchResult: TwitterID %s, Name %s", t.TwitterID, t.Name)
 }
 
+func (t TwitterUserSearchResult) Equal(another TwitterUserSearchResult) bool {
+	return t.TwitterID == another.TwitterID
+}
+
+type UserList []TwitterUserSearchResult
+
+func (u UserList) Len() int           { return len(u) }
+func (u UserList) Swap(i, j int)      { u[i], u[j] = u[j], u[i] }
+func (u UserList) Less(i, j int) bool { return u[i].TwitterID < u[j].TwitterID }
+
+func (u UserList) Diff(another UserList) UserList {
+	sorted := append(another[:0:0], another...)
+	sort.Sort(sorted)
+	res := make(UserList, 0, len(sorted))
+	length := len(sorted)
+	for _, user := range u {
+		i := sort.Search(length, func(i int) bool { return sorted[i].TwitterID >= user.TwitterID })
+		if i == length || !user.Equal(sorted[i]) {
+			res = append(res, user)
+		}
+	}
+	return res
+}
+
 // Subscription represents user subscription
 type Subscription struct {
 	ID       uuid.UUID `db:"id"`
@@ -56,11 +81,44 @@ type Subscription struct {
 	Title    string    `db:"title"`
 	Email    string    `db:"email"`
 	Day      string    `db:"day"`
-	UserList []TwitterUserSearchResult
+	UserList UserList
 }
 
 func (s Subscription) String() string {
 	return fmt.Sprintf("Subscription: ID %s, UserID %s, Title %s, users amount %d", s.ID, s.UserID, s.Title, len(s.UserList))
+}
+
+func (s Subscription) Equal(another Subscription) bool {
+	if s.ID != another.ID {
+		return false
+	}
+
+	if s.UserID != another.UserID {
+		return false
+	}
+
+	if s.Title != another.Title {
+		return false
+	}
+
+	if s.Email != another.Email {
+		return false
+	}
+
+	if s.Day != another.Day {
+		return false
+	}
+
+	if len(s.UserList) != len(another.UserList) {
+		return false
+	}
+
+	diff := s.UserList.Diff(another.UserList)
+	if len(diff) != 0 {
+		return false
+	}
+
+	return true
 }
 
 // UserUseCase - represents user use cases
@@ -70,6 +128,7 @@ type UserUseCase interface {
 	SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]TwitterUserSearchResult, error)
 	AddSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
 	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
+	UpdateSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
 }
 
 // UserDatastore - represents all user related database methods
@@ -85,6 +144,8 @@ type UserDatastore interface {
 
 	InsertSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
 	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
+	UpdateSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
+	GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (Subscription, error)
 }
 
 // UseCases - represents all use cases
