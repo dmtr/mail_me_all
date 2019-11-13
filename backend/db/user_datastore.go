@@ -46,7 +46,9 @@ func (t *currentTx) commitOrRollback() {
 			t.tx.Rollback()
 		} else {
 			e := t.tx.Commit()
-			log.Errorf("Error committing transaction %s", e)
+			if e != nil {
+				log.Errorf("Error committing transaction %s", e)
+			}
 		}
 	}
 }
