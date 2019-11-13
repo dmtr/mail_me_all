@@ -247,7 +247,8 @@ func searchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
 
 func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, err := uuid.Parse(c.Param("id"))
+		uid := getUserID(c)
+		userID, err := uuid.Parse(uid)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
 			return
@@ -300,7 +301,8 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 
 func getSubscriptions(usecases *models.UseCases) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, err := uuid.Parse(c.Param("id"))
+		uid := getUserID(c)
+		userID, err := uuid.Parse(uid)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
 			return
