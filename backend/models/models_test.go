@@ -4,6 +4,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,4 +46,74 @@ func TestUserListDiff(t *testing.T) {
 	assert.Equal(t, "789", list[0].TwitterID)
 	assert.Equal(t, "123", list[1].TwitterID)
 	assert.Equal(t, "456", list[2].TwitterID)
+}
+
+func TestUserSubscriptionEqual(t *testing.T) {
+	list1 := UserList{
+		TwitterUserSearchResult{TwitterID: "789"}, TwitterUserSearchResult{TwitterID: "123"}}
+
+	id := uuid.New()
+	userID := uuid.New()
+	title := "test"
+	day := "monday"
+	email := "test@example.com"
+
+	s1 := Subscription{
+		ID:       id,
+		UserID:   userID,
+		Title:    title,
+		Email:    email,
+		Day:      day,
+		UserList: list1,
+	}
+
+	s2 := Subscription{
+		ID:       id,
+		UserID:   userID,
+		Title:    title,
+		Email:    email,
+		Day:      day,
+		UserList: list1,
+	}
+
+	assert.True(t, s1.Equal(s1))
+	assert.True(t, s1.Equal(s2))
+	assert.True(t, s2.Equal(s1))
+
+	s3 := Subscription{
+		ID:       id,
+		UserID:   userID,
+		Title:    title,
+		Email:    email,
+		Day:      "wensday",
+		UserList: list1,
+	}
+
+	assert.False(t, s1.Equal(s3))
+	assert.False(t, s2.Equal(s3))
+	assert.False(t, s3.Equal(s1))
+
+	s4 := Subscription{
+		ID:       id,
+		UserID:   userID,
+		Title:    title,
+		Email:    email,
+		Day:      day,
+		UserList: list1[1:],
+	}
+
+	assert.False(t, s1.Equal(s4))
+	assert.False(t, s4.Equal(s1))
+
+	s5 := Subscription{
+		ID:       id,
+		UserID:   userID,
+		Title:    title,
+		Email:    email,
+		Day:      day,
+		UserList: append(list1, TwitterUserSearchResult{TwitterID: "1234"}),
+	}
+
+	assert.False(t, s1.Equal(s5))
+	assert.False(t, s5.Equal(s1))
 }
