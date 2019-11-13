@@ -6,10 +6,17 @@ const defaultErorr = "Server Error";
 function getError(e) {
   if (e.response) {
     const data = e.response.data;
-    return {
-      code: data.code,
-      message: data.message
-    };
+    if (data && typeof data === "object") {
+      return {
+        code: data.code,
+        message: data.message
+      };
+    } else {
+      return {
+        code: e.status,
+        message: e.message
+      };
+    }
   } else {
     return {
       code: null,
@@ -53,6 +60,16 @@ export async function getSubscriptions() {
 export async function createSubscription(subscription) {
   try {
     const response = await axios.post("api/subscriptions", subscription);
+    return new ApiResult(response.data, null);
+  } catch (error) {
+    console.log(error.toJSON());
+    return new ApiResult(null, error);
+  }
+}
+
+export async function updateSubscription(subscription) {
+  try {
+    const response = await axios.put("api/subscriptions", subscription);
     return new ApiResult(response.data, null);
   } catch (error) {
     console.log(error.toJSON());
