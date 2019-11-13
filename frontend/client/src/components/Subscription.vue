@@ -1,10 +1,10 @@
 <template>
   <v-card flat>
     <v-form ref="form">
-      <v-text-field v-model="title" :rules="titleRules" label="Subscription title"></v-text-field>
-      <v-text-field v-model="email" :rules="emailRules" label="E-mail"></v-text-field>
-      <v-select v-model="day" :items="days" label="Subscription delivery day"></v-select>
-      <TwUserList v-bind:userList="userList" v-on:removeUser="removeUser" />
+      <v-text-field v-model="subscription.title" :rules="titleRules" label="Subscription title"></v-text-field>
+      <v-text-field v-model="subscription.email" :rules="emailRules" label="E-mail"></v-text-field>
+      <v-select v-model="subscription.day" :items="days" label="Subscription delivery day"></v-select>
+      <TwUserList v-bind:userList="subscription.userList" v-on:removeUser="removeUser" />
       <v-autocomplete
         v-model="selected"
         :loading="loading"
@@ -32,7 +32,7 @@
     <v-alert dense border="right" type="warning" v-if="!valid">{{ validationErrors}}</v-alert>
     <v-card-actions>
       <v-spacer></v-spacer>
-      <v-btn text color="primary" @click="saveSubscription">Save</v-btn>
+      <v-btn text color="primary" @click="saveSubscription(subscription)">Save</v-btn>
       <v-btn text color="primary" @click="cancelSubscriptionEdit">Cancel</v-btn>
     </v-card-actions>
   </v-card>
@@ -45,13 +45,13 @@ import { mapActions } from "vuex";
 import TwUserList from "./TwUserList";
 
 const days = [
-  "Monday",
-  "Tuedasy",
-  "Wensday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday"
+  "monday",
+  "tuedasy",
+  "wensday",
+  "thursday",
+  "friday",
+  "saturday",
+  "dunday"
 ];
 
 const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
@@ -109,12 +109,7 @@ export default {
     selected: null,
     twitterUsers: [],
     query: null,
-    id: null,
-    title: "",
-    day: null,
     days: days,
-    userList: [],
-    email: "",
     emailRules: [
       value => {
         if (value.length > 0) {
@@ -146,21 +141,16 @@ export default {
   created: function() {
     this.debouncedQuery = _.debounce(this.querySelections, 200);
   },
-  beforeMount: function() {
-    this.init(false);
-  },
   methods: {
-    ...mapActions(["createSubscription", "getSubscriptions"]),
+    ...mapActions([
+      "createSubscription",
+      "getSubscriptions",
+      "updateSubscription"
+    ]),
 
-    init(resetForm) {
-      const customizer = (objValue, srcValue) => {
-        return _.isArray(srcValue) ? [...srcValue] : srcValue;
-      };
-      _.assignWith(this, this.subscription, customizer);
+    init() {
       this.validationErrors = "";
-      if (resetForm) {
-        this.$refs.form.resetValidation();
-      }
+      this.$refs.form.resetValidation();
     },
 
     querySelections() {
@@ -187,8 +177,11 @@ export default {
         .head()
         .value();
 
-      if (user && -1 === _.findIndex(this.userList, ["id", user.id])) {
-        this.userList.push(user);
+      if (
+        user &&
+        -1 === _.findIndex(this.subscription.userList, ["id", user.id])
+      ) {
+        this.subscription.userList.push(user);
         this.$nextTick(() => {
           this.selected = null;
         });
@@ -196,22 +189,25 @@ export default {
     },
 
     removeUser: function(user) {
-      this.userList = _.filter(this.userList, e => e.id !== user.id);
+      this.subscription.userList = _.filter(
+        this.subscription.userList,
+        e => e.id !== user.id
+      );
     },
 
-    getSubscriptionDetails: function({ id, title, email, day, userList }) {
-      return { id, title, email, day, userList };
-    },
-
-    saveSubscription: async function() {
-      var s = this.getSubscriptionDetails(this);
+    saveSubscription: async function(s) {
+      console.log(s);
       this.valid = validateSubscription(s);
 
       if (this.valid) {
-        var res = await this.createSubscription(s);
+        let func = this.createSubscription;
+        if (s.id) {
+          func = this.updateSubscription;
+        }
+        let res = await func(s);
         if (!res.error) {
           await this.getSubscriptions();
-          this.init(true);
+          this.init();
           this.$emit("cancelSubscriptionEdit");
         } else {
           this.validationErrors = res.error.message;
@@ -220,7 +216,7 @@ export default {
     },
 
     cancelSubscriptionEdit: function() {
-      this.init(true);
+      this.init();
       this.$emit("cancelSubscriptionEdit");
     }
   }

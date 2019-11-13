@@ -1,5 +1,10 @@
 import _ from "lodash";
-import { getUser, getSubscriptions, createSubscription } from "../../api";
+import {
+  getUser,
+  getSubscriptions,
+  createSubscription,
+  updateSubscription
+} from "../../api";
 
 const state = {
   user: null,
@@ -23,6 +28,11 @@ const actions = {
 
   async createSubscription({ commit }, subscription) {
     const res = await createSubscription(subscription);
+    return res;
+  },
+
+  async updateSubscription({ commit }, subscription) {
+    const res = await updateSubscription(subscription);
     return res;
   },
 
