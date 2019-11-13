@@ -40,9 +40,9 @@ export async function getUser() {
   }
 }
 
-export async function getSubscriptions(userId) {
+export async function getSubscriptions() {
   try {
-    const response = await axios.get(`api/user/${userId}/subscriptions`);
+    const response = await axios.get("api/subscriptions");
     return new ApiResult(response.data["subscriptions"], null);
   } catch (error) {
     console.log(error.toJSON());
@@ -50,13 +50,9 @@ export async function getSubscriptions(userId) {
   }
 }
 
-export async function createSubscription(userId, subscription) {
+export async function createSubscription(subscription) {
   try {
-    console.log(userId, subscription);
-    const response = await axios.post(
-      `api/user/${userId}/subscriptions`,
-      subscription
-    );
+    const response = await axios.post("api/subscriptions", subscription);
     return new ApiResult(response.data, null);
   } catch (error) {
     console.log(error.toJSON());

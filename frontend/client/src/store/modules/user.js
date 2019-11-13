@@ -13,7 +13,7 @@ const getters = {
 };
 
 const actions = {
-  async getUser({ dispatch, commit, state }) {
+  async getUser({ commit }) {
     const res = await getUser();
     if (!res.error) {
       commit("setUser", res.data);
@@ -21,13 +21,13 @@ const actions = {
     return res;
   },
 
-  async createSubscription({ dispatch, commit, state }, subscription) {
-    const res = await createSubscription(state.user.id, subscription);
+  async createSubscription({ commit }, subscription) {
+    const res = await createSubscription(subscription);
     return res;
   },
 
-  async getSubscriptions({ commit, state }) {
-    const res = await getSubscriptions(state.user.id);
+  async getSubscriptions({ commit }) {
+    const res = await getSubscriptions();
     if (!res.error) {
       commit("setSubscriptions", res.data);
     }
