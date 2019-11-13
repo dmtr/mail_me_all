@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -32,7 +31,6 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 	d := NewUserDatastore(db)
 
 	for name, fn := range tests {
-		fmt.Printf("Running test %s", name)
 		tx := db.MustBegin()
 		f := func(t *testing.T) {
 			fn(t, tx, d)
@@ -192,6 +190,55 @@ func testInsertSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	assert.Equal(t, res, fromDb[0])
 }
 
+func testUpdateSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	user := models.User{
+		Name:  "Test",
+		Email: "another@mail.com",
+	}
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	u, err := d.InsertUser(ctx, user)
+	assert.NoError(t, err)
+
+	s := models.Subscription{
+		UserID: u.ID,
+		Title:  "test",
+		Email:  "test@mail.com",
+		Day:    "monday",
+		UserList: []models.TwitterUserSearchResult{
+			models.TwitterUserSearchResult{TwitterID: "121", Name: "foo", ProfileIMGURL: "some_url", ScreenName: "foo_name"},
+			models.TwitterUserSearchResult{TwitterID: "322", Name: "bar", ProfileIMGURL: "other_url", ScreenName: "bar_name"}},
+	}
+
+	fromDb, err := d.InsertSubscription(ctx, s)
+	assert.NoError(t, err)
+
+	s.ID = fromDb.ID
+	s.Title = "test2"
+	fromDb, err = d.UpdateSubscription(ctx, s)
+	assert.NoError(t, err)
+	assert.True(t, s.Equal(fromDb))
+
+	s.UserList = s.UserList[1:]
+	fromDb, err = d.UpdateSubscription(ctx, s)
+	assert.NoError(t, err)
+	assert.True(t, s.Equal(fromDb))
+	assert.Equal(t, 1, len(fromDb.UserList))
+
+	var count int
+	err = tx.Get(&count, "SELECT COUNT(*) FROM subscription_user_m2m")
+	assert.NoError(t, err)
+	assert.Equal(t, 1, count)
+
+	err = tx.Get(&count, "SELECT COUNT(*) FROM subscription_user")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, count)
+
+	fromDb, err = d.GetSubscription(ctx, s.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, "322", fromDb.UserList[0].TwitterID)
+	assert.Equal(t, s, fromDb)
+}
+
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestInsertTwitterUser":          testInsertTwitterUser,
@@ -199,6 +246,7 @@ func TestUserDatastore(t *testing.T) {
 		"TestGetUser":                    testGetUser,
 		"TestUpdateUser":                 testUpdateUser,
 		"TestInsertSubscription":         testInsertSubscription,
+		"TestUpdatetSubscription":        testUpdateSubscription,
 	}
 	runTests(tests, t)
 }

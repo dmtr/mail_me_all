@@ -217,52 +217,7 @@ func (d *UserDatastore) InsertSubscription(ctx context.Context, subscription mod
 		return subscription, t.getError()
 	}
 
-	for _, u := range subscription.UserList {
-		su := &subscriptionUser{
-			TwitterID:     u.TwitterID,
-			Name:          u.Name,
-			ProfileIMGURL: u.ProfileIMGURL,
-			ScreenName:    u.ScreenName,
-		}
-
-		_, err = tx.Exec("SAVEPOINT save1")
-		if err != nil {
-			break
-		}
-
-		err = su.insertSubscriptionUser(tx)
-
-		if err != nil {
-			e := getDbError(err).(*DbError)
-			if e.IsUniqueViolationError() {
-				_, err = tx.Exec("ROLLBACK TO SAVEPOINT save1")
-				if err != nil {
-					break
-				}
-
-				*su, err = getSubscriptionUser(tx, su.TwitterID)
-				if err != nil {
-					break
-				}
-
-				err = nil
-
-			} else {
-				break
-			}
-		}
-		m2m := struct {
-			Subscription_id uuid.UUID `db:"subscription_id"`
-			User_id         uint      `db:"user_id"`
-		}{
-			subscription.ID,
-			su.ID,
-		}
-		_, err = tx.NamedExec("INSERT INTO subscription_user_m2m (subscription_id, user_id) VALUES(:subscription_id, :user_id)", m2m)
-		if err != nil {
-			break
-		}
-	}
+	err = insertUserList(tx, subscription.UserList, subscription.ID)
 
 	return subscription, t.getError()
 }
