@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -43,6 +42,10 @@ func performGetRequest(r http.Handler, path string, cookie *http.Cookie) *httpte
 	return performRequest(r, "GET", path, nil, false, cookie)
 }
 
+func performPutRequest(r http.Handler, path string, body io.Reader) *httptest.ResponseRecorder {
+	return performRequest(r, "PUT", path, body, true, nil)
+}
+
 func parseCookie(cookie string) *http.Cookie {
 	c := http.Cookie{}
 	s := strings.Split(cookie, ";")
@@ -69,7 +72,6 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 	router := GetRouter(&conf, nil, usecases)
 
 	for name, fn := range tests {
-		fmt.Printf("Running test %s", name)
 		f := func(t *testing.T) {
 			datastoreMock := new(mocks.UserDatastore)
 			userUseCase.UserDatastore = datastoreMock

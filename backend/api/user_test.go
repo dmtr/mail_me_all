@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -80,12 +81,45 @@ func testSearchTwitterUsersBadRequest(t *testing.T, router *gin.Engine, datastor
 
 }
 
+func testAddSubscriptionUserNotFound(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	e := &db.DbError{Err: sql.ErrNoRows}
+	datastoreMock.On("GetUser", mock.Anything, mock.Anything).Return(models.User{}, e)
+
+	req := map[string]interface{}{
+		"id": nil, "title": "abc", "email": "test@example.com", "day": "monday",
+		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
+	reqJson, _ := json.Marshal(req)
+
+	w := performPostRequest(router, "/api/subscriptions", bytes.NewBuffer(reqJson))
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	datastoreMock.AssertNumberOfCalls(t, "GetUser", 1)
+	datastoreMock.AssertNumberOfCalls(t, "InsertSubscription", 0)
+}
+
+func testUpdateSubscriptionNotFound(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	e := &db.DbError{Err: sql.ErrNoRows}
+	datastoreMock.On("UpdateSubscription", mock.Anything, mock.Anything).Return(models.Subscription{}, e)
+
+	req := map[string]interface{}{
+		"id": uuid.New().String(), "title": "abc", "email": "test@example.com", "day": "monday",
+		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
+	reqJson, _ := json.Marshal(req)
+
+	w := performPutRequest(router, "/api/subscriptions", bytes.NewBuffer(reqJson))
+	assert.Equal(t, http.StatusNotFound, w.Code)
+
+	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
+}
+
 func TestUserEndpoints(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestGetUserOk":                    testGetUserOk,
 		"TestGetUserNotFound":              testGetUserNotFound,
 		"TestSearchTwitterUsersOk":         testSearchTwitterUsersOk,
 		"TestSearchTwitterUsersBadRequest": testSearchTwitterUsersBadRequest,
+		"TestUpdateSubscriptionNotFound":   testUpdateSubscriptionNotFound,
+		"TestAddSubscriptionUserNotFound":  testAddSubscriptionUserNotFound,
 	}
 	runTests(tests, t)
 }

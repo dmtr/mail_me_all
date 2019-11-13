@@ -254,26 +254,10 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		var s subscription
-		if err := c.ShouldBindJSON(&s); err != nil {
+		newSubscription, err := getSubscription(c, userID)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
 			return
-		}
-
-		newSubscription := models.Subscription{
-			UserID: userID,
-			Title:  s.Title,
-			Email:  s.Email,
-			Day:    strings.ToLower(s.Day),
-		}
-
-		for _, u := range s.UserList {
-			newSubscription.UserList = append(
-				newSubscription.UserList, models.TwitterUserSearchResult{
-					TwitterID:     u.ID,
-					Name:          u.Name,
-					ProfileIMGURL: u.ProfileIMGURL,
-					ScreenName:    u.ScreenName})
 		}
 
 		ctx, err := getContextWithTransaction(c)
@@ -285,7 +269,7 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 		newSubscription, err = usecases.User.AddSubscription(ctx, newSubscription)
 
 		if err != nil {
-			log.Errorf("Can not add subscription %s, got error %s", s, err)
+			log.Errorf("Can not add subscription %s, got error %s", newSubscription, err)
 			e, _ := err.(*useCases.UseCaseError)
 			status := http.StatusInternalServerError
 			if e.Code() == errors.NotFound {
@@ -332,5 +316,66 @@ func getSubscriptions(usecases *models.UseCases) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"subscriptions": res})
+	}
+}
+
+func getSubscription(c *gin.Context, userID uuid.UUID) (models.Subscription, error) {
+	var s subscription
+	if err := c.ShouldBindJSON(&s); err != nil {
+		return models.Subscription{}, err
+	}
+
+	newSubscription := models.Subscription{
+		UserID: userID,
+		Title:  s.Title,
+		Email:  s.Email,
+		Day:    strings.ToLower(s.Day),
+	}
+
+	for _, u := range s.UserList {
+		newSubscription.UserList = append(
+			newSubscription.UserList, models.TwitterUserSearchResult{
+				TwitterID:     u.ID,
+				Name:          u.Name,
+				ProfileIMGURL: u.ProfileIMGURL,
+				ScreenName:    u.ScreenName})
+	}
+	return newSubscription, nil
+}
+
+func updateSubscription(usecases *models.UseCases) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid := getUserID(c)
+		userID, err := uuid.Parse(uid)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		ctx, err := getContextWithTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+			return
+		}
+
+		updatedSubscription, err := getSubscription(c, userID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		updatedSubscription, err = usecases.User.UpdateSubscription(ctx, userID, updatedSubscription)
+		if err != nil {
+			log.Errorf("Can not add subscription %s, got error %s", updatedSubscription, err)
+			e, _ := err.(*useCases.UseCaseError)
+			status := http.StatusInternalServerError
+			if e.Code() == errors.NotFound {
+				status = http.StatusNotFound
+			}
+			c.JSON(status, gin.H{"code": e.Code()})
+			return
+		}
+
+		c.JSON(http.StatusOK, adaptSubscription(updatedSubscription))
 	}
 }
