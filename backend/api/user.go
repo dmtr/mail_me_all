@@ -325,7 +325,9 @@ func getSubscription(c *gin.Context, userID uuid.UUID) (models.Subscription, err
 		return models.Subscription{}, err
 	}
 
+	id, _ := uuid.Parse(s.ID)
 	newSubscription := models.Subscription{
+		ID:     id,
 		UserID: userID,
 		Title:  s.Title,
 		Email:  s.Email,
