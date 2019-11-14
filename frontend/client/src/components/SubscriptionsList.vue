@@ -25,7 +25,7 @@
               </v-btn>
             </v-list-item-action>
             <v-list-item-action>
-              <v-btn icon>
+              <v-btn @click.stop="openRemoveDialog(subscription)" icon>
                 <v-icon color="grey lighten-1">mdi-delete</v-icon>
               </v-btn>
             </v-list-item-action>
@@ -41,6 +41,16 @@
             <Subscription v-on:cancelSubscriptionEdit="cancelSubscriptionEdit" v-else></Subscription>
           </v-card>
         </v-dialog>
+        <v-dialog v-model="removeDialog" max-width="500px">
+          <v-card class="pa-md-4 mx-md-auto">
+            <v-card-actions>
+              Remove subscription?
+              <v-spacer></v-spacer>
+              <v-btn text color="primary" @click="removeSubscription()">Remove</v-btn>
+              <v-btn text color="primary" @click="removeDialog=false">Cancel</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-card>
     </v-col>
   </v-row>
@@ -48,6 +58,7 @@
 
 <script>
 import _ from "lodash";
+import { mapActions } from "vuex";
 import Subscription from "./Subscription";
 
 export default {
@@ -56,9 +67,12 @@ export default {
   props: { subscriptions: Array },
   data: () => ({
     dialog: false,
-    currentSubscription: null
+    currentSubscription: null,
+    removeDialog: false,
+    toRemove: null
   }),
   methods: {
+    ...mapActions(["deleteSubscription"]),
     cancelSubscriptionEdit: function() {
       this.dialog = false;
       this.currentSubscription = null;
@@ -71,8 +85,20 @@ export default {
     },
 
     newSubscription: function() {
-      this.dialog = true;
       this.currentSubscription = null;
+      this.dialog = true;
+    },
+
+    openRemoveDialog: function(subscription) {
+      this.toRemove = subscription;
+      this.removeDialog = true;
+    },
+
+    removeSubscription: async function() {
+      if (this.toRemove) {
+        await this.deleteSubscription(this.toRemove);
+      }
+      this.removeDialog = false;
     }
   }
 };

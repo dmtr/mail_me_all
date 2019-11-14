@@ -3,7 +3,8 @@ import {
   getUser,
   getSubscriptions,
   createSubscription,
-  updateSubscription
+  updateSubscription,
+  deleteSubscription
 } from "../../api";
 
 const state = {
@@ -36,6 +37,13 @@ const actions = {
     return res;
   },
 
+  async deleteSubscription({ commit }, subscription) {
+    const res = await deleteSubscription(subscription.id);
+    if (!res.error) {
+      commit("removeSubscription", subscription);
+    }
+  },
+
   async getSubscriptions({ commit }) {
     const res = await getSubscriptions();
     if (!res.error) {
@@ -61,6 +69,13 @@ const mutations = {
 
   setSubscriptions(state, subscriptions) {
     state.subscriptions = subscriptions;
+  },
+
+  removeSubscription(state, subscription) {
+    state.subscriptions = _.filter(
+      state.subscriptions,
+      s => s.id != subscription.id
+    );
   }
 };
 

@@ -76,3 +76,13 @@ export async function updateSubscription(subscription) {
     return new ApiResult(null, error);
   }
 }
+
+export async function deleteSubscription(subscriptionId) {
+  try {
+    const response = await axios.delete(`api/subscriptions/${subscriptionId}`);
+    return new ApiResult(response.data, null);
+  } catch (error) {
+    console.log(error.toJSON());
+    return new ApiResult(null, error);
+  }
+}
