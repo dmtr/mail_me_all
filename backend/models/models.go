@@ -129,6 +129,7 @@ type UserUseCase interface {
 	AddSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
 	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
 	UpdateSubscription(ctx context.Context, userID uuid.UUID, subscription Subscription) (Subscription, error)
+	DeleteSubscription(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
 }
 
 // UserDatastore - represents all user related database methods
@@ -146,6 +147,7 @@ type UserDatastore interface {
 	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
 	UpdateSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
 	GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (Subscription, error)
+	DeleteSubscription(ctx context.Context, subscription Subscription) error
 }
 
 // UseCases - represents all use cases

@@ -170,3 +170,22 @@ func (u UserUseCase) UpdateSubscription(ctx context.Context, userID uuid.UUID, s
 
 	return s, nil
 }
+
+func (u UserUseCase) DeleteSubscription(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error {
+	subscription, err := u.UserDatastore.GetSubscription(ctx, subscriptionID)
+	if err != nil {
+		return NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	if userID != subscription.UserID {
+		err := fmt.Errorf("User %s can not edit subscription %s", userID, subscription)
+		return NewUseCaseError(err.Error(), errors.AuthRequired)
+	}
+
+	err = u.UserDatastore.DeleteSubscription(ctx, subscription)
+	if err != nil {
+		return NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	return nil
+}

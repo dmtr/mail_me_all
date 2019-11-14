@@ -40,6 +40,14 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 	}
 }
 
+func insertUser(d *UserDatastore, ctx context.Context) (models.User, error) {
+	user := models.User{
+		Name:  "Test",
+		Email: "foo@bar.com",
+	}
+	return d.InsertUser(ctx, user)
+}
+
 func testGetUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	uid := uuid.New()
 	ctx := context.WithValue(context.Background(), "Tx", tx)
@@ -85,12 +93,8 @@ func testUpdateUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 }
 
 func testInsertTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
-	user := models.User{
-		Name:  "Test",
-		Email: "some@body.com",
-	}
 	ctx := context.WithValue(context.Background(), "Tx", tx)
-	u, err := d.InsertUser(ctx, user)
+	u, err := insertUser(d, ctx)
 	assert.NoError(t, err)
 
 	twitterUser := models.TwitterUser{
@@ -110,12 +114,8 @@ func testInsertTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 }
 
 func testInsertAndUpdateTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
-	user := models.User{
-		Name:  "Test",
-		Email: "another@mail.com",
-	}
 	ctx := context.WithValue(context.Background(), "Tx", tx)
-	u, err := d.InsertUser(ctx, user)
+	u, err := insertUser(d, ctx)
 	assert.NoError(t, err)
 
 	twitterUser := models.TwitterUser{
@@ -141,12 +141,8 @@ func testInsertAndUpdateTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore)
 }
 
 func testInsertSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
-	user := models.User{
-		Name:  "Test",
-		Email: "another@mail.com",
-	}
 	ctx := context.WithValue(context.Background(), "Tx", tx)
-	u, err := d.InsertUser(ctx, user)
+	u, err := insertUser(d, ctx)
 	assert.NoError(t, err)
 
 	s := models.Subscription{
@@ -191,12 +187,8 @@ func testInsertSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 }
 
 func testUpdateSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
-	user := models.User{
-		Name:  "Test",
-		Email: "another@mail.com",
-	}
 	ctx := context.WithValue(context.Background(), "Tx", tx)
-	u, err := d.InsertUser(ctx, user)
+	u, err := insertUser(d, ctx)
 	assert.NoError(t, err)
 
 	s := models.Subscription{
@@ -239,6 +231,37 @@ func testUpdateSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	assert.Equal(t, s, fromDb)
 }
 
+func testDeleteSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	u, err := insertUser(d, ctx)
+	assert.NoError(t, err)
+
+	s := models.Subscription{
+		UserID: u.ID,
+		Title:  "test",
+		Email:  "test@mail.com",
+		Day:    "monday",
+		UserList: []models.TwitterUserSearchResult{
+			models.TwitterUserSearchResult{TwitterID: "121", Name: "foo", ProfileIMGURL: "some_url", ScreenName: "foo_name"},
+			models.TwitterUserSearchResult{TwitterID: "322", Name: "bar", ProfileIMGURL: "other_url", ScreenName: "bar_name"}},
+	}
+
+	fromDb, err := d.InsertSubscription(ctx, s)
+	assert.NoError(t, err)
+
+	err = d.DeleteSubscription(ctx, fromDb)
+	assert.NoError(t, err)
+
+	var count int
+	err = tx.Get(&count, "SELECT COUNT(*) FROM subscription_user_m2m")
+	assert.NoError(t, err)
+	assert.Equal(t, 0, count)
+
+	err = tx.Get(&count, "SELECT COUNT(*) FROM subscription_user")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, count)
+}
+
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestInsertTwitterUser":          testInsertTwitterUser,
@@ -247,6 +270,7 @@ func TestUserDatastore(t *testing.T) {
 		"TestUpdateUser":                 testUpdateUser,
 		"TestInsertSubscription":         testInsertSubscription,
 		"TestUpdatetSubscription":        testUpdateSubscription,
+		"TestDeleteSubscription":         testDeleteSubscription,
 	}
 	runTests(tests, t)
 }

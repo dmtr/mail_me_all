@@ -381,3 +381,40 @@ func updateSubscription(usecases *models.UseCases) gin.HandlerFunc {
 		c.JSON(http.StatusOK, adaptSubscription(updatedSubscription))
 	}
 }
+
+func deleteSubscription(usecases *models.UseCases) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid := getUserID(c)
+		userID, err := uuid.Parse(uid)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		subscriptionID, err := uuid.Parse(c.Param("id"))
+
+		ctx, err := getContextWithTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+			return
+		}
+
+		err = usecases.User.DeleteSubscription(ctx, userID, subscriptionID)
+		if err != nil {
+			log.Errorf("Can not delete subscription %s, got error %s", subscriptionID, err)
+			e, _ := err.(*useCases.UseCaseError)
+			status := http.StatusInternalServerError
+
+			if e.Code() == errors.NotFound {
+				status = http.StatusNotFound
+			} else if e.Code() == errors.AuthRequired {
+				status = http.StatusUnauthorized
+			}
+
+			c.JSON(status, gin.H{"code": e.Code()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{})
+	}
+}

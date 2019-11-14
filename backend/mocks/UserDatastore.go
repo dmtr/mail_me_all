@@ -12,6 +12,20 @@ type UserDatastore struct {
 	mock.Mock
 }
 
+// DeleteSubscription provides a mock function with given fields: ctx, subscription
+func (_m *UserDatastore) DeleteSubscription(ctx context.Context, subscription models.Subscription) error {
+	ret := _m.Called(ctx, subscription)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, models.Subscription) error); ok {
+		r0 = rf(ctx, subscription)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetSubscription provides a mock function with given fields: ctx, subscriptionID
 func (_m *UserDatastore) GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (models.Subscription, error) {
 	ret := _m.Called(ctx, subscriptionID)

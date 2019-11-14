@@ -372,3 +372,15 @@ func (d *UserDatastore) UpdateSubscription(ctx context.Context, subscription mod
 	}
 	return subscription, t.getError()
 }
+
+func (d *UserDatastore) DeleteSubscription(ctx context.Context, subscription models.Subscription) error {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	_, err = t.tx.NamedExec("DELETE FROM subscription WHERE id = :id", subscription)
+	return t.getError()
+}

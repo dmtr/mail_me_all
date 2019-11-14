@@ -46,6 +46,10 @@ func performPutRequest(r http.Handler, path string, body io.Reader) *httptest.Re
 	return performRequest(r, "PUT", path, body, true, nil)
 }
 
+func performDeleteRequest(r http.Handler, path string, body io.Reader) *httptest.ResponseRecorder {
+	return performRequest(r, "DELETE", path, body, true, nil)
+}
+
 func parseCookie(cookie string) *http.Cookie {
 	c := http.Cookie{}
 	s := strings.Split(cookie, ";")

@@ -112,6 +112,24 @@ func testUpdateSubscriptionNotFound(t *testing.T, router *gin.Engine, datastoreM
 	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
 }
 
+func testDeleteSubscriptionNotAuth(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	id, _ := uuid.Parse("1c61dcb2-8bdb-4e3a-8415-d73b1d6133d0")
+	s := models.Subscription{
+		ID:     uuid.New(),
+		UserID: id,
+		Title:  "test",
+	}
+	datastoreMock.On("GetSubscription", mock.Anything, mock.Anything).Return(s, nil)
+
+	req := map[string]interface{}{}
+	reqJson, _ := json.Marshal(req)
+
+	w := performDeleteRequest(router, fmt.Sprintf("/api/subscriptions/%s", s.ID.String()), bytes.NewBuffer(reqJson))
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+
+	datastoreMock.AssertNumberOfCalls(t, "GetSubscription", 1)
+}
+
 func TestUserEndpoints(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestGetUserOk":                    testGetUserOk,
@@ -120,6 +138,7 @@ func TestUserEndpoints(t *testing.T) {
 		"TestSearchTwitterUsersBadRequest": testSearchTwitterUsersBadRequest,
 		"TestUpdateSubscriptionNotFound":   testUpdateSubscriptionNotFound,
 		"TestAddSubscriptionUserNotFound":  testAddSubscriptionUserNotFound,
+		"TestDeleteSubscriptionNotAuth":    testDeleteSubscriptionNotAuth,
 	}
 	runTests(tests, t)
 }
