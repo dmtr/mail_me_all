@@ -5,7 +5,6 @@ CREATE TYPE subscription_status AS ENUM ('PREPARING', 'READY', 'SENDING', 'SENT'
 CREATE TABLE subscription_state (
     id SERIAL PRIMARY KEY,
     status subscription_status NOT NULL,
-    last_tweet_id VARCHAR,
     subscription_id UUID NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -30,6 +29,15 @@ CREATE TABLE subscription_state_tweet_m2m (
     tweet_id INTEGER NOT NULL,
     CONSTRAINT subscription_state_tweet_m2m_subscription_state_id_fk FOREIGN KEY (subscription_state_id) REFERENCES subscription_state (id) ON DELETE CASCADE,
     CONSTRAINT subscription_state_tweet_m2m_tweet_id_fk FOREIGN KEY (tweet_id) REFERENCES tweet (id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE subscription_user_state (
+    subscription_id UUID NOT NULL,
+    user_id INTEGER NOT NULL,
+    last_tweet_id VARCHAR NOT NULL,
+    CONSTRAINT subscription_user_state_subscription_id_fk FOREIGN KEY (subscription_id) REFERENCES subscription (id) ON DELETE CASCADE,
+    CONSTRAINT subscription_user_state_user_id_fk FOREIGN KEY (user_id) REFERENCES subscription_user (id) ON DELETE CASCADE
 );
 
 COMMIT;
