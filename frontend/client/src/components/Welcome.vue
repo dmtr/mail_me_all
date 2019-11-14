@@ -2,7 +2,7 @@
   <v-container class="fill-height" fluid>
     <v-row align="center" justify="center">
       <v-col class="text-center">
-        <div>Updater provides possibility to get Twitter users updates via email.</div>
+        <div>Updater makes it possible to get tweets via email.</div>
       </v-col>
     </v-row>
     <v-row align="center" justify="center">
