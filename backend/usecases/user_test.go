@@ -83,7 +83,7 @@ func testSignUpWithTwitterOk(t *testing.T, usecases *models.UseCases, datastoreM
 	}
 	datastoreMock.On("InsertTwitterUser", mock.Anything, twitterUser).Return(twitterUser, nil)
 
-	u, err := usecases.User.SignInWithTwitter(context.Background(), twitterUserID, name, email, screenName, accessToken, tokenSecret)
+	u, err := usecases.SignInWithTwitter(context.Background(), twitterUserID, name, email, screenName, accessToken, tokenSecret)
 	assert.NoError(t, err)
 	assert.Equal(t, user, u)
 
@@ -141,7 +141,7 @@ func testSignInWithTwitterOk(t *testing.T, usecases *models.UseCases, datastoreM
 	}
 	datastoreMock.On("UpdateTwitterUser", mock.Anything, updatedTwitterUser).Return(updatedTwitterUser, nil)
 
-	u, err := usecases.User.SignInWithTwitter(context.Background(), twitterUserID, name, email, screenName, accessToken, tokenSecret)
+	u, err := usecases.SignInWithTwitter(context.Background(), twitterUserID, name, email, screenName, accessToken, tokenSecret)
 	assert.NoError(t, err)
 	assert.Equal(t, user, u)
 
