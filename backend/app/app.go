@@ -50,7 +50,7 @@ func getUseCases(db_ *sqlx.DB, client pb.TwProxyServiceClient) *models.UseCases 
 }
 
 // GetApp - returns app
-func GetApp(withAPI bool) *App {
+func GetApp(withAPI bool, opts ...bool) *App {
 	log.Infoln("Loading Config")
 	conf := config.GetConfig()
 	initLogger(conf.Loglevel)
@@ -64,6 +64,16 @@ func GetApp(withAPI bool) *App {
 		withDB = true
 		withRpcConn = true
 		withUseCases = true
+	} else {
+		for i, v := range opts {
+			if i == 0 {
+				withDB = v
+			} else if i == 1 {
+				withRpcConn = v
+			} else if i == 2 {
+				withUseCases = v
+			}
+		}
 	}
 
 	var db_ *sqlx.DB
