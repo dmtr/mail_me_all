@@ -150,12 +150,17 @@ type UserDatastore interface {
 	DeleteSubscription(ctx context.Context, subscription Subscription) error
 }
 
+type SystemUseCase interface {
+	InitSubscriptions() error
+}
+
 // UseCases - represents all use cases
 type UseCases struct {
 	UserUseCase
+	SystemUseCase
 }
 
 // NewUseCases - returns new UseCases struct
-func NewUseCases(user UserUseCase) *UseCases {
-	return &UseCases{user}
+func NewUseCases(user UserUseCase, system SystemUseCase) *UseCases {
+	return &UseCases{user, system}
 }

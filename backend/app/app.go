@@ -46,7 +46,8 @@ func initLogger(loglevel log.Level) {
 func getUseCases(db_ *sqlx.DB, client pb.TwProxyServiceClient) *models.UseCases {
 	userDatastore := db.NewUserDatastore(db_)
 	userUseCase := usecases.NewUserUseCase(userDatastore, client)
-	return models.NewUseCases(userUseCase)
+	systemUseCase := usecases.NewSystemUseCase(userDatastore, client)
+	return models.NewUseCases(userUseCase, systemUseCase)
 }
 
 // GetApp - returns app
