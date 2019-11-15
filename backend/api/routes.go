@@ -27,7 +27,7 @@ func getSessionStore(authKey string, encryptKey string) cookie.Store {
 }
 
 // GetRouter - returns router
-func GetRouter(conf *config.Config, db *sqlx.DB, usecases *models.UseCases) *gin.Engine {
+func GetRouter(conf *config.Config, db *sqlx.DB, usecases models.UserUseCase) *gin.Engine {
 	router := gin.Default()
 	sessionStore := getSessionStore(conf.AuthKey, conf.EncryptKey)
 	router.Use(sessions.Sessions("session", sessionStore))
@@ -36,7 +36,7 @@ func GetRouter(conf *config.Config, db *sqlx.DB, usecases *models.UseCases) *gin
 }
 
 //RegisterRoutes setups routes
-func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecases *models.UseCases, testing bool) {
+func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecases models.UserUseCase, testing bool) {
 	router.GET("/healthcheck", func(c *gin.Context) { c.String(http.StatusOK, "Ok") })
 
 	oauth1Config := &oauth1.Config{

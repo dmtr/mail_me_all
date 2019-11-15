@@ -9,7 +9,6 @@ import (
 
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/mocks"
-	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/dmtr/mail_me_all/backend/usecases"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
@@ -72,8 +71,7 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 	datastoreMock := new(mocks.UserDatastore)
 	clientMock := new(mocks.TwProxyServiceClient)
 	userUseCase := usecases.NewUserUseCase(datastoreMock, clientMock)
-	usecases := models.NewUseCases(userUseCase)
-	router := GetRouter(&conf, nil, usecases)
+	router := GetRouter(&conf, nil, userUseCase)
 
 	for name, fn := range tests {
 		f := func(t *testing.T) {

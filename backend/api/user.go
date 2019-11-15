@@ -125,7 +125,7 @@ func getContextWithTransaction(c *gin.Context) (context.Context, error) {
 	return context.WithValue(context.Background(), "Tx", tx), nil
 }
 
-func processTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, usecases *models.UseCases) gin.HandlerFunc {
+func processTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, usecases models.UserUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		success := func(w http.ResponseWriter, req *http.Request) {
@@ -152,7 +152,7 @@ func processTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, us
 				return
 			}
 
-			user, err := usecases.User.SignInWithTwitter(
+			user, err := usecases.SignInWithTwitter(
 				contxt, twitterUser.IDStr, twitterUser.Name, twitterUser.Email, twitterUser.ScreenName, accessToken, accessSecret)
 
 			if err != nil {
@@ -171,7 +171,7 @@ func processTwitterCallback(conf *config.Config, oauth1Config *oauth1.Config, us
 }
 
 // GetUser - get user id from session cookie and check if user is valid
-func getUser(usecases *models.UseCases) gin.HandlerFunc {
+func getUser(usecases models.UserUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var u appUser
 		uid := getUserID(c)
@@ -192,7 +192,7 @@ func getUser(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		user, err := usecases.User.GetUserByID(ctx, userID)
+		user, err := usecases.GetUserByID(ctx, userID)
 		if err != nil {
 			log.Errorf("Can not get user, got error %s", err)
 			e, _ := err.(*useCases.UseCaseError)
@@ -208,7 +208,7 @@ func getUser(usecases *models.UseCases) gin.HandlerFunc {
 	}
 }
 
-func searchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
+func searchTwitterUsers(usecases models.UserUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getUserID(c)
 		if uid == "" {
@@ -228,7 +228,7 @@ func searchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		users, err := usecases.User.SearchTwitterUsers(context.Background(), userID, query)
+		users, err := usecases.SearchTwitterUsers(context.Background(), userID, query)
 		if err != nil {
 			log.Errorf("Got error searching users %s", err)
 			e, _ := err.(*useCases.UseCaseError)
@@ -245,7 +245,7 @@ func searchTwitterUsers(usecases *models.UseCases) gin.HandlerFunc {
 	}
 }
 
-func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
+func addSubscription(usecases models.UserUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getUserID(c)
 		userID, err := uuid.Parse(uid)
@@ -266,7 +266,7 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		newSubscription, err = usecases.User.AddSubscription(ctx, newSubscription)
+		newSubscription, err = usecases.AddSubscription(ctx, newSubscription)
 
 		if err != nil {
 			log.Errorf("Can not add subscription %s, got error %s", newSubscription, err)
@@ -283,7 +283,7 @@ func addSubscription(usecases *models.UseCases) gin.HandlerFunc {
 	}
 }
 
-func getSubscriptions(usecases *models.UseCases) gin.HandlerFunc {
+func getSubscriptions(usecases models.UserUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getUserID(c)
 		userID, err := uuid.Parse(uid)
@@ -298,7 +298,7 @@ func getSubscriptions(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		subscriptions, err := usecases.User.GetSubscriptions(ctx, userID)
+		subscriptions, err := usecases.GetSubscriptions(ctx, userID)
 		if err != nil {
 			log.Errorf("Can not find subscriptions for user %s, got error %s", userID, err)
 			e, _ := err.(*useCases.UseCaseError)
@@ -345,7 +345,7 @@ func getSubscription(c *gin.Context, userID uuid.UUID) (models.Subscription, err
 	return newSubscription, nil
 }
 
-func updateSubscription(usecases *models.UseCases) gin.HandlerFunc {
+func updateSubscription(usecases models.UserUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getUserID(c)
 		userID, err := uuid.Parse(uid)
@@ -366,7 +366,7 @@ func updateSubscription(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		updatedSubscription, err = usecases.User.UpdateSubscription(ctx, userID, updatedSubscription)
+		updatedSubscription, err = usecases.UpdateSubscription(ctx, userID, updatedSubscription)
 		if err != nil {
 			log.Errorf("Can not add subscription %s, got error %s", updatedSubscription, err)
 			e, _ := err.(*useCases.UseCaseError)
@@ -382,7 +382,7 @@ func updateSubscription(usecases *models.UseCases) gin.HandlerFunc {
 	}
 }
 
-func deleteSubscription(usecases *models.UseCases) gin.HandlerFunc {
+func deleteSubscription(usecases models.UserUseCase) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getUserID(c)
 		userID, err := uuid.Parse(uid)
@@ -399,7 +399,7 @@ func deleteSubscription(usecases *models.UseCases) gin.HandlerFunc {
 			return
 		}
 
-		err = usecases.User.DeleteSubscription(ctx, userID, subscriptionID)
+		err = usecases.DeleteSubscription(ctx, userID, subscriptionID)
 		if err != nil {
 			log.Errorf("Can not delete subscription %s, got error %s", subscriptionID, err)
 			e, _ := err.(*useCases.UseCaseError)
