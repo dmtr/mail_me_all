@@ -152,10 +152,10 @@ type UserDatastore interface {
 
 // UseCases - represents all use cases
 type UseCases struct {
-	User UserUseCase
+	UserUseCase
 }
 
 // NewUseCases - returns new UseCases struct
 func NewUseCases(user UserUseCase) *UseCases {
-	return &UseCases{User: user}
+	return &UseCases{user}
 }
