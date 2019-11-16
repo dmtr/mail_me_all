@@ -25,6 +25,18 @@ type UserInfo struct {
 	ProfileIMGURL string
 }
 
+type Tweet struct {
+	IDStr                string
+	Text                 string
+	FullText             string
+	InReplyToStatusIDStr string
+	InReplyToUserIDStr   string
+	UserID               string
+	UserName             string
+	UserScreenName       string
+	UserProfileImageUrl  string
+}
+
 type Twitter struct {
 	oauth1Config *oauth1.Config
 	sessions     map[string]*tw.Client
@@ -122,6 +134,49 @@ func (t Twitter) SearchUsers(accessToken, accessSecret, twitterID, query string)
 			ProfileIMGURL: user.ProfileImageURLHttps,
 		}
 		res = append(res, u)
+	}
+
+	return res, err
+}
+
+func (t Twitter) GetUserTimeline(accessToken, accessSecret, twitterID, screenName string, sinceID int64, count int64) ([]Tweet, error) {
+	client := t.getSession(accessToken, accessSecret, twitterID)
+
+	trim := true
+	params := tw.UserTimelineParams{
+		ScreenName: screenName,
+		TrimUser:   &trim,
+	}
+
+	if sinceID != 0 {
+		params.SinceID = sinceID
+	}
+
+	if count != 0 {
+		params.Count = int(count)
+	}
+
+	tweets, _, err := client.Timelines.UserTimeline(&params)
+
+	if err != nil {
+		log.Errorf("Got error calling twitter api: %s", err)
+		return []Tweet{}, err
+	}
+
+	res := make([]Tweet, 0, len(tweets))
+	for _, tweet := range tweets {
+		t := Tweet{
+			IDStr:                tweet.IDStr,
+			Text:                 tweet.Text,
+			FullText:             tweet.FullText,
+			InReplyToStatusIDStr: tweet.InReplyToStatusIDStr,
+			InReplyToUserIDStr:   tweet.InReplyToUserIDStr,
+			UserID:               tweet.User.IDStr,
+			UserName:             tweet.User.Name,
+			UserScreenName:       tweet.User.ScreenName,
+			UserProfileImageUrl:  tweet.User.ProfileImageURL,
+		}
+		res = append(res, t)
 	}
 
 	return res, err

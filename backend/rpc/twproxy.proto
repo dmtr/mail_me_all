@@ -6,6 +6,7 @@ package rpc;
 service TwProxyService {
 	  rpc GetUserInfo(UserInfoRequest) returns (UserInfo) {}
 	  rpc SearchUsers(UserSearchRequest) returns (UserSearchResult) {}
+	  rpc GetUserTimeline(UserTimelineRequest) returns (UserTimelineResponse) {}
 }
 
 
@@ -16,6 +17,7 @@ message UserInfoRequest {
 	string screen_name = 4;
 }
 
+
 message UserInfo {
 	string twitter_id = 1;
 	string name = 2;
@@ -23,6 +25,7 @@ message UserInfo {
 	string screen_name = 4;
 	string profile_image_url = 5;
 }
+
 
 message UserSearchRequest {
 	string access_token = 1;
@@ -32,6 +35,33 @@ message UserSearchRequest {
 }
 
 
+
 message UserSearchResult {
 	repeated UserInfo users = 1;
+}
+
+
+message UserTimelineRequest {
+	string access_token = 1;
+	string access_secret = 2;
+	string twitter_id = 3;
+	string screen_name = 4;
+	int64 since_id = 5;
+	int64 count = 6;
+}
+
+message Tweet {
+	string id_str = 1;
+	string text = 2;
+	string full_text = 3;
+	string in_reply_to_status_id_str = 4;
+	string in_reply_to_user_id_str = 5;
+	string user_id = 6;
+	string user_name = 7;
+	string user_screen_name = 8;
+	string user_profile_image_url = 9;
+}
+
+message UserTimelineResponse {
+       repeated Tweet tweets = 1;
 }

@@ -59,3 +59,33 @@ func (s *ServiceServer) SearchUsers(ctx context.Context, request *pb.UserSearchR
 
 	return &res, err
 }
+
+//
+func (s *ServiceServer) GetUserTimeline(ctx context.Context, request *pb.UserTimelineRequest) (*pb.UserTimelineResponse, error) {
+	tweets, err := s.twitter.GetUserTimeline(
+		request.AccessToken, request.AccessSecret, request.TwitterId, request.ScreenName, request.SinceId, request.Count)
+	if err != nil {
+		return nil, err
+	}
+
+	res := pb.UserTimelineResponse{
+		Tweets: make([]*pb.Tweet, 0, len(tweets)),
+	}
+
+	for _, tweet := range tweets {
+		t := pb.Tweet{
+			IdStr:                tweet.IDStr,
+			Text:                 tweet.Text,
+			FullText:             tweet.FullText,
+			InReplyToStatusIdStr: tweet.InReplyToStatusIDStr,
+			InReplyToUserIdStr:   tweet.InReplyToUserIDStr,
+			UserId:               tweet.UserID,
+			UserName:             tweet.UserName,
+			UserScreenName:       tweet.UserScreenName,
+			UserProfileImageUrl:  tweet.UserProfileImageUrl,
+		}
+		res.Tweets = append(res.Tweets, &t)
+	}
+
+	return &res, err
+}
