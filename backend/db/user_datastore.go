@@ -337,7 +337,7 @@ func (d *UserDatastore) UpdateSubscription(ctx context.Context, subscription mod
 		t.commitOrRollback()
 	}()
 
-	fromDb, err := d.GetSubscription(ctx, subscription.ID)
+	fromDb, err := d.GetSubscription(context.WithValue(ctx, "Tx", t.tx), subscription.ID)
 	if err != nil {
 		return subscription, err
 	}
@@ -383,4 +383,39 @@ func (d *UserDatastore) DeleteSubscription(ctx context.Context, subscription mod
 
 	_, err = t.tx.NamedExec("DELETE FROM subscription WHERE id = :id", subscription)
 	return t.getError()
+}
+
+func (d *UserDatastore) GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	rows, err := t.tx.Queryx("WITH subscriptions_state AS " +
+		"(SELECT subscription.id, s.last_tweet_id " +
+		"FROM subscription LEFT JOIN subscription_user_state s " +
+		"ON s.subscription_id = subscription.id " +
+		"WHERE created_at::DATE = NOW()::DATE) " +
+		"SELECT id FROM subscriptions_state WHERE last_tweet_id is NULL",
+	)
+
+	if err != nil {
+		log.Errorf("Got error %s", err)
+		return []uuid.UUID{}, t.getError()
+	}
+
+	ids := make([]uuid.UUID, 0)
+	for rows.Next() {
+		var id uuid.UUID
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Errorf("Got error %s", err)
+			continue
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, t.getError()
 }

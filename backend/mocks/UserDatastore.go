@@ -26,6 +26,29 @@ func (_m *UserDatastore) DeleteSubscription(ctx context.Context, subscription mo
 	return r0
 }
 
+// GetNewSubscriptionsIDs provides a mock function with given fields: ctx
+func (_m *UserDatastore) GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error) {
+	ret := _m.Called(ctx)
+
+	var r0 []uuid.UUID
+	if rf, ok := ret.Get(0).(func(context.Context) []uuid.UUID); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]uuid.UUID)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSubscription provides a mock function with given fields: ctx, subscriptionID
 func (_m *UserDatastore) GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (models.Subscription, error) {
 	ret := _m.Called(ctx, subscriptionID)

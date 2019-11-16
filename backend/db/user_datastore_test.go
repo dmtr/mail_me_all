@@ -48,6 +48,25 @@ func insertUser(d *UserDatastore, ctx context.Context) (models.User, error) {
 	return d.InsertUser(ctx, user)
 }
 
+func insertUserAndSubscription(d *UserDatastore, ctx context.Context) (models.User, models.Subscription, error) {
+	u, err := insertUser(d, ctx)
+	if err != nil {
+		return models.User{}, models.Subscription{}, err
+	}
+	s := models.Subscription{
+		UserID: u.ID,
+		Title:  "test",
+		Email:  "test@mail.com",
+		Day:    "monday",
+		UserList: []models.TwitterUserSearchResult{
+			models.TwitterUserSearchResult{TwitterID: "121", Name: "foo", ProfileIMGURL: "some_url", ScreenName: "foo_name"},
+			models.TwitterUserSearchResult{TwitterID: "322", Name: "bar", ProfileIMGURL: "other_url", ScreenName: "bar_name"}},
+	}
+
+	fromDb, err := d.InsertSubscription(ctx, s)
+	return u, fromDb, err
+}
+
 func testGetUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	uid := uuid.New()
 	ctx := context.WithValue(context.Background(), "Tx", tx)
@@ -233,23 +252,10 @@ func testUpdateSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 
 func testDeleteSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	ctx := context.WithValue(context.Background(), "Tx", tx)
-	u, err := insertUser(d, ctx)
+	_, subscription, err := insertUserAndSubscription(d, ctx)
 	assert.NoError(t, err)
 
-	s := models.Subscription{
-		UserID: u.ID,
-		Title:  "test",
-		Email:  "test@mail.com",
-		Day:    "monday",
-		UserList: []models.TwitterUserSearchResult{
-			models.TwitterUserSearchResult{TwitterID: "121", Name: "foo", ProfileIMGURL: "some_url", ScreenName: "foo_name"},
-			models.TwitterUserSearchResult{TwitterID: "322", Name: "bar", ProfileIMGURL: "other_url", ScreenName: "bar_name"}},
-	}
-
-	fromDb, err := d.InsertSubscription(ctx, s)
-	assert.NoError(t, err)
-
-	err = d.DeleteSubscription(ctx, fromDb)
+	err = d.DeleteSubscription(ctx, subscription)
 	assert.NoError(t, err)
 
 	var count int
@@ -262,6 +268,20 @@ func testDeleteSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	assert.Equal(t, 2, count)
 }
 
+func testGetNewSubscriptions(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	res, err := d.GetNewSubscriptionsIDs(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, len(res), 0)
+
+	_, s, err := insertUserAndSubscription(d, ctx)
+
+	res, err = d.GetNewSubscriptionsIDs(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, len(res), 1)
+	assert.Equal(t, s.ID, res[0])
+}
+
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestInsertTwitterUser":          testInsertTwitterUser,
@@ -271,6 +291,7 @@ func TestUserDatastore(t *testing.T) {
 		"TestInsertSubscription":         testInsertSubscription,
 		"TestUpdatetSubscription":        testUpdateSubscription,
 		"TestDeleteSubscription":         testDeleteSubscription,
+		"TestGetNewSubscriptions":        testGetNewSubscriptions,
 	}
 	runTests(tests, t)
 }

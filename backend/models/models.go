@@ -148,6 +148,8 @@ type UserDatastore interface {
 	UpdateSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
 	GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (Subscription, error)
 	DeleteSubscription(ctx context.Context, subscription Subscription) error
+
+	GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 }
 
 type SystemUseCase interface {
