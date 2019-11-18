@@ -8,7 +8,6 @@ import (
 	"os/signal"
 
 	"github.com/dmtr/mail_me_all/backend/app"
-	"github.com/dmtr/mail_me_all/backend/commands"
 	"github.com/dmtr/mail_me_all/backend/twapi"
 	"github.com/dmtr/mail_me_all/backend/twproxy"
 	log "github.com/sirupsen/logrus"
@@ -96,7 +95,7 @@ func main() {
 		startTwProxy(a)
 	} else if cmd == checkNewSubscriptions {
 		a = app.GetApp(false, true, true, true)
-		commands.CheckNewSubscriptions(a)
+		CheckNewSubscriptions(a)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)

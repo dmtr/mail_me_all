@@ -1,4 +1,4 @@
-package commands
+package main
 
 import (
 	"github.com/dmtr/mail_me_all/backend/app"
