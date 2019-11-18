@@ -52,9 +52,13 @@ func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, wg *sync.WaitG
 			log.Errorf("Can not get timeline for user %s", u)
 		}
 
-		log.Infof("tweets: %v", tweets)
-	}
+		log.Debugf("tweets: %v", tweets)
 
+		err = s.UserDatastore.InsertSubscriptionUserState(context.Background(), subscriptionID, u.TwitterID, tweets.Tweets[0].IdStr)
+		if err != nil {
+			log.Errorf("Can not insert subscription_user_state, got error %s", err)
+		}
+	}
 }
 
 func (s SystemUseCase) InitSubscriptions(ids ...uuid.UUID) error {

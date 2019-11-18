@@ -419,3 +419,16 @@ func (d *UserDatastore) GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID
 
 	return ids, t.getError()
 }
+
+func (d *UserDatastore) InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID string, lastTweetID string) error {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	_, err = t.tx.Exec("INSERT INTO subscription_user_state (subscription_id, user_twitter_id, last_tweet_id) VALUES ($1, $2, $3)", subscriptionID, userTwitterID, lastTweetID)
+
+	return err
+}

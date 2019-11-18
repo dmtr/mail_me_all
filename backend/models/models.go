@@ -150,6 +150,7 @@ type UserDatastore interface {
 	DeleteSubscription(ctx context.Context, subscription Subscription) error
 
 	GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
+	InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID, lastTweetID string) error
 }
 
 type SystemUseCase interface {
