@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/dmtr/mail_me_all/backend/app"
 	"github.com/dmtr/mail_me_all/backend/twapi"
 	"github.com/dmtr/mail_me_all/backend/twproxy"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 
@@ -75,9 +77,21 @@ func main() {
 
 	flag.String("auth-key", "", "auth key")
 	flag.String("encrypt-key", "", "encryption key")
-	flag.Parse()
 
+	var subscriptionIDs *string = flag.String("subscription-ids", "", "subscription IDs")
+
+	flag.Parse()
 	viper.BindPFlags(flag.CommandLine)
+
+	var IDs []uuid.UUID
+	if *subscriptionIDs != "" {
+		for _, s := range strings.Split(*subscriptionIDs, ",") {
+			id, err := uuid.Parse(s)
+			if err == nil {
+				IDs = append(IDs, id)
+			}
+		}
+	}
 
 	cmd := flag.Arg(0)
 	if cmd == "" {
@@ -95,7 +109,7 @@ func main() {
 		startTwProxy(a)
 	} else if cmd == checkNewSubscriptions {
 		a = app.GetApp(false, true, true, true)
-		CheckNewSubscriptions(a)
+		CheckNewSubscriptions(a, IDs...)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)

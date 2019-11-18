@@ -153,7 +153,7 @@ type UserDatastore interface {
 }
 
 type SystemUseCase interface {
-	InitSubscriptions() error
+	InitSubscriptions(ids ...uuid.UUID) error
 }
 
 // UseCases - represents all use cases

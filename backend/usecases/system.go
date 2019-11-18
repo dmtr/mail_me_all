@@ -57,13 +57,19 @@ func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, wg *sync.WaitG
 
 }
 
-func (s SystemUseCase) InitSubscriptions() error {
-	ctx := context.Background()
-	subscriptions, err := s.UserDatastore.GetNewSubscriptionsIDs(ctx)
+func (s SystemUseCase) InitSubscriptions(ids ...uuid.UUID) error {
+	var subscriptions []uuid.UUID
+	var err error
 
-	if err != nil {
-		return err
+	if len(ids) == 0 {
+		subscriptions, err = s.UserDatastore.GetNewSubscriptionsIDs(context.Background())
+		if err != nil {
+			return err
+		}
+	} else {
+		subscriptions = ids
 	}
+
 	log.Infof("Got subscriptions %s", subscriptions)
 
 	var wg sync.WaitGroup
