@@ -432,3 +432,39 @@ func (d *UserDatastore) InsertSubscriptionUserState(ctx context.Context, subscri
 
 	return err
 }
+
+func (d *UserDatastore) GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	rows, err := t.tx.Queryx("WITH t AS " +
+		"(SELECT subscription_id FROM subscription_state st " +
+		"WHERE st.created_at::DATE = NOW()::DATE) " +
+		"SELECT s.id FROM subscription s " +
+		"LEFT JOIN t ON s.id = t.subscription_id " +
+		"WHERE s.day = get_day_of_week(NOW()) " +
+		"GROUP BY s.id HAVING count(t.*) = 0",
+	)
+
+	if err != nil {
+		log.Errorf("Got error %s", err)
+		return []uuid.UUID{}, t.getError()
+	}
+
+	ids := make([]uuid.UUID, 0)
+	for rows.Next() {
+		var id uuid.UUID
+		err = rows.Scan(&id)
+		if err != nil {
+			log.Errorf("Got error %s", err)
+			continue
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, t.getError()
+}

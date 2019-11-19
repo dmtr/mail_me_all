@@ -151,10 +151,12 @@ type UserDatastore interface {
 
 	GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 	InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID, lastTweetID string) error
+	GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 }
 
 type SystemUseCase interface {
 	InitSubscriptions(ids ...uuid.UUID) error
+	PrepareSubscriptions(ids ...uuid.UUID) error
 }
 
 // UseCases - represents all use cases

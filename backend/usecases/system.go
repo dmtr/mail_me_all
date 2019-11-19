@@ -85,3 +85,20 @@ func (s SystemUseCase) InitSubscriptions(ids ...uuid.UUID) error {
 	wg.Wait()
 	return err
 }
+
+func (s SystemUseCase) PrepareSubscriptions(ids ...uuid.UUID) error {
+	var subscriptions []uuid.UUID
+	var err error
+
+	if len(ids) == 0 {
+		subscriptions, err = s.UserDatastore.GetTodaySubscriptionsIDs(context.Background())
+		if err != nil {
+			return err
+		}
+	} else {
+		subscriptions = ids
+	}
+
+	log.Infof("Got subscriptions %s", subscriptions)
+	return err
+}

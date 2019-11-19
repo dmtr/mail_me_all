@@ -22,9 +22,10 @@ import (
 )
 
 const (
-	runAPI                string = "api"
-	runTwProxy            string = "run-tw-proxy"
-	checkNewSubscriptions string = "check-new-subscriptions"
+	runAPI     string = "api"
+	runTwProxy string = "run-tw-proxy"
+	check      string = "check-new-subscriptions"
+	prepare    string = "prepare-subscriptions"
 )
 
 func startAPIServer(app *app.App) {
@@ -107,9 +108,12 @@ func main() {
 	} else if cmd == runTwProxy {
 		a = app.GetApp(false)
 		startTwProxy(a)
-	} else if cmd == checkNewSubscriptions {
+	} else if cmd == check {
 		a = app.GetApp(false, true, true, true)
-		CheckNewSubscriptions(a, IDs...)
+		checkNewSubscriptions(a, IDs...)
+	} else if cmd == prepare {
+		a = app.GetApp(false, true, true, true)
+		prepareSubscriptions(a, IDs...)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)
