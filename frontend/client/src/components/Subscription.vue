@@ -46,7 +46,7 @@ import TwUserList from "./TwUserList";
 
 const days = [
   "monday",
-  "tuedasy",
+  "tuesday",
   "wensday",
   "thursday",
   "friday",
