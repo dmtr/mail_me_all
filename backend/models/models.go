@@ -137,15 +137,25 @@ func (s *SubscriptionState) String() string {
 }
 
 // UserTweet - last read tweet of a user
-type UserTweet struct {
+type UserLastTweet struct {
 	ScreenName  string
 	LastTweetID string
 }
 
-// SubscriptionUserTweets contains map user twiiter id - UserTweet
+func (u UserLastTweet) String() string {
+	return fmt.Sprintf("UserLastTweet: ScreenName %s, LastTweetID %s", u.ScreenName, u.LastTweetID)
+}
+
+// SubscriptionUserTweets contains map user twiiter id to UserLastTweet
 type SubscriptionUserTweets struct {
 	SubscriptionID uuid.UUID `db:"subscription_id"`
-	Tweets         map[string]UserTweet
+	Tweets         map[string]UserLastTweet
+}
+
+func (s SubscriptionUserTweets) String() string {
+	return fmt.Sprintf("SubscriptionUserTweets: SubscriptionID %s", s.SubscriptionID)
+}
+
 }
 
 // UserUseCase - represents user use cases

@@ -518,7 +518,7 @@ func (d *UserDatastore) GetSubscriptionUserTweets(ctx context.Context, subscript
 
 	res := models.SubscriptionUserTweets{
 		SubscriptionID: subscriptionID,
-		Tweets:         make(map[string]models.UserTweet, 0)}
+		Tweets:         make(map[string]models.UserLastTweet, 0)}
 
 	for rows.Next() {
 		type row struct {
@@ -534,7 +534,7 @@ func (d *UserDatastore) GetSubscriptionUserTweets(ctx context.Context, subscript
 			continue
 		}
 
-		res.Tweets[r.TwitterId] = models.UserTweet{ScreenName: r.ScreenName, LastTweetID: r.LastTweetID}
+		res.Tweets[r.TwitterId] = models.UserLastTweet{ScreenName: r.ScreenName, LastTweetID: r.LastTweetID}
 	}
 
 	return res, err
