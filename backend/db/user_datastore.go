@@ -468,3 +468,74 @@ func (d *UserDatastore) GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UU
 
 	return ids, t.getError()
 }
+
+func (d *UserDatastore) InsertSubscriptionState(ctx context.Context, state models.SubscriptionState) (models.SubscriptionState, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	res, err := t.tx.NamedQuery(
+		"INSERT INTO subscription_state (subscription_id, status) VALUES (:subscription_id, :status) RETURNING id", state)
+	if err != nil {
+		return state, err
+	}
+
+	var id uint
+	for res.Next() {
+		err = res.Scan(&id)
+		if err != nil {
+			log.Errorf("Scan error: %s", err)
+			return state, err
+		}
+	}
+
+	var fromDB models.SubscriptionState
+	err = t.tx.Get(&fromDB, "SELECT id, subscription_id, status, created_at, updated_at FROM subscription_state WHERE id=$1", id)
+	if err != nil {
+		return state, err
+	}
+
+	return fromDB, err
+}
+
+func (d *UserDatastore) GetSubscriptionUserTweets(ctx context.Context, subscriptionID uuid.UUID) (models.SubscriptionUserTweets, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	rows, err := t.tx.Queryx("SELECT u.twitter_id, u.screen_name, st.last_tweet_id "+
+		"FROM subscription_user u INNER JOIN subscription_user_state st ON st.user_twitter_id = u.twitter_id "+
+		"WHERE st.subscription_id = $1", subscriptionID)
+	if err != nil {
+		return models.SubscriptionUserTweets{}, err
+	}
+
+	res := models.SubscriptionUserTweets{
+		SubscriptionID: subscriptionID,
+		Tweets:         make(map[string]models.UserTweet, 0)}
+
+	for rows.Next() {
+		type row struct {
+			TwitterId   string `db:"twitter_id"`
+			ScreenName  string `db:"screen_name"`
+			LastTweetID string `db:"last_tweet_id"`
+		}
+
+		var r row
+		err = rows.StructScan(&r)
+		if err != nil {
+			log.Errorf("Got error %s", err)
+			continue
+		}
+
+		res.Tweets[r.TwitterId] = models.UserTweet{ScreenName: r.ScreenName, LastTweetID: r.LastTweetID}
+	}
+
+	return res, err
+}

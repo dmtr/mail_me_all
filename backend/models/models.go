@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -121,6 +122,32 @@ func (s Subscription) Equal(another Subscription) bool {
 	return true
 }
 
+// SubscriptionState - subscription status
+type SubscriptionState struct {
+	ID             uint      `db:"id"`
+	SubscriptionID uuid.UUID `db:"subscription_id"`
+	Status         string    `db:"status"`
+	CreatedAt      time.Time `db:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"`
+}
+
+func (s *SubscriptionState) String() string {
+	return fmt.Sprintf(
+		"SubscriptionState: id %d, subscription_id %s, status %s, updated at %s", s.ID, s.SubscriptionID, s.Status, s.UpdatedAt)
+}
+
+// UserTweet - last read tweet of a user
+type UserTweet struct {
+	ScreenName  string
+	LastTweetID string
+}
+
+// SubscriptionUserTweets contains map user twiiter id - UserTweet
+type SubscriptionUserTweets struct {
+	SubscriptionID uuid.UUID `db:"subscription_id"`
+	Tweets         map[string]UserTweet
+}
+
 // UserUseCase - represents user use cases
 type UserUseCase interface {
 	SignInWithTwitter(ctx context.Context, twitterID, name, email, screenName, accessToken, tokenSecret string) (User, error)
@@ -152,6 +179,9 @@ type UserDatastore interface {
 	GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 	InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID, lastTweetID string) error
 	GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
+	InsertSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
+
+	GetSubscriptionUserTweets(ctx context.Context, subscriptionID uuid.UUID) (SubscriptionUserTweets, error)
 }
 
 type SystemUseCase interface {

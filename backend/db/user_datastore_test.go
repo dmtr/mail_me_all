@@ -282,6 +282,35 @@ func testGetNewSubscriptions(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	assert.Equal(t, s.ID, res[0])
 }
 
+func testInsertSubscriptionState(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	_, s, err := insertUserAndSubscription(d, ctx)
+	assert.NoError(t, err)
+
+	state, err := d.InsertSubscriptionState(ctx, models.SubscriptionState{SubscriptionID: s.ID, Status: "PREPARING"})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, state.ID)
+	assert.NotEmpty(t, state.CreatedAt)
+}
+
+func testGetSubscriptionUserTweets(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	_, s, err := insertUserAndSubscription(d, ctx)
+	assert.NoError(t, err)
+
+	err = d.InsertSubscriptionUserState(ctx, s.ID, s.UserList[0].TwitterID, "123")
+	assert.NoError(t, err)
+
+	stweets, err := d.GetSubscriptionUserTweets(ctx, s.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, s.ID, stweets.SubscriptionID)
+	assert.Len(t, stweets.Tweets, 1)
+	tw, ok := stweets.Tweets[s.UserList[0].TwitterID]
+	assert.True(t, ok)
+	assert.Equal(t, s.UserList[0].ScreenName, tw.ScreenName)
+	assert.Equal(t, "123", tw.LastTweetID)
+}
+
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestInsertTwitterUser":          testInsertTwitterUser,
@@ -292,6 +321,8 @@ func TestUserDatastore(t *testing.T) {
 		"TestUpdatetSubscription":        testUpdateSubscription,
 		"TestDeleteSubscription":         testDeleteSubscription,
 		"TestGetNewSubscriptions":        testGetNewSubscriptions,
+		"TestInsertSubscriptionState":    testInsertSubscriptionState,
+		"TestGetSubscriptionUserTweets":  testGetSubscriptionUserTweets,
 	}
 	runTests(tests, t)
 }
