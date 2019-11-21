@@ -79,9 +79,11 @@ const validateSubscription = s => {
 
 export default {
   name: "Subscription",
+
   components: {
     TwUserList
   },
+
   props: {
     subscription: {
       type: Object,
@@ -90,6 +92,7 @@ export default {
       }
     }
   },
+
   computed: {
     valid: {
       get: function() {
@@ -103,6 +106,7 @@ export default {
       }
     }
   },
+
   data: () => ({
     loading: false,
     search: null,
@@ -138,15 +142,13 @@ export default {
       }
     }
   },
+
   created: function() {
-    this.debouncedQuery = _.debounce(this.querySelections, 200);
+    this.debouncedQuery = _.debounce(this.querySelections, 150);
   },
+
   methods: {
-    ...mapActions([
-      "createSubscription",
-      "getSubscriptions",
-      "updateSubscription"
-    ]),
+    ...mapActions(["createSubscription", "updateSubscription"]),
 
     init() {
       this.validationErrors = "";
@@ -206,9 +208,8 @@ export default {
         }
         let res = await func(s);
         if (!res.error) {
-          await this.getSubscriptions();
           this.init();
-          this.$emit("cancelSubscriptionEdit");
+          this.$emit("subscriptionSaved");
         } else {
           this.validationErrors = res.error.message;
         }

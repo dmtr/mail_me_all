@@ -36,9 +36,14 @@
             <Subscription
               v-bind:subscription="currentSubscription"
               v-on:cancelSubscriptionEdit="cancelSubscriptionEdit"
+              v-on:subscriptionSaved="subscriptionSaved"
               v-if="currentSubscription"
             ></Subscription>
-            <Subscription v-on:cancelSubscriptionEdit="cancelSubscriptionEdit" v-else></Subscription>
+            <Subscription
+              v-on:cancelSubscriptionEdit="cancelSubscriptionEdit"
+              v-on:subscriptionSaved="subscriptionSaved"
+              v-else
+            ></Subscription>
           </v-card>
         </v-dialog>
         <v-dialog v-model="removeDialog" max-width="500px">
@@ -72,10 +77,16 @@ export default {
     toRemove: null
   }),
   methods: {
-    ...mapActions(["deleteSubscription"]),
+    ...mapActions(["deleteSubscription", "getSubscriptions"]),
     cancelSubscriptionEdit: function() {
-      this.dialog = false;
       this.currentSubscription = null;
+      this.dialog = false;
+    },
+
+    subscriptionSaved: async function() {
+      await this.getSubscriptions();
+      this.currentSubscription = this.subscriptions[0];
+      this.dialog = false;
     },
 
     editSubscription: function(subscription) {
@@ -97,6 +108,7 @@ export default {
     removeSubscription: async function() {
       if (this.toRemove) {
         await this.deleteSubscription(this.toRemove);
+        this.toRemove = null;
       }
       this.removeDialog = false;
     }
