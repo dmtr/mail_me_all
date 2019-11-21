@@ -369,6 +369,12 @@ func (d *UserDatastore) UpdateSubscription(ctx context.Context, subscription mod
 		if err != nil {
 			return subscription, t.getError()
 		}
+
+		_, err = tx.Exec("DELETE FROM subscription_user_state WHERE subscription_id=$1 AND user_twitter_id=$2", subscription.ID, su.TwitterID)
+		if err != nil {
+			return subscription, t.getError()
+		}
+
 	}
 	return subscription, t.getError()
 }

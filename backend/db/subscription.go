@@ -47,11 +47,6 @@ func getSubscriptionUser(tx *sqlx.Tx, twitterID string) (subscriptionUser, error
 	return user, err
 }
 
-func deleteSubscriptionUser(tx *sqlx.Tx, userID uint) error {
-	_, err := tx.Exec("DELETE FROM subscription_user WHERE id=$1", userID)
-	return err
-}
-
 func insertUserList(tx *sqlx.Tx, userList models.UserList, subscriptionID uuid.UUID) error {
 	var err error
 	for _, u := range userList {
