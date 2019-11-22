@@ -23,6 +23,8 @@ export PG_PORT=$(DB_PORT)
 export PG_DATABASE=$(DB_NAME)
 export PG_USER=$(DB_USER)
 
+.PHONY: all restart build-backend restart-backend up-backend restart-all migrate-up migrate-down proto test-backend
+
 all: build-backend up-backend 
 restart: restart-all
 build-backend:
