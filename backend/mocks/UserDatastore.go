@@ -26,22 +26,29 @@ func (_m *UserDatastore) DeleteSubscription(ctx context.Context, subscription mo
 	return r0
 }
 
-// GetNewSubscriptionsIDs provides a mock function with given fields: ctx
-func (_m *UserDatastore) GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error) {
-	ret := _m.Called(ctx)
+// GetNewSubscriptionsUsers provides a mock function with given fields: ctx, subscriptionIDs
+func (_m *UserDatastore) GetNewSubscriptionsUsers(ctx context.Context, subscriptionIDs ...uuid.UUID) (map[uuid.UUID][]string, error) {
+	_va := make([]interface{}, len(subscriptionIDs))
+	for _i := range subscriptionIDs {
+		_va[_i] = subscriptionIDs[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
-	var r0 []uuid.UUID
-	if rf, ok := ret.Get(0).(func(context.Context) []uuid.UUID); ok {
-		r0 = rf(ctx)
+	var r0 map[uuid.UUID][]string
+	if rf, ok := ret.Get(0).(func(context.Context, ...uuid.UUID) map[uuid.UUID][]string); ok {
+		r0 = rf(ctx, subscriptionIDs...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]uuid.UUID)
+			r0 = ret.Get(0).(map[uuid.UUID][]string)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, ...uuid.UUID) error); ok {
+		r1 = rf(ctx, subscriptionIDs...)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -21,7 +21,16 @@ func NewSystemUseCase(datastore models.UserDatastore, client pb.TwProxyServiceCl
 	return &SystemUseCase{UserDatastore: datastore, RpcClient: client}
 }
 
-func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, wg *sync.WaitGroup) {
+func find(slice []string, val string) (int, bool) {
+	for i, item := range slice {
+		if item == val {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, users []string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	subscription, err := s.UserDatastore.GetSubscription(context.Background(), subscriptionID)
 	if err != nil {
@@ -39,6 +48,12 @@ func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, wg *sync.WaitG
 	log.Infof("Got user %s", user)
 
 	for _, u := range subscription.UserList {
+
+		_, found := find(users, u.TwitterID)
+		if !found {
+			continue
+		}
+
 		req := pb.UserTimelineRequest{
 			AccessToken:  user.AccessToken,
 			AccessSecret: user.TokenSecret,
@@ -62,24 +77,17 @@ func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, wg *sync.WaitG
 }
 
 func (s SystemUseCase) InitSubscriptions(ids ...uuid.UUID) error {
-	var subscriptions []uuid.UUID
-	var err error
-
-	if len(ids) == 0 {
-		subscriptions, err = s.UserDatastore.GetNewSubscriptionsIDs(context.Background())
-		if err != nil {
-			return err
-		}
-	} else {
-		subscriptions = ids
+	subscriptions, err := s.UserDatastore.GetNewSubscriptionsUsers(context.Background(), ids...)
+	if err != nil {
+		return err
 	}
 
 	log.Infof("Got subscriptions %s", subscriptions)
 
 	var wg sync.WaitGroup
-	for _, id := range subscriptions {
+	for subscription, users := range subscriptions {
 		wg.Add(1)
-		go s.initSubscription(id, &wg)
+		go s.initSubscription(subscription, users, &wg)
 	}
 
 	wg.Wait()

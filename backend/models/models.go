@@ -193,7 +193,7 @@ type UserDatastore interface {
 	GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (Subscription, error)
 	DeleteSubscription(ctx context.Context, subscription Subscription) error
 
-	GetNewSubscriptionsUsers(ctx context.Context) (map[uuid.UUID][]string, error)
+	GetNewSubscriptionsUsers(ctx context.Context, subscriptionIDs ...uuid.UUID) (map[uuid.UUID][]string, error)
 	InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID, lastTweetID string) error
 	GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 	InsertSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
