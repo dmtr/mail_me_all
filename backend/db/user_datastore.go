@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -391,7 +393,7 @@ func (d *UserDatastore) DeleteSubscription(ctx context.Context, subscription mod
 	return t.getError()
 }
 
-func (d *UserDatastore) GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error) {
+func (d *UserDatastore) GetNewSubscriptionsUsers(ctx context.Context, subscriptionIDs ...uuid.UUID) (map[uuid.UUID][]string, error) {
 	var err error
 	t := getTransaction(ctx, d.DB, &err)
 
@@ -399,31 +401,55 @@ func (d *UserDatastore) GetNewSubscriptionsIDs(ctx context.Context) ([]uuid.UUID
 		t.commitOrRollback()
 	}()
 
-	rows, err := t.tx.Queryx("WITH subscriptions_state AS " +
-		"(SELECT subscription.id, s.last_tweet_id " +
-		"FROM subscription LEFT JOIN subscription_user_state s " +
-		"ON s.subscription_id = subscription.id " +
-		"WHERE created_at::DATE = NOW()::DATE) " +
-		"SELECT id FROM subscriptions_state WHERE last_tweet_id is NULL",
-	)
+	res := make(map[uuid.UUID][]string, 0)
 
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	q := psql.Select("s.id AS subscription_id, array_agg(t.twitter_id) AS users").
+		Prefix("WITH t AS " +
+			"(SELECT u.id, u.twitter_id, st.last_tweet_id " +
+			"FROM subscription_user u " +
+			"LEFT JOIN subscription_user_state st ON st.user_twitter_id = u.twitter_id)").
+		From("t").
+		JoinClause("INNER JOIN subscription_user_m2m m ON m.user_id = t.id").
+		JoinClause("INNER JOIN subscription s ON s.id = m.subscription_id").
+		Where("t.last_tweet_id IS NULL")
+
+	if len(subscriptionIDs) > 0 {
+		q = q.Where(sq.Eq{"subscription_id": subscriptionIDs})
+	}
+	q = q.GroupBy("s.id")
+
+	sql, args, err := q.ToSql()
 	if err != nil {
-		log.Errorf("Got error %s", err)
-		return []uuid.UUID{}, t.getError()
+		return res, t.getError()
 	}
 
-	ids := make([]uuid.UUID, 0)
+	var rows *sqlx.Rows
+	if len(args) > 0 {
+		rows, err = t.tx.Queryx(sql, args...)
+	} else {
+		rows, err = t.tx.Queryx(sql)
+	}
+
+	if err != nil {
+		log.Errorf("Got error %s %s", err, sql)
+		return res, t.getError()
+	}
+
 	for rows.Next() {
-		var id uuid.UUID
-		err = rows.Scan(&id)
+		var subscriptionID uuid.UUID
+		var users []string
+
+		err = rows.Scan(&subscriptionID, pq.Array(&users))
 		if err != nil {
 			log.Errorf("Got error %s", err)
 			continue
 		}
-		ids = append(ids, id)
+		res[subscriptionID] = users
 	}
 
-	return ids, t.getError()
+	return res, t.getError()
 }
 
 func (d *UserDatastore) InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID string, lastTweetID string) error {

@@ -268,18 +268,37 @@ func testDeleteSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	assert.Equal(t, 2, count)
 }
 
-func testGetNewSubscriptions(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+func testGetNewSubscriptionsUsers(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	ctx := context.WithValue(context.Background(), "Tx", tx)
-	res, err := d.GetNewSubscriptionsIDs(ctx)
+	res, err := d.GetNewSubscriptionsUsers(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, len(res), 0)
 
 	_, s, err := insertUserAndSubscription(d, ctx)
 
-	res, err = d.GetNewSubscriptionsIDs(ctx)
+	res, err = d.GetNewSubscriptionsUsers(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, len(res), 1)
-	assert.Equal(t, s.ID, res[0])
+	users, ok := res[s.ID]
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(users))
+	assert.Contains(t, users, s.UserList[0].TwitterID)
+	assert.Contains(t, users, s.UserList[1].TwitterID)
+
+	_, s2, err := insertUserAndSubscription(d, ctx)
+	assert.NoError(t, err)
+
+	res, err = d.GetNewSubscriptionsUsers(ctx, s2.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, len(res), 1)
+	_, ok = res[s2.ID]
+	assert.True(t, ok)
+
+	res, err = d.GetNewSubscriptionsUsers(ctx, s2.ID, s.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, len(res), 2)
+	_, ok = res[s.ID]
+	assert.True(t, ok)
 }
 
 func testInsertSubscriptionState(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
@@ -320,7 +339,7 @@ func TestUserDatastore(t *testing.T) {
 		"TestInsertSubscription":         testInsertSubscription,
 		"TestUpdatetSubscription":        testUpdateSubscription,
 		"TestDeleteSubscription":         testDeleteSubscription,
-		"TestGetNewSubscriptions":        testGetNewSubscriptions,
+		"TestGetNewSubscriptionsUsers":   testGetNewSubscriptionsUsers,
 		"TestInsertSubscriptionState":    testInsertSubscriptionState,
 		"TestGetSubscriptionUserTweets":  testGetSubscriptionUserTweets,
 	}
