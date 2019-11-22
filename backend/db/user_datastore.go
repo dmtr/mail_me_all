@@ -501,6 +501,23 @@ func (d *UserDatastore) GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UU
 	return ids, t.getError()
 }
 
+func (d *UserDatastore) UpdateSubscriptionState(ctx context.Context, state models.SubscriptionState) (models.SubscriptionState, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	_, err = t.tx.NamedExec(
+		"UPDATE subscription_state SET status = (:status) WHERE id = :id ", state)
+	if err != nil {
+		return state, err
+	}
+
+	return state, err
+}
+
 func (d *UserDatastore) InsertSubscriptionState(ctx context.Context, state models.SubscriptionState) (models.SubscriptionState, error) {
 	var err error
 	t := getTransaction(ctx, d.DB, &err)
@@ -570,4 +587,71 @@ func (d *UserDatastore) GetSubscriptionUserTweets(ctx context.Context, subscript
 	}
 
 	return res, err
+}
+
+func (d *UserDatastore) InsertTweet(ctx context.Context, tweet models.Tweet, subscriptionStateID uint) (models.Tweet, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	tx := t.tx
+
+	_, err = tx.Exec("SAVEPOINT save1")
+	if err != nil {
+		return tweet, err
+	}
+
+	res, err := tx.NamedQuery(
+		"INSERT INTO tweet (tweet_id, tweet) VALUES (:tweet_id, :tweet) RETURNING id", tweet)
+
+	if err != nil {
+		e := getDbError(err).(*DbError)
+		if e.IsUniqueViolationError() {
+			_, err = tx.Exec("ROLLBACK TO SAVEPOINT save1")
+			if err != nil {
+				return tweet, err
+			}
+
+			var fromDB models.Tweet
+			err = t.tx.Get(&fromDB, "SELECT id, tweet_id, tweet FROM tweet WHERE tweet_id=$1", tweet.TweetID)
+			if err != nil {
+				return tweet, err
+			}
+
+			tweet = fromDB
+			err = nil
+		} else {
+			return tweet, err
+		}
+	}
+
+	if tweet.ID == 0 {
+		var id uint
+		for res.Next() {
+			err = res.Scan(&id)
+			if err != nil {
+				log.Errorf("Scan error: %s", err)
+				return tweet, err
+			}
+		}
+
+		tweet.ID = id
+	}
+
+	m2m := struct {
+		SubscriptionStateID uint `db:"subscription_state_id"`
+		TweetID             uint `db:"tweet_id"`
+	}{
+		subscriptionStateID,
+		tweet.ID,
+	}
+	_, err = tx.NamedExec("INSERT INTO subscription_state_tweet_m2m (subscription_state_id, tweet_id) VALUES(:subscription_state_id, :tweet_id)", m2m)
+	if err != nil {
+		return tweet, err
+	}
+
+	return tweet, err
 }

@@ -263,6 +263,27 @@ func (_m *UserDatastore) InsertSubscriptionUserState(ctx context.Context, subscr
 	return r0
 }
 
+// InsertTweet provides a mock function with given fields: ctx, tweet, subscriptionStateID
+func (_m *UserDatastore) InsertTweet(ctx context.Context, tweet models.Tweet, subscriptionStateID uint) (models.Tweet, error) {
+	ret := _m.Called(ctx, tweet, subscriptionStateID)
+
+	var r0 models.Tweet
+	if rf, ok := ret.Get(0).(func(context.Context, models.Tweet, uint) models.Tweet); ok {
+		r0 = rf(ctx, tweet, subscriptionStateID)
+	} else {
+		r0 = ret.Get(0).(models.Tweet)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, models.Tweet, uint) error); ok {
+		r1 = rf(ctx, tweet, subscriptionStateID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // InsertTwitterUser provides a mock function with given fields: ctx, twitterUser
 func (_m *UserDatastore) InsertTwitterUser(ctx context.Context, twitterUser models.TwitterUser) (models.TwitterUser, error) {
 	ret := _m.Called(ctx, twitterUser)
@@ -319,6 +340,27 @@ func (_m *UserDatastore) UpdateSubscription(ctx context.Context, subscription mo
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, models.Subscription) error); ok {
 		r1 = rf(ctx, subscription)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateSubscriptionState provides a mock function with given fields: ctx, state
+func (_m *UserDatastore) UpdateSubscriptionState(ctx context.Context, state models.SubscriptionState) (models.SubscriptionState, error) {
+	ret := _m.Called(ctx, state)
+
+	var r0 models.SubscriptionState
+	if rf, ok := ret.Get(0).(func(context.Context, models.SubscriptionState) models.SubscriptionState); ok {
+		r0 = rf(ctx, state)
+	} else {
+		r0 = ret.Get(0).(models.SubscriptionState)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, models.SubscriptionState) error); ok {
+		r1 = rf(ctx, state)
 	} else {
 		r1 = ret.Error(1)
 	}

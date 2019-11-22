@@ -2,6 +2,9 @@ package models
 
 import (
 	"context"
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -158,11 +161,38 @@ func (s SubscriptionUserTweets) String() string {
 
 // Tweet - user tweet
 type Tweet struct {
-	TwitterID string `db:"twitter_id"`
+	ID      uint       `db:"id"`
+	TweetID string     `db:"tweet_id"`
+	Tweet   TweetAttrs `db:"tweet"`
 }
 
 func (t Tweet) String() string {
-	return fmt.Sprintf("Tweet %s", t.TwitterID)
+	return fmt.Sprintf("Tweet %s", t.TweetID)
+}
+
+type TweetAttrs struct {
+	IdStr                string `json:"id_str"`
+	Text                 string `json:"text"`
+	FullText             string `json:"full_text"`
+	InReplyToStatusIdStr string `json:"in_reply_to_status_id_str"`
+	InReplyToUserIdStr   string `json:"in_reply_to_user_id_str"`
+	UserId               string `json:"user_id"`
+	UserName             string `json:"user_name"`
+	UserScreenName       string `json:"user_screen_name"`
+	UserProfileImageUrl  string `json:"user_profile_image_url"`
+}
+
+func (a TweetAttrs) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
+
+func (a *TweetAttrs) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
 }
 
 // UserUseCase - represents user use cases
@@ -197,8 +227,11 @@ type UserDatastore interface {
 	InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID, lastTweetID string) error
 	GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 	InsertSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
+	UpdateSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
 
 	GetSubscriptionUserTweets(ctx context.Context, subscriptionID uuid.UUID) (SubscriptionUserTweets, error)
+
+	InsertTweet(ctx context.Context, tweet Tweet, subscriptionStateID uint) (Tweet, error)
 }
 
 type SystemUseCase interface {

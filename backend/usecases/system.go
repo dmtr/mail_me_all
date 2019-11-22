@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"strconv"
 	"sync"
 
 	"github.com/dmtr/mail_me_all/backend/models"
@@ -108,5 +109,146 @@ func (s SystemUseCase) PrepareSubscriptions(ids ...uuid.UUID) error {
 	}
 
 	log.Infof("Got subscriptions %s", subscriptions)
+
+	var wg sync.WaitGroup
+	for _, id := range subscriptions {
+		state, err := s.UserDatastore.InsertSubscriptionState(
+			context.Background(), models.SubscriptionState{SubscriptionID: id, Status: "PREPARING"})
+		if err != nil {
+			log.Errorf("Can nor insert subscription state got error %s", err)
+			continue
+		}
+
+		subscription, err := s.UserDatastore.GetSubscription(context.Background(), id)
+		if err != nil {
+			log.Errorf("Can not get subscription %s, got error %s", id, err)
+			continue
+		}
+		log.Infof("Got subscription %s", subscription)
+
+		user, err := s.UserDatastore.GetTwitterUser(context.Background(), subscription.UserID)
+		if err != nil {
+			log.Errorf("Can not get user %s, got error %s", subscription.UserID, err)
+			continue
+		}
+
+		log.Infof("Got user %s", user)
+
+		wg.Add(1)
+		go s.prepareSubscription(subscription, user, state, &wg)
+	}
+
+	wg.Wait()
+
 	return err
+}
+
+func (s SystemUseCase) prepareSubscription(subscription models.Subscription, user models.TwitterUser, subscriptionState models.SubscriptionState, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	subscriptionUserTweets, err := s.UserDatastore.GetSubscriptionUserTweets(context.Background(), subscription.ID)
+	if err != nil {
+		log.Errorf("Can't get subscription user' tweets %s", err)
+		return
+	}
+
+	channels := make([]<-chan models.Tweet, 0)
+	for _, u := range subscription.UserList {
+		ch := s.getTweets(subscriptionUserTweets, u, user.AccessToken, user.TokenSecret, user.TwitterID)
+		channels = append(channels, ch)
+	}
+
+	for t := range merge(channels) {
+		log.Infof("Got tweet %s", t)
+		_, err := s.UserDatastore.InsertTweet(context.Background(), t, subscriptionState.ID)
+		if err != nil {
+			log.Errorf("Can't insert tweet %s", err)
+		}
+
+		subscriptionState.Status = "READY"
+		_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
+		if err != nil {
+			log.Errorf("Can't update subscription state %s  %s", subscriptionState, err)
+		}
+
+	}
+
+}
+
+func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserTweets, user models.TwitterUserSearchResult, accessToken, tokenSecret, twitterID string) <-chan models.Tweet {
+	ch := make(chan models.Tweet)
+
+	lastTweet, ok := subscriptionUserTweets.Tweets[user.TwitterID]
+	if !ok {
+		log.Errorf("Can't find last tweet for user %s", user)
+		close(ch)
+		return ch
+	}
+
+	sinceID, err := strconv.ParseInt(lastTweet.LastTweetID, 10, 64)
+	if err != nil {
+		log.Errorf("Can't parse last tweet id %s %s", lastTweet, err)
+		close(ch)
+		return ch
+	}
+
+	go func() {
+		req := pb.UserTimelineRequest{
+			AccessToken:  accessToken,
+			AccessSecret: tokenSecret,
+			TwitterId:    twitterID,
+			ScreenName:   user.ScreenName,
+			SinceId:      sinceID,
+		}
+
+		tweets, err := s.RpcClient.GetUserTimeline(context.Background(), &req)
+		if err != nil {
+			log.Errorf("Can not get timeline for user %s", user)
+		}
+
+		for _, t := range tweets.Tweets {
+			ch <- models.Tweet{
+				TweetID: t.IdStr,
+				Tweet: models.TweetAttrs{
+					IdStr:                t.IdStr,
+					Text:                 t.Text,
+					FullText:             t.FullText,
+					InReplyToStatusIdStr: t.InReplyToStatusIdStr,
+					InReplyToUserIdStr:   t.InReplyToUserIdStr,
+					UserId:               t.UserId,
+					UserName:             t.UserName,
+					UserScreenName:       t.UserScreenName,
+					UserProfileImageUrl:  t.UserProfileImageUrl,
+				},
+			}
+		}
+		close(ch)
+	}()
+
+	return ch
+}
+
+func merge(channels []<-chan models.Tweet) <-chan models.Tweet {
+	var wg sync.WaitGroup
+	out := make(chan models.Tweet)
+
+	output := func(c <-chan models.Tweet) {
+		for t := range c {
+			out <- t
+		}
+		wg.Done()
+	}
+
+	wg.Add(len(channels))
+
+	for _, c := range channels {
+		go output(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return out
 }
