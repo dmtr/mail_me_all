@@ -27,3 +27,14 @@ func prepareSubscriptions(a *app.App, ids ...uuid.UUID) {
 
 	log.Info("Command prepareSubscriptions finished")
 }
+
+func sendSubscriptions(a *app.App, ids ...uuid.UUID) {
+	log.Info("Executing sendSubscriptions command")
+
+	err := a.UseCases.SendSubscriptions(ids...)
+	if err != nil {
+		log.Errorf("Got error executing command %s", err)
+	}
+
+	log.Info("Command sendSubscriptions finished")
+}

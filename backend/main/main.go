@@ -26,6 +26,7 @@ const (
 	runTwProxy string = "run-tw-proxy"
 	check      string = "check-new-subscriptions"
 	prepare    string = "prepare-subscriptions"
+	send       string = "send-subscriptions"
 )
 
 func startAPIServer(app *app.App) {
@@ -114,6 +115,9 @@ func main() {
 	} else if cmd == prepare {
 		a = app.GetApp(false, true, true, true)
 		prepareSubscriptions(a, IDs...)
+	} else if cmd == send {
+		a = app.GetApp(false, true, true, true)
+		sendSubscriptions(a, IDs...)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)

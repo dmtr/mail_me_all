@@ -253,27 +253,59 @@ func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserT
 	return ch
 }
 
-func merge(channels []<-chan models.Tweet) <-chan models.Tweet {
+func (s SystemUseCase) SendSubscriptions(ids ...uuid.UUID) error {
+	states, err := s.UserDatastore.GetReadySubscriptionsStates(context.Background(), ids...)
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Got subscriptions %s", states)
+
 	var wg sync.WaitGroup
-	out := make(chan models.Tweet)
 
-	output := func(c <-chan models.Tweet) {
-		for t := range c {
-			out <- t
+	for _, st := range states {
+		st.Status = models.Sending
+		state, err := s.UserDatastore.UpdateSubscriptionState(context.Background(), st)
+		if err != nil {
+			log.Errorf("Can not update subscription state got error %s", err)
+			continue
 		}
-		wg.Done()
+
+		subscription, err := s.UserDatastore.GetSubscription(context.Background(), state.SubscriptionID)
+		if err != nil {
+			log.Errorf("Can not get subscription %s, got error %s", state.SubscriptionID, err)
+			continue
+		}
+		log.Infof("Got subscription %s", subscription)
+
+		user, err := s.UserDatastore.GetTwitterUser(context.Background(), subscription.UserID)
+		if err != nil {
+			log.Errorf("Can not get user %s, got error %s", subscription.UserID, err)
+			continue
+		}
+
+		log.Infof("Got user %s", user)
+
+		wg.Add(1)
+		go s.sendSubscription(subscription, state, &wg)
 	}
 
-	wg.Add(len(channels))
+	wg.Wait()
+	return err
+}
 
-	for _, c := range channels {
-		go output(c)
+func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscriptionState models.SubscriptionState, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	log.Infof("SubscriptionState %+v", subscriptionState)
+
+	tweets, err := s.UserDatastore.GetSubscriptionTweets(context.Background(), subscriptionState.ID)
+	if err != nil {
+		log.Errorf("Can not get tweets for subscription %s, got error %s", subscription, err)
 	}
 
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
+	for _, tweet := range tweets {
+		log.Infof("Tweet %+v", tweet)
+	}
 
-	return out
 }
