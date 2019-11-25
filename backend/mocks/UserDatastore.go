@@ -56,6 +56,36 @@ func (_m *UserDatastore) GetNewSubscriptionsUsers(ctx context.Context, subscript
 	return r0, r1
 }
 
+// GetReadySubscriptionsStates provides a mock function with given fields: ctx, subscriptionIDs
+func (_m *UserDatastore) GetReadySubscriptionsStates(ctx context.Context, subscriptionIDs ...uuid.UUID) ([]models.SubscriptionState, error) {
+	_va := make([]interface{}, len(subscriptionIDs))
+	for _i := range subscriptionIDs {
+		_va[_i] = subscriptionIDs[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	var r0 []models.SubscriptionState
+	if rf, ok := ret.Get(0).(func(context.Context, ...uuid.UUID) []models.SubscriptionState); ok {
+		r0 = rf(ctx, subscriptionIDs...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.SubscriptionState)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, ...uuid.UUID) error); ok {
+		r1 = rf(ctx, subscriptionIDs...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetSubscription provides a mock function with given fields: ctx, subscriptionID
 func (_m *UserDatastore) GetSubscription(ctx context.Context, subscriptionID uuid.UUID) (models.Subscription, error) {
 	ret := _m.Called(ctx, subscriptionID)
@@ -70,6 +100,29 @@ func (_m *UserDatastore) GetSubscription(ctx context.Context, subscriptionID uui
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
 		r1 = rf(ctx, subscriptionID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetSubscriptionTweets provides a mock function with given fields: ctx, subscriptionStateID
+func (_m *UserDatastore) GetSubscriptionTweets(ctx context.Context, subscriptionStateID uint) ([]models.Tweet, error) {
+	ret := _m.Called(ctx, subscriptionStateID)
+
+	var r0 []models.Tweet
+	if rf, ok := ret.Get(0).(func(context.Context, uint) []models.Tweet); ok {
+		r0 = rf(ctx, subscriptionStateID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Tweet)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, subscriptionStateID)
 	} else {
 		r1 = ret.Error(1)
 	}
