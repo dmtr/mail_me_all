@@ -12,6 +12,20 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	//Preparing - subscription status
+	Preparing string = "PREPARING"
+
+	//Ready - subscription status
+	Ready string = "READY"
+
+	//Sending - subscription status
+	Sending string = "SENDING"
+
+	//Sent - subscription status
+	Sent string = "SENT"
+)
+
 // Model interface
 type Model interface {
 	String() string
@@ -42,7 +56,7 @@ func (u User) String() string {
 	return fmt.Sprintf("User: Name %s, ID %s", u.Name, u.ID)
 }
 
-// TwitterUser - represents twitter account
+// TwitterUserSearchResult - twitter user info
 type TwitterUserSearchResult struct {
 	Name          string `db:"name"`
 	TwitterID     string `db:"twitter_id"`
@@ -170,6 +184,7 @@ func (t Tweet) String() string {
 	return fmt.Sprintf("Tweet %s", t.TweetID)
 }
 
+//TweetAttrs - tweet data
 type TweetAttrs struct {
 	IdStr                string `json:"id_str"`
 	Text                 string `json:"text"`

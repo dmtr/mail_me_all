@@ -31,6 +31,31 @@ func find(slice []string, val string) (int, bool) {
 	return -1, false
 }
 
+func merge(channels []<-chan models.Tweet) <-chan models.Tweet {
+	var wg sync.WaitGroup
+	out := make(chan models.Tweet)
+
+	output := func(c <-chan models.Tweet) {
+		for t := range c {
+			out <- t
+		}
+		wg.Done()
+	}
+
+	wg.Add(len(channels))
+
+	for _, c := range channels {
+		go output(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return out
+}
+
 func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, users []string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	subscription, err := s.UserDatastore.GetSubscription(context.Background(), subscriptionID)
@@ -113,9 +138,9 @@ func (s SystemUseCase) PrepareSubscriptions(ids ...uuid.UUID) error {
 	var wg sync.WaitGroup
 	for _, id := range subscriptions {
 		state, err := s.UserDatastore.InsertSubscriptionState(
-			context.Background(), models.SubscriptionState{SubscriptionID: id, Status: "PREPARING"})
+			context.Background(), models.SubscriptionState{SubscriptionID: id, Status: models.Preparing})
 		if err != nil {
-			log.Errorf("Can nor insert subscription state got error %s", err)
+			log.Errorf("Can not insert subscription state got error %s", err)
 			continue
 		}
 
@@ -165,7 +190,7 @@ func (s SystemUseCase) prepareSubscription(subscription models.Subscription, use
 			log.Errorf("Can't insert tweet %s", err)
 		}
 
-		subscriptionState.Status = "READY"
+		subscriptionState.Status = models.Ready
 		_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
 		if err != nil {
 			log.Errorf("Can't update subscription state %s  %s", subscriptionState, err)
