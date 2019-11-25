@@ -243,8 +243,10 @@ type UserDatastore interface {
 	GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 	InsertSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
 	UpdateSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
+	GetReadySubscriptionsStates(ctx context.Context, subscriptionIDs ...uuid.UUID) ([]SubscriptionState, error)
 
 	GetSubscriptionUserTweets(ctx context.Context, subscriptionID uuid.UUID) (SubscriptionUserTweets, error)
+	GetSubscriptionTweets(ctx context.Context, subscriptionStateID uint) ([]Tweet, error)
 
 	InsertTweet(ctx context.Context, tweet Tweet, subscriptionStateID uint) (Tweet, error)
 }
@@ -252,6 +254,7 @@ type UserDatastore interface {
 type SystemUseCase interface {
 	InitSubscriptions(ids ...uuid.UUID) error
 	PrepareSubscriptions(ids ...uuid.UUID) error
+	SendSubscriptions(ids ...uuid.UUID) error
 }
 
 // UseCases - represents all use cases

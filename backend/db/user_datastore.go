@@ -569,13 +569,13 @@ func (d *UserDatastore) GetSubscriptionUserTweets(ctx context.Context, subscript
 		SubscriptionID: subscriptionID,
 		Tweets:         make(map[string]models.UserLastTweet, 0)}
 
-	for rows.Next() {
-		type row struct {
-			TwitterId   string `db:"twitter_id"`
-			ScreenName  string `db:"screen_name"`
-			LastTweetID string `db:"last_tweet_id"`
-		}
+	type row struct {
+		TwitterId   string `db:"twitter_id"`
+		ScreenName  string `db:"screen_name"`
+		LastTweetID string `db:"last_tweet_id"`
+	}
 
+	for rows.Next() {
 		var r row
 		err = rows.StructScan(&r)
 		if err != nil {
@@ -654,4 +654,87 @@ func (d *UserDatastore) InsertTweet(ctx context.Context, tweet models.Tweet, sub
 	}
 
 	return tweet, err
+}
+
+func (d *UserDatastore) GetReadySubscriptionsStates(ctx context.Context, subscriptionIDs ...uuid.UUID) ([]models.SubscriptionState, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	res := make([]models.SubscriptionState, 0)
+
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	q := psql.Select("id, subscription_id, status, created_at, updated_at FROM subscription_state").
+		Where("status = 'READY'")
+
+	if len(subscriptionIDs) > 0 {
+		q = q.Where(sq.Eq{"subscription_id": subscriptionIDs})
+	} else {
+		q = q.Where("created_at::DATE = NOW()::DATE")
+	}
+
+	sql, args, err := q.ToSql()
+	if err != nil {
+		return res, t.getError()
+	}
+
+	var rows *sqlx.Rows
+	if len(args) > 0 {
+		rows, err = t.tx.Queryx(sql, args...)
+	} else {
+		rows, err = t.tx.Queryx(sql)
+	}
+
+	if err != nil {
+		log.Errorf("Got error %s, sql %s", err, sql)
+		return []models.SubscriptionState{}, t.getError()
+	}
+
+	for rows.Next() {
+		var s models.SubscriptionState
+		err = rows.StructScan(&s)
+		if err != nil {
+			log.Errorf("Got error %s", err)
+			continue
+		}
+		res = append(res, s)
+	}
+
+	return res, t.getError()
+}
+
+func (d *UserDatastore) GetSubscriptionTweets(ctx context.Context, subscriptionStateID uint) ([]models.Tweet, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	rows, err := t.tx.Queryx("SELECT t.id, t.tweet_id, t.tweet FROM tweet t "+
+		"INNER JOIN subscription_state_tweet_m2m m ON t.id = m.tweet_id "+
+		"WHERE m.subscription_state_id = $1 "+
+		"ORDER BY t.tweet_id::BIGINT ASC", subscriptionStateID)
+
+	if err != nil {
+		log.Errorf("Got error %s", err)
+		return []models.Tweet{}, t.getError()
+	}
+
+	tweets := make([]models.Tweet, 0)
+	for rows.Next() {
+		var t models.Tweet
+		err = rows.StructScan(&t)
+		if err != nil {
+			log.Errorf("Got error %s", err)
+			continue
+		}
+		tweets = append(tweets, t)
+	}
+
+	return tweets, t.getError()
 }
