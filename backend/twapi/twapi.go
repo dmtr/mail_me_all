@@ -143,9 +143,14 @@ func (t Twitter) GetUserTimeline(accessToken, accessSecret, twitterID, screenNam
 	client := t.getSession(accessToken, accessSecret, twitterID)
 
 	trim := true
+	if count == 0 {
+		trim = false
+	}
+
 	params := tw.UserTimelineParams{
 		ScreenName: screenName,
 		TrimUser:   &trim,
+		TweetMode:  "extended",
 	}
 
 	if sinceID != 0 {
