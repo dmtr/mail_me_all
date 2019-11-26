@@ -34,6 +34,7 @@ type Config struct {
 	TwConsumerKey    string
 	TwConsumerSecret string
 	TwCallbackURL    string
+	TemplatePath     string
 }
 
 // GetConfig returns app config
@@ -53,6 +54,7 @@ func GetConfig() Config {
 	viper.SetDefault("HTTP_ONLY", 1)
 	viper.SetDefault("TESTING", 0)
 	viper.SetDefault("TW_CALLBACK_URL", "")
+	viper.SetDefault("TEMPLATE_PATH", "/app/templates/")
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -79,6 +81,7 @@ func GetConfig() Config {
 		TwConsumerKey:    viper.GetString("tw-consumer-key"),
 		TwConsumerSecret: viper.GetString("tw-consumer-secret"),
 		TwCallbackURL:    viper.GetString("TW_CALLBACK_URL"),
+		TemplatePath:     viper.GetString("TEMPLATE_PATH"),
 	}
 
 	return conf
