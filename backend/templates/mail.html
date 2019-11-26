@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <table border="0" cellpadding="4" cellspacing="0">
+    {{range .Tweets}}
+    <tr>
+      <td>
+        <a href="https://twitter.com/{{.Tweet.UserScreenName}}">
+          <img src="{{.Tweet.UserProfileImageUrl}}" alt="{{.Tweet.UserName}}"></img>
+        </a>
+      </td>
+      <td>{{.Tweet.FullText | shortener}}</td>
+      <td><a href="https://twitter.com/{{.Tweet.UserScreenName}}/status/{{.TweetID}}">link</a></td>
+    </tr>
+    {{end}}
+  </table>
+</body>
+</html>
