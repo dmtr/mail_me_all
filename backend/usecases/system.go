@@ -2,7 +2,12 @@ package usecases
 
 import (
 	"context"
+	"fmt"
+	"html/template"
+	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/dmtr/mail_me_all/backend/models"
@@ -11,6 +16,21 @@ import (
 
 	log "github.com/sirupsen/logrus"
 )
+
+var once sync.Once
+var shortenerRegex *regexp.Regexp
+
+func getShortenerRegexp() *regexp.Regexp {
+	once.Do(func() {
+		r, err := regexp.Compile("(https://t.co/[A-Za-z0-9]+)")
+		if err != nil {
+			log.Errorf("Can't compile regex %s", err)
+		} else {
+			shortenerRegex = r
+		}
+	})
+	return shortenerRegex
+}
 
 // SystemUseCase implementation
 type SystemUseCase struct {
@@ -184,7 +204,7 @@ func (s SystemUseCase) prepareSubscription(subscription models.Subscription, use
 	}
 
 	for t := range merge(channels) {
-		log.Infof("Got tweet %s", t)
+		log.Infof("Got tweet %s", t.Tweet.FullText)
 		_, err := s.UserDatastore.InsertTweet(context.Background(), t, subscriptionState.ID)
 		if err != nil {
 			log.Errorf("Can't insert tweet %s", err)
@@ -253,13 +273,24 @@ func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserT
 	return ch
 }
 
-func (s SystemUseCase) SendSubscriptions(ids ...uuid.UUID) error {
+func (s SystemUseCase) SendSubscriptions(templatePath string, ids ...uuid.UUID) error {
 	states, err := s.UserDatastore.GetReadySubscriptionsStates(context.Background(), ids...)
 	if err != nil {
 		return err
 	}
 
 	log.Infof("Got subscriptions %s", states)
+
+	r := getShortenerRegexp()
+	shortener := func(s string) template.HTML {
+		return template.HTML(r.ReplaceAllStringFunc(s, func(t string) string { return fmt.Sprintf("<a href=\"%s\">%s</a>", t, t) }))
+	}
+
+	funcMap := template.FuncMap{
+		"shortener": shortener,
+	}
+
+	tmpl := template.Must(template.New("mail.html").Funcs(funcMap).ParseFiles(filepath.Join(templatePath, "mail.html")))
 
 	var wg sync.WaitGroup
 
@@ -287,14 +318,14 @@ func (s SystemUseCase) SendSubscriptions(ids ...uuid.UUID) error {
 		log.Infof("Got user %s", user)
 
 		wg.Add(1)
-		go s.sendSubscription(subscription, state, &wg)
+		go s.sendSubscription(subscription, state, tmpl, &wg)
 	}
 
 	wg.Wait()
 	return err
 }
 
-func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscriptionState models.SubscriptionState, wg *sync.WaitGroup) {
+func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscriptionState models.SubscriptionState, tmpl *template.Template, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	log.Infof("SubscriptionState %+v", subscriptionState)
@@ -304,8 +335,15 @@ func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscr
 		log.Errorf("Can not get tweets for subscription %s, got error %s", subscription, err)
 	}
 
-	for _, tweet := range tweets {
-		log.Infof("Tweet %+v", tweet)
+	type TemplateData struct {
+		Tweets []models.Tweet
 	}
 
+	var buf strings.Builder
+	err = tmpl.Execute(&buf, TemplateData{Tweets: tweets})
+	if err != nil {
+		log.Errorf("err %s", err)
+	} else {
+		log.Infof("html %s", buf.String())
+	}
 }

@@ -254,7 +254,7 @@ type UserDatastore interface {
 type SystemUseCase interface {
 	InitSubscriptions(ids ...uuid.UUID) error
 	PrepareSubscriptions(ids ...uuid.UUID) error
-	SendSubscriptions(ids ...uuid.UUID) error
+	SendSubscriptions(templatePath string, ids ...uuid.UUID) error
 }
 
 // UseCases - represents all use cases

@@ -31,7 +31,7 @@ func prepareSubscriptions(a *app.App, ids ...uuid.UUID) {
 func sendSubscriptions(a *app.App, ids ...uuid.UUID) {
 	log.Info("Executing sendSubscriptions command")
 
-	err := a.UseCases.SendSubscriptions(ids...)
+	err := a.UseCases.SendSubscriptions(a.Conf.TemplatePath, ids...)
 	if err != nil {
 		log.Errorf("Got error executing command %s", err)
 	}
