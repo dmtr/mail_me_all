@@ -18,6 +18,7 @@ RUN apk add --no-cache tzdata ca-certificates \
 RUN adduser -S -D -H -h /app appuser
 USER appuser
 COPY --from=builder /app/mailmeapp /app/
+COPY --from=builder /app/backend/templates /app/templates
 WORKDIR /app
 EXPOSE ${APP_PORT:-8080}
 CMD ["/app/mailmeapp"]
