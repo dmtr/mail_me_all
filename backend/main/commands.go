@@ -6,12 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	initKey    = 1
-	prepareKey = 2
-	sendKey    = 3
-)
-
 func checkNewSubscriptions(a *app.App, ids ...uuid.UUID) {
 	log.Info("Executing checkNewSubscriptions command")
 

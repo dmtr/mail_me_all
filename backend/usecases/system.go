@@ -383,6 +383,9 @@ func (s SystemUseCase) SendSubscriptions(templatePath string, ids ...uuid.UUID) 
 	}
 
 	wg.Wait()
+
+	err = s.UserDatastore.UpdateSubscriptionUserStateTweets(context.Background())
+
 	return err
 }
 
@@ -440,5 +443,6 @@ func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscr
 	_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
 	if err != nil {
 		log.Errorf("Can not update subscription state got error %s", err)
+		return
 	}
 }

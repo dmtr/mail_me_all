@@ -463,6 +463,34 @@ func (_m *UserDatastore) UpdateSubscriptionState(ctx context.Context, state mode
 	return r0, r1
 }
 
+// UpdateSubscriptionUserState provides a mock function with given fields: ctx, subscriptionID, userTwitterID, lastTweetID
+func (_m *UserDatastore) UpdateSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID string, lastTweetID string) error {
+	ret := _m.Called(ctx, subscriptionID, userTwitterID, lastTweetID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string, string) error); ok {
+		r0 = rf(ctx, subscriptionID, userTwitterID, lastTweetID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// UpdateSubscriptionUserStateTweets provides a mock function with given fields: ctx
+func (_m *UserDatastore) UpdateSubscriptionUserStateTweets(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdateTwitterUser provides a mock function with given fields: ctx, twitterUser
 func (_m *UserDatastore) UpdateTwitterUser(ctx context.Context, twitterUser models.TwitterUser) (models.TwitterUser, error) {
 	ret := _m.Called(ctx, twitterUser)

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/dmtr/mail_me_all/backend/models"
@@ -461,6 +462,65 @@ func (d *UserDatastore) InsertSubscriptionUserState(ctx context.Context, subscri
 	}()
 
 	_, err = t.tx.Exec("INSERT INTO subscription_user_state (subscription_id, user_twitter_id, last_tweet_id) VALUES ($1, $2, $3)", subscriptionID, userTwitterID, lastTweetID)
+
+	return err
+}
+
+func (d *UserDatastore) UpdateSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID string, lastTweetID string) error {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	_, err = t.tx.Exec("UPDATE subscription_user_state SET last_tweet_id = $1 WHERE subscription_id = $2 AND user_twitter_id = $3", lastTweetID, subscriptionID, userTwitterID)
+
+	return err
+}
+
+func (d *UserDatastore) UpdateSubscriptionUserStateTweets(ctx context.Context) error {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	rows, err := t.tx.Queryx("SELECT t.tweet->>'user_id' AS user_id, st.subscription_id, MAX(t.tweet_id::BIGINT) AS tweet_id " +
+		"FROM subscription_state st " +
+		"INNER JOIN subscription_state_tweet_m2m m ON m.subscription_state_id = st.id " +
+		"INNER JOIN tweet t ON t.id = m.tweet_id " +
+		"WHERE st.status = 'SENT' AND st.created_at::DATE = NOW()::DATE " +
+		"GROUP  BY t.tweet->>'user_id', subscription_id")
+
+	if err != nil {
+		return err
+	}
+
+	type row struct {
+		UserID         string    `db:"user_id"`
+		SubscriptionID uuid.UUID `db:"subscription_id"`
+		TweetID        uint      `db:"tweet_id"`
+	}
+
+	var results []row
+
+	for rows.Next() {
+		var r row
+		err = rows.StructScan(&r)
+		if err != nil {
+			log.Errorf("Can't scan %s", err)
+			continue
+		}
+
+		results = append(results, r)
+	}
+
+	for _, r := range results {
+		lastTweetID := strconv.FormatUint(uint64(r.TweetID), 10)
+		err = d.UpdateSubscriptionUserState(context.WithValue(ctx, "Tx", t.tx), r.SubscriptionID, r.UserID, lastTweetID)
+	}
 
 	return err
 }

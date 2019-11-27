@@ -247,10 +247,13 @@ type UserDatastore interface {
 
 	GetNewSubscriptionsUsers(ctx context.Context, subscriptionIDs ...uuid.UUID) (map[uuid.UUID][]string, error)
 	InsertSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID, lastTweetID string) error
+	UpdateSubscriptionUserState(ctx context.Context, subscriptionID uuid.UUID, userTwitterID, lastTweetID string) error
+
 	GetTodaySubscriptionsIDs(ctx context.Context) ([]uuid.UUID, error)
 	InsertSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
 	UpdateSubscriptionState(ctx context.Context, state SubscriptionState) (SubscriptionState, error)
 	GetReadySubscriptionsStates(ctx context.Context, subscriptionIDs ...uuid.UUID) ([]SubscriptionState, error)
+	UpdateSubscriptionUserStateTweets(ctx context.Context) error
 
 	GetSubscriptionUserTweets(ctx context.Context, subscriptionID uuid.UUID) (SubscriptionUserTweets, error)
 	GetSubscriptionTweets(ctx context.Context, subscriptionStateID uint) ([]Tweet, error)
