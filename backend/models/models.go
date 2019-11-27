@@ -256,6 +256,9 @@ type UserDatastore interface {
 	GetSubscriptionTweets(ctx context.Context, subscriptionStateID uint) ([]Tweet, error)
 
 	InsertTweet(ctx context.Context, tweet Tweet, subscriptionStateID uint) (Tweet, error)
+
+	AcquireLock(ctx context.Context, key uint) (bool, error)
+	ReleaseLock(ctx context.Context, key uint) (bool, error)
 }
 
 type SystemUseCase interface {

@@ -12,6 +12,27 @@ type UserDatastore struct {
 	mock.Mock
 }
 
+// AcquireLock provides a mock function with given fields: ctx, key
+func (_m *UserDatastore) AcquireLock(ctx context.Context, key uint) (bool, error) {
+	ret := _m.Called(ctx, key)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, uint) bool); ok {
+		r0 = rf(ctx, key)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // DeleteSubscription provides a mock function with given fields: ctx, subscription
 func (_m *UserDatastore) DeleteSubscription(ctx context.Context, subscription models.Subscription) error {
 	ret := _m.Called(ctx, subscription)
@@ -372,6 +393,27 @@ func (_m *UserDatastore) InsertUser(ctx context.Context, user models.User) (mode
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, models.User) error); ok {
 		r1 = rf(ctx, user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ReleaseLock provides a mock function with given fields: ctx, key
+func (_m *UserDatastore) ReleaseLock(ctx context.Context, key uint) (bool, error) {
+	ret := _m.Called(ctx, key)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, uint) bool); ok {
+		r0 = rf(ctx, key)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, key)
 	} else {
 		r1 = ret.Error(1)
 	}

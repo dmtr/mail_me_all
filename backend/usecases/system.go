@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"html/template"
 	"path/filepath"
@@ -16,6 +17,12 @@ import (
 	"github.com/google/uuid"
 
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	initKey    = 1
+	prepareKey = 2
+	sendKey    = 3
 )
 
 var once sync.Once
@@ -132,6 +139,22 @@ func (s SystemUseCase) initSubscription(subscriptionID uuid.UUID, users []string
 }
 
 func (s SystemUseCase) InitSubscriptions(ids ...uuid.UUID) error {
+	lock, err := s.UserDatastore.AcquireLock(context.Background(), initKey)
+	if err != nil {
+		return err
+	}
+
+	if !lock {
+		return errors.New("Can not acquire lock")
+	}
+
+	defer func() {
+		_, err = s.UserDatastore.ReleaseLock(context.Background(), initKey)
+		if err != nil {
+			log.Errorf("Can not release lock %s", err)
+		}
+	}()
+
 	subscriptions, err := s.UserDatastore.GetNewSubscriptionsUsers(context.Background(), ids...)
 	if err != nil {
 		return err
@@ -150,8 +173,23 @@ func (s SystemUseCase) InitSubscriptions(ids ...uuid.UUID) error {
 }
 
 func (s SystemUseCase) PrepareSubscriptions(ids ...uuid.UUID) error {
+	lock, err := s.UserDatastore.AcquireLock(context.Background(), prepareKey)
+	if err != nil {
+		return err
+	}
+
+	if !lock {
+		return errors.New("Can not acquire lock")
+	}
+
+	defer func() {
+		_, err = s.UserDatastore.ReleaseLock(context.Background(), prepareKey)
+		if err != nil {
+			log.Errorf("Can not release lock %s", err)
+		}
+	}()
+
 	var subscriptions []uuid.UUID
-	var err error
 
 	if len(ids) == 0 {
 		subscriptions, err = s.UserDatastore.GetTodaySubscriptionsIDs(context.Background())
@@ -281,6 +319,22 @@ func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserT
 }
 
 func (s SystemUseCase) SendSubscriptions(templatePath string, ids ...uuid.UUID) error {
+	lock, err := s.UserDatastore.AcquireLock(context.Background(), sendKey)
+	if err != nil {
+		return err
+	}
+
+	if !lock {
+		return errors.New("Can not acquire lock")
+	}
+
+	defer func() {
+		_, err = s.UserDatastore.ReleaseLock(context.Background(), sendKey)
+		if err != nil {
+			log.Errorf("Can not release lock %s", err)
+		}
+	}()
+
 	states, err := s.UserDatastore.GetReadySubscriptionsStates(context.Background(), ids...)
 	if err != nil {
 		return err

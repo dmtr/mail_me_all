@@ -738,3 +738,31 @@ func (d *UserDatastore) GetSubscriptionTweets(ctx context.Context, subscriptionS
 
 	return tweets, t.getError()
 }
+
+func (d *UserDatastore) AcquireLock(ctx context.Context, key uint) (bool, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	var res bool
+	err = t.tx.Get(&res, "SELECT pg_try_advisory_lock($1)", key)
+
+	return res, err
+}
+
+func (d *UserDatastore) ReleaseLock(ctx context.Context, key uint) (bool, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	var res bool
+	err = t.tx.Get(&res, "SELECT pg_advisory_unlock($1)", key)
+
+	return res, err
+}
