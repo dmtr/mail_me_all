@@ -35,6 +35,9 @@ type Config struct {
 	TwConsumerSecret string
 	TwCallbackURL    string
 	TemplatePath     string
+	MgDomain         string
+	MgAPIKEY         string
+	From             string
 }
 
 // GetConfig returns app config
@@ -55,6 +58,9 @@ func GetConfig() Config {
 	viper.SetDefault("TESTING", 0)
 	viper.SetDefault("TW_CALLBACK_URL", "")
 	viper.SetDefault("TEMPLATE_PATH", "/app/templates/")
+	viper.SetDefault("MG_DOMAIN", "")
+	viper.SetDefault("MG_APIKEY", "")
+	viper.SetDefault("FROM", "")
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -82,6 +88,9 @@ func GetConfig() Config {
 		TwConsumerSecret: viper.GetString("tw-consumer-secret"),
 		TwCallbackURL:    viper.GetString("TW_CALLBACK_URL"),
 		TemplatePath:     viper.GetString("TEMPLATE_PATH"),
+		MgDomain:         viper.GetString("MG_DOMAIN"),
+		MgAPIKEY:         viper.GetString("MG_APIKEY"),
+		From:             viper.GetString("FROM"),
 	}
 
 	return conf
