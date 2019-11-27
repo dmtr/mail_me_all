@@ -43,10 +43,10 @@ func initLogger(loglevel log.Level) {
 	log.SetReportCaller(true)
 }
 
-func getUseCases(db_ *sqlx.DB, client pb.TwProxyServiceClient) *models.UseCases {
+func getUseCases(db_ *sqlx.DB, client pb.TwProxyServiceClient, conf config.Config) *models.UseCases {
 	userDatastore := db.NewUserDatastore(db_)
 	userUseCase := usecases.NewUserUseCase(userDatastore, client)
-	systemUseCase := usecases.NewSystemUseCase(userDatastore, client)
+	systemUseCase := usecases.NewSystemUseCase(userDatastore, client, conf.MgDomain, conf.MgAPIKEY, conf.From)
 	return models.NewUseCases(userUseCase, systemUseCase)
 }
 
@@ -114,7 +114,7 @@ func GetApp(withAPI bool, opts ...bool) *App {
 
 	if withUseCases {
 		client := rpc.GetRpcClient(conn)
-		usecases = getUseCases(db_, client)
+		usecases = getUseCases(db_, client, conf)
 	}
 
 	var router *gin.Engine

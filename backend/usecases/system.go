@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/dmtr/mail_me_all/backend/mail"
 	"github.com/dmtr/mail_me_all/backend/models"
 	pb "github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/google/uuid"
@@ -36,10 +37,18 @@ func getShortenerRegexp() *regexp.Regexp {
 type SystemUseCase struct {
 	UserDatastore models.UserDatastore
 	RpcClient     pb.TwProxyServiceClient
+	MgDomain      string
+	MgAPIKEY      string
+	From          string
 }
 
-func NewSystemUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient) *SystemUseCase {
-	return &SystemUseCase{UserDatastore: datastore, RpcClient: client}
+func NewSystemUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient, mgDomain, mgApiKey, from string) *SystemUseCase {
+	return &SystemUseCase{
+		UserDatastore: datastore,
+		RpcClient:     client,
+		MgDomain:      mgDomain,
+		MgAPIKEY:      mgApiKey,
+		From:          from}
 }
 
 func find(slice []string, val string) (int, bool) {
@@ -209,15 +218,13 @@ func (s SystemUseCase) prepareSubscription(subscription models.Subscription, use
 		if err != nil {
 			log.Errorf("Can't insert tweet %s", err)
 		}
-
-		subscriptionState.Status = models.Ready
-		_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
-		if err != nil {
-			log.Errorf("Can't update subscription state %s  %s", subscriptionState, err)
-		}
-
 	}
 
+	subscriptionState.Status = models.Ready
+	_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
+	if err != nil {
+		log.Errorf("Can't update subscription state %s  %s", subscriptionState, err)
+	}
 }
 
 func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserTweets, user models.TwitterUserSearchResult, accessToken, tokenSecret, twitterID string) <-chan models.Tweet {
@@ -333,6 +340,22 @@ func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscr
 	tweets, err := s.UserDatastore.GetSubscriptionTweets(context.Background(), subscriptionState.ID)
 	if err != nil {
 		log.Errorf("Can not get tweets for subscription %s, got error %s", subscription, err)
+		subscriptionState.Status = models.Failed
+		_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
+		if err != nil {
+			log.Errorf("Can not update subscription state got error %s", err)
+		}
+		return
+	}
+
+	if len(tweets) == 0 {
+		log.Warnf("No tweets found for subscription %s", subscription)
+		subscriptionState.Status = models.Sent
+		_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
+		if err != nil {
+			log.Errorf("Can not update subscription state got error %s", err)
+		}
+		return
 	}
 
 	type TemplateData struct {
@@ -343,7 +366,25 @@ func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscr
 	err = tmpl.Execute(&buf, TemplateData{Tweets: tweets})
 	if err != nil {
 		log.Errorf("err %s", err)
+		subscriptionState.Status = models.Failed
+		_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
+		if err != nil {
+			log.Errorf("Can not update subscription state got error %s", err)
+		}
+		return
+	}
+
+	log.Debugf("html %s", buf.String())
+
+	err = mail.SendEmail(s.MgDomain, s.MgAPIKEY, s.From, subscription.Email, subscription.GetSubject(), buf.String())
+
+	if err != nil {
+		subscriptionState.Status = models.Failed
 	} else {
-		log.Infof("html %s", buf.String())
+		subscriptionState.Status = models.Sent
+	}
+	_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
+	if err != nil {
+		log.Errorf("Can not update subscription state got error %s", err)
 	}
 }

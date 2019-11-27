@@ -24,6 +24,9 @@ const (
 
 	//Sent - subscription status
 	Sent string = "SENT"
+
+	//Failed - subscription status
+	Failed string = "FAILED"
 )
 
 // Model interface
@@ -104,6 +107,10 @@ type Subscription struct {
 
 func (s Subscription) String() string {
 	return fmt.Sprintf("Subscription: ID %s, UserID %s, Title %s, users amount %d", s.ID, s.UserID, s.Title, len(s.UserList))
+}
+
+func (s Subscription) GetSubject() string {
+	return fmt.Sprintf("New Issue of %s", s.Title)
 }
 
 func (s Subscription) Equal(another Subscription) bool {
