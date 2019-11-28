@@ -7,7 +7,15 @@
             <v-icon>mdi-home</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title>Home</v-list-item-title>
+            <v-btn text to="/">Home</v-btn>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item>
+          <v-list-item-action>
+            <v-icon>mdi-account-settings</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-btn text to="/settings">Settings</v-btn>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -17,15 +25,7 @@
       <v-toolbar-title>Updater</v-toolbar-title>
     </v-app-bar>
     <v-content>
-      <div v-if="isUserLoaded">
-        <div v-if="isUserSignedIn">
-          <SubscriptionsList v-bind:subscriptions="subscriptions" />
-        </div>
-        <div v-else>
-          <Welcome />
-        </div>
-      </div>
-      <div v-else>Loading...</div>
+      <router-view></router-view>
     </v-content>
     <v-footer color="blue" app>
       <span class="white--text">&copy; 2019</span>
@@ -34,19 +34,13 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
-import Welcome from "./components/Welcome";
-import SubscriptionsList from "./components/SubscriptionsList";
+import { mapActions } from "vuex";
 
 export default {
   name: "App",
-  computed: {
-    ...mapGetters(["isUserSignedIn", "isUserLoaded", "subscriptions"])
-  },
-  components: {
-    Welcome,
-    SubscriptionsList
-  },
+  data: () => ({
+    drawer: null
+  }),
   methods: {
     ...mapActions(["getUser", "getSubscriptions"]),
     async loadData() {
@@ -58,9 +52,6 @@ export default {
   },
   created: function() {
     this.loadData();
-  },
-  data: () => ({
-    drawer: null
-  })
+  }
 };
 </script>
