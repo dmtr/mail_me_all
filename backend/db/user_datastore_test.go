@@ -159,6 +159,35 @@ func testInsertAndUpdateTwitterUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore)
 	assert.Equal(t, twitterUser, fromDb)
 }
 
+func testRemoveUser(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	u, err := insertUser(d, ctx)
+	assert.NoError(t, err)
+
+	twitterUser := models.TwitterUser{
+		UserID:        u.ID,
+		TwitterID:     "111",
+		AccessToken:   "some-token",
+		TokenSecret:   "some-secret",
+		ProfileIMGURL: "https://some_url",
+	}
+	_, err = d.InsertTwitterUser(ctx, twitterUser)
+	assert.NoError(t, err)
+
+	err = d.RemoveUser(ctx, u.ID)
+	assert.NoError(t, err)
+
+	_, err = d.GetUser(ctx, u.ID)
+	assert.Error(t, err)
+	e, _ := err.(*DbError)
+	assert.True(t, e.HasNoRows())
+
+	_, err = d.GetTwitterUserByID(ctx, twitterUser.TwitterID)
+	assert.Error(t, err)
+	e, _ = err.(*DbError)
+	assert.True(t, e.HasNoRows())
+}
+
 func testInsertSubscription(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	ctx := context.WithValue(context.Background(), "Tx", tx)
 	u, err := insertUser(d, ctx)
@@ -336,6 +365,7 @@ func TestUserDatastore(t *testing.T) {
 		"TestInsertAndUpdateTwitterUser": testInsertAndUpdateTwitterUser,
 		"TestGetUser":                    testGetUser,
 		"TestUpdateUser":                 testUpdateUser,
+		"TestRemoveUser":                 testRemoveUser,
 		"TestInsertSubscription":         testInsertSubscription,
 		"TestUpdatetSubscription":        testUpdateSubscription,
 		"TestDeleteSubscription":         testDeleteSubscription,

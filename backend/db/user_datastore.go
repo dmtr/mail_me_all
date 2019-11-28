@@ -131,6 +131,24 @@ func (d *UserDatastore) GetUser(ctx context.Context, userID uuid.UUID) (models.U
 
 }
 
+func (d *UserDatastore) RemoveUser(ctx context.Context, userID uuid.UUID) error {
+	log.Debugf("Going to remove user %s", userID)
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	_, err = t.tx.Exec("DELETE FROM user_account WHERE id = $1", userID)
+	if err != nil {
+		log.Error(err.Error() + fmt.Sprintf(" removing user: %s", userID))
+		return t.getError()
+	}
+	return t.getError()
+
+}
+
 func (d *UserDatastore) GetTwitterUserByID(ctx context.Context, twitterUserID string) (models.TwitterUser, error) {
 	var err error
 	t := getTransaction(ctx, d.DB, &err)
