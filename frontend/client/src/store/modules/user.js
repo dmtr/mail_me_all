@@ -4,7 +4,8 @@ import {
   getSubscriptions,
   createSubscription,
   updateSubscription,
-  deleteSubscription
+  deleteSubscription,
+  deleteAccount
 } from "../../api";
 
 const state = {
@@ -50,6 +51,14 @@ const actions = {
       commit("setSubscriptions", res.data);
     }
     return res;
+  },
+
+  async deleteAccount({ commit }) {
+    const res = await deleteAccount();
+    if (!res.error) {
+      commit("setUser", null);
+      commit("setSubscriptions", []);
+    }
   }
 };
 
