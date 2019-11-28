@@ -53,6 +53,7 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 		api.POST("/subscriptions", middlewares.TestTransactionlMiddleware(), addSubscription(usecases))
 		api.PUT("/subscriptions", middlewares.TestTransactionlMiddleware(), updateSubscription(usecases))
 		api.DELETE("/subscriptions/:id", middlewares.TestTransactionlMiddleware(), deleteSubscription(usecases))
+		api.DELETE("/user", middlewares.TestTransactionlMiddleware(), deleteAccount(usecases))
 	} else {
 		router.GET("/oauth/tw/signin", gin.WrapH(twitter.LoginHandler(oauth1Config, nil)))
 		router.GET("/oauth/tw/callback", middlewares.TransactionlMiddleware(db), processTwitterCallback(conf, oauth1Config, usecases))
@@ -64,5 +65,6 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 		api.GET("/subscriptions", middlewares.TransactionlMiddleware(db), getSubscriptions(usecases))
 		api.PUT("/subscriptions", middlewares.TransactionlMiddleware(db), updateSubscription(usecases))
 		api.DELETE("/subscriptions/:id", middlewares.TransactionlMiddleware(db), deleteSubscription(usecases))
+		api.DELETE("/user", middlewares.TransactionlMiddleware(db), deleteAccount(usecases))
 	}
 }

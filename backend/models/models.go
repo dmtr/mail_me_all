@@ -226,6 +226,7 @@ type UserUseCase interface {
 	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
 	UpdateSubscription(ctx context.Context, userID uuid.UUID, subscription Subscription) (Subscription, error)
 	DeleteSubscription(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
+	DeleteAccount(ctx context.Context, userID uuid.UUID) error
 }
 
 // UserDatastore - represents all user related database methods
@@ -233,6 +234,7 @@ type UserDatastore interface {
 	InsertUser(ctx context.Context, user User) (User, error)
 	UpdateUser(ctx context.Context, user User) (User, error)
 	GetUser(ctx context.Context, userID uuid.UUID) (User, error)
+	RemoveUser(ctx context.Context, userID uuid.UUID) error
 
 	InsertTwitterUser(ctx context.Context, twitterUser TwitterUser) (TwitterUser, error)
 	UpdateTwitterUser(ctx context.Context, twitterUser TwitterUser) (TwitterUser, error)

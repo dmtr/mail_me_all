@@ -130,6 +130,14 @@ func testDeleteSubscriptionNotAuth(t *testing.T, router *gin.Engine, datastoreMo
 	datastoreMock.AssertNumberOfCalls(t, "GetSubscription", 1)
 }
 
+func testDeleteAccountOk(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	uid, _ := uuid.Parse(testUserID)
+	datastoreMock.On("RemoveUser", mock.Anything, uid).Return(nil)
+
+	w := performDeleteRequest(router, "/api/user", nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
 func TestUserEndpoints(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestGetUserOk":                    testGetUserOk,
@@ -139,6 +147,7 @@ func TestUserEndpoints(t *testing.T) {
 		"TestUpdateSubscriptionNotFound":   testUpdateSubscriptionNotFound,
 		"TestAddSubscriptionUserNotFound":  testAddSubscriptionUserNotFound,
 		"TestDeleteSubscriptionNotAuth":    testDeleteSubscriptionNotAuth,
+		"TestDeleteAccountOk":              testDeleteAccountOk,
 	}
 	runTests(tests, t)
 }

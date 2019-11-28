@@ -418,3 +418,45 @@ func deleteSubscription(usecases models.UserUseCase) gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{})
 	}
 }
+
+func deleteAccount(usecases models.UserUseCase) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid := getUserID(c)
+		userID, err := uuid.Parse(uid)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
+			return
+		}
+
+		ctx, err := getContextWithTransaction(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
+			return
+		}
+
+		err = usecases.DeleteAccount(ctx, userID)
+		if err != nil {
+			log.Errorf("Can not delete account %s, got error %s", userID, err)
+			e, _ := err.(*useCases.UseCaseError)
+			status := http.StatusInternalServerError
+
+			if e.Code() == errors.NotFound {
+				status = http.StatusNotFound
+			} else if e.Code() == errors.AuthRequired {
+				status = http.StatusUnauthorized
+			}
+
+			c.JSON(status, gin.H{"code": e.Code()})
+			return
+		}
+
+		s := sessions.Default(c)
+		s.Clear()
+		err = s.Save()
+		if err != nil {
+			log.Errorf("Can not save session %s", err)
+		}
+
+		c.JSON(http.StatusOK, gin.H{})
+	}
+}
