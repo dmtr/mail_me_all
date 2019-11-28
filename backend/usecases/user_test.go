@@ -26,7 +26,7 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 	datastoreMock := new(mocks.UserDatastore)
 	clientMock := new(mocks.TwProxyServiceClient)
 	userUseCase := NewUserUseCase(datastoreMock, clientMock)
-	systemUseCase := NewSystemUseCase(datastoreMock, clientMock)
+	systemUseCase := NewSystemUseCase(datastoreMock, clientMock, conf.MgDomain, conf.MgAPIKEY, conf.From)
 	usecases := models.NewUseCases(userUseCase, systemUseCase)
 
 	for name, fn := range tests {

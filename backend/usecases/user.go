@@ -189,3 +189,12 @@ func (u UserUseCase) DeleteSubscription(ctx context.Context, userID uuid.UUID, s
 
 	return nil
 }
+
+func (u UserUseCase) DeleteAccount(ctx context.Context, userID uuid.UUID) error {
+	err := u.UserDatastore.RemoveUser(ctx, userID)
+	if err != nil {
+		return NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	return err
+}

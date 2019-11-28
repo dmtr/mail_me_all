@@ -261,7 +261,7 @@ func (s SystemUseCase) prepareSubscription(subscription models.Subscription, use
 	subscriptionState.Status = models.Ready
 	_, err = s.UserDatastore.UpdateSubscriptionState(context.Background(), subscriptionState)
 	if err != nil {
-		log.Errorf("Can't update subscription state %s  %s", subscriptionState, err)
+		log.Errorf("Can't update subscription state %s  %s", subscriptionState.String(), err)
 	}
 }
 
@@ -340,7 +340,7 @@ func (s SystemUseCase) SendSubscriptions(templatePath string, ids ...uuid.UUID) 
 		return err
 	}
 
-	log.Infof("Got subscriptions %s", states)
+	log.Infof("Got subscriptions %v", states)
 
 	r := getShortenerRegexp()
 	shortener := func(s string) template.HTML {
