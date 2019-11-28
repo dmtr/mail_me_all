@@ -86,3 +86,13 @@ export async function deleteSubscription(subscriptionId) {
     return new ApiResult(null, error);
   }
 }
+
+export async function deleteAccount() {
+  try {
+    const response = await axios.delete(`api/user`);
+    return new ApiResult(response.data, null);
+  } catch (error) {
+    console.log(error.toJSON());
+    return new ApiResult(null, error);
+  }
+}
