@@ -16,7 +16,15 @@ const state = {
 const getters = {
   isUserLoaded: state => (state.user ? true : false),
   isUserSignedIn: state => state.user && state.user.signedIn,
-  subscriptions: state => state.subscriptions
+  subscriptions: state => state.subscriptions,
+  email: state =>
+    state.subscriptions.length
+      ? _.chain(state.subscriptions)
+          .groupBy("email")
+          .sortBy("length")
+          .last()
+          .value()[0]["email"]
+      : ""
 };
 
 const actions = {

@@ -2,7 +2,7 @@
   <v-card flat>
     <v-form ref="form">
       <v-text-field v-model="subscription.title" :rules="titleRules" label="Subscription title"></v-text-field>
-      <v-text-field v-model="subscription.email" :rules="emailRules" label="E-mail"></v-text-field>
+      <v-text-field v-model="currentEmail" :rules="emailRules" label="E-mail"></v-text-field>
       <v-select v-model="subscription.day" :items="days" label="Subscription delivery day"></v-select>
       <TwUserList v-bind:userList="subscription.userList" v-on:removeUser="removeUser" />
       <v-autocomplete
@@ -41,7 +41,7 @@
 <script>
 import axios from "axios";
 import _ from "lodash";
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 import TwUserList from "./TwUserList";
 
 const days = [
@@ -88,12 +88,29 @@ export default {
     subscription: {
       type: Object,
       default: function() {
-        return { id: null, title: "", email: "", day: null, userList: [] };
+        return {
+          id: null,
+          title: "",
+          email: "",
+          day: null,
+          userList: []
+        };
       }
     }
   },
 
   computed: {
+    ...mapGetters(["email"]),
+    currentEmail: {
+      get: function() {
+        return this.subscription.email.length
+          ? this.subscription.email
+          : this.email;
+      },
+      set: function(v) {
+        this.subscription.email = v;
+      }
+    },
     valid: {
       get: function() {
         return this.validationErrors.length > 0 ? false : true;
