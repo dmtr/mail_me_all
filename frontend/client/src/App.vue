@@ -28,7 +28,9 @@
       <router-view></router-view>
     </v-content>
     <v-footer color="blue" app>
-      <span class="white--text">&copy; 2019</span>
+      <span>
+        <a href="https://github.com/dmtr/mail_me_all">Github</a>
+      </span>
     </v-footer>
   </v-app>
 </template>
@@ -58,3 +60,29 @@ export default {
   }
 };
 </script>
+
+<style>
+a:link {
+  color: white;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:visited {
+  color: white;
+  background-color: transparent;
+  text-decoration: none;
+}
+
+a:hover {
+  color: white;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+a:active {
+  color: white;
+  background-color: transparent;
+  text-decoration: underline;
+}
+</style>
