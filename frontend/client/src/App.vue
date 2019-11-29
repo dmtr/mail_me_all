@@ -34,13 +34,16 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "App",
   data: () => ({
     drawer: null
   }),
+  computed: {
+    ...mapGetters(["isUserSignedIn"])
+  },
   methods: {
     ...mapActions(["getUser", "getSubscriptions"]),
     async loadData() {
