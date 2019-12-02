@@ -38,6 +38,8 @@ type Config struct {
 	MgDomain         string
 	MgAPIKEY         string
 	From             string
+	PemFile          string
+	KeyFile          string
 }
 
 // GetConfig returns app config
@@ -61,6 +63,8 @@ func GetConfig() Config {
 	viper.SetDefault("MG_DOMAIN", "")
 	viper.SetDefault("MG_APIKEY", "")
 	viper.SetDefault("FROM", "")
+	viper.SetDefault("PEM_FILE", "")
+	viper.SetDefault("KEY_FILE", "")
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -91,6 +95,8 @@ func GetConfig() Config {
 		MgDomain:         viper.GetString("MG_DOMAIN"),
 		MgAPIKEY:         viper.GetString("MG_APIKEY"),
 		From:             viper.GetString("FROM"),
+		PemFile:          viper.GetString("PEM_FILE"),
+		KeyFile:          viper.GetString("KEY_FILE"),
 	}
 
 	return conf

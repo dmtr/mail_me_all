@@ -18,6 +18,7 @@ import (
 	pb "github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -59,13 +60,25 @@ func startAPIServer(app *app.App) {
 }
 
 func startTwProxy(app *app.App) {
-	log.Info("Starting FB proxy server")
+	log.Info("Starting Twitter API proxy server")
 	lsnr, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", app.Conf.TwProxyPort))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("failed to listen: %s", err)
 	}
+
 	var opts []grpc.ServerOption
+	if app.Conf.PemFile != "" && app.Conf.KeyFile != "" {
+		creds, err := credentials.NewServerTLSFromFile(app.Conf.PemFile, app.Conf.KeyFile)
+		if err != nil {
+			log.Fatalf("Can read credentials file: %s", err)
+		}
+		log.Info("Load credentials")
+
+		opts = append(opts, grpc.Creds(creds))
+	}
+
 	grpcServer := grpc.NewServer(opts...)
+
 	t := twapi.NewTwitter(app.Conf.TwConsumerKey, app.Conf.TwConsumerSecret)
 	s := twproxy.NewServiceServer(t)
 	pb.RegisterTwProxyServiceServer(grpcServer, s)
