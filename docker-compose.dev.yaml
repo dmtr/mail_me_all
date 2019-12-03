@@ -1,8 +1,9 @@
-version: '3'
+version: '3.4'
 services:
     backend:
       build:
-        context: .
+        context: ./backend/
+        target: service
       container_name: mailmeapp.backend
       environment:
         - MAILME_APP_DEBUG=0
@@ -11,23 +12,53 @@ services:
         - MAILME_APP_HTTP_ONLY=1
         - MAILME_APP_MAX_AGE=43200
         - MAILME_APP_TW_CALLBACK_URL=https://localhost/oauth/tw/callback
+        - MAILME_APP_PEM_FILE=/app/service.pem
       command: /app/mailmeapp --tw-consumer-key=${TW_KEY} --tw-consumer-secret=${TW_SECRET} --auth-key=${AUTH_KEY:-secret} --encrypt-key=${ENCRYPT_KEY}
       depends_on:
         - postgresql
         - twproxy
       networks:
         - mailmeapp 
+      volumes:
+        - ./backend/cert/service.pem:/app/service.pem
+        - ./backend/cert/service.key:/app/service.key
+
     twproxy:
       build:
-        context: .
+        context: ./backend/
+        target: service
         args:
           - APP_PORT=5000
+      environment: 
+        - MAILME_APP_PEM_FILE=/app/service.pem
+        - MAILME_APP_KEY_FILE=/app/service.key
+      volumes:
+        - ./backend/cert/service.pem:/app/service.pem
+        - ./backend/cert/service.key:/app/service.key
       container_name: mailmeapp.twproxy
       command: /app/mailmeapp run-tw-proxy --tw-consumer-key=${TW_KEY} --tw-consumer-secret=${TW_SECRET} 
       networks:
         - mailmeapp 
       ports:
         - "5000:5000"
+
+    crontasks:
+      build:
+        context: ./backend/
+        target: crontask
+      environment: 
+        - MAILME_APP_TEMPLATE_PATH=/app/templates/
+        - MAILME_APP_TW_PROXY_HOST=twproxy
+        - MAILME_APP_DSN=${MAILME_APP_DSN:-postgres://postgres@postgresql:5432/mailmeapp?sslmode=disable}
+        - MAILME_APP_PEM_FILE=/app/service.pem
+        - MAILME_APP_KEY_FILE=/app/service.key
+      volumes:
+        - ./backend/cert/service.pem:/app/service.pem
+        - ./backend/cert/service.key:/app/service.key
+      container_name: mailmeapp.crontasks
+      networks:
+        - mailmeapp 
+
     frontend:
       build:
         context: ./frontend/
@@ -37,6 +68,7 @@ services:
       command: yarn serve   
       networks:
         - mailmeapp 
+
     nginx:
       image: nginx:1.17.3-alpine
       build:
@@ -53,6 +85,7 @@ services:
         - frontend
       networks:
         - mailmeapp 
+
     postgresql:
       image: postgres:11.5-alpine
       container_name: mailmeapp.postgres
