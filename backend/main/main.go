@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/dmtr/mail_me_all/backend/app"
 	"github.com/dmtr/mail_me_all/backend/twapi"
@@ -30,24 +31,38 @@ const (
 	send       string = "send-subscriptions"
 )
 
+func handleSignals(server *http.Server) {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM, syscall.SIGQUIT)
+
+	go func() {
+		for {
+			s := <-signalChan
+			switch s {
+			case syscall.SIGHUP,
+				syscall.SIGINT,
+				syscall.SIGTERM,
+				syscall.SIGQUIT:
+				log.Infof("Received shutdown signal: %s", s)
+				err := server.Close()
+				if err != nil {
+					log.Errorf("Web server closed with error: %s", err)
+				}
+
+			default:
+				log.Warningf("Unknown signal!?, %s", s)
+			}
+		}
+	}()
+}
+
 func startAPIServer(app *app.App) {
 	server := &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", app.Conf.Host, app.Conf.Port),
 		Handler: app.Router,
 	}
 
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt)
-
-	go func() {
-		<-quit
-		log.Info("Recieve interrupt signal")
-		err := server.Close()
-		if err != nil {
-			log.Errorf("Web server closed : %v", err)
-		}
-
-	}()
+	go handleSignals(server)
 
 	if err := server.ListenAndServe(); err != nil {
 		if err == http.ErrServerClosed {
@@ -70,7 +85,7 @@ func startTwProxy(app *app.App) {
 	if app.Conf.PemFile != "" && app.Conf.KeyFile != "" {
 		creds, err := credentials.NewServerTLSFromFile(app.Conf.PemFile, app.Conf.KeyFile)
 		if err != nil {
-			log.Fatalf("Can read credentials file: %s", err)
+			log.Fatalf("Cant read credentials file: %s", err)
 		}
 		log.Info("Load credentials")
 
@@ -114,7 +129,7 @@ func main() {
 	}
 
 	var a *app.App
-	defer func() { fmt.Print("Shutting down"); a.Close() }()
+	defer func() { a.Close() }()
 
 	if cmd == runAPI {
 		a = app.GetApp(true)
