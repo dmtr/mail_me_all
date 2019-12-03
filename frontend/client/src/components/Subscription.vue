@@ -215,6 +215,7 @@ export default {
     },
 
     saveSubscription: async function(s) {
+      s.email = s.email || this.currentEmail;
       console.log(s);
       this.valid = validateSubscription(s);
 
