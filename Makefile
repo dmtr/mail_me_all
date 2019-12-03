@@ -59,7 +59,7 @@ test-backend:
 	docker run --rm --name $(TEST_DB_CONTAINER) --network $(NETWORK) -d -e POSTGRES_DB=$(DB_NAME) -p $(DB_PORT):5432 $(DB_IMAGE)
 	./scripts/wait-for-pq.sh
 	docker run --rm --network $(NETWORK) -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL_INTERNAL) -path /migrations up
-	MAILME_APP_DSN=$(POSTGRES_URL) go test -v ./backend/... || docker stop $(TEST_DB_CONTAINER) 
+	cd ./backend && MAILME_APP_DSN=$(POSTGRES_URL) go test -v ./... || docker stop $(TEST_DB_CONTAINER) 
 	docker stop $(TEST_DB_CONTAINER) || echo already stopped
 proto: 
 	$(info Running target $(MAKECMDGOALS))

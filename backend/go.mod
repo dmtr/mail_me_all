@@ -1,4 +1,4 @@
-module github.com/dmtr/mail_me_all
+module backend
 
 go 1.12
 
@@ -7,17 +7,19 @@ require (
 	github.com/dghubble/go-twitter v0.0.0-20190719072343-39e5462e111f
 	github.com/dghubble/gologin/v2 v2.2.0
 	github.com/dghubble/oauth1 v0.6.0
+	github.com/dmtr/mail_me_all v0.0.0-20191203091138-ec6479357e97
 	github.com/gin-contrib/sessions v0.0.1
 	github.com/gin-gonic/gin v1.4.0
-	github.com/golang/protobuf v1.3.1
+	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
-	github.com/huandu/facebook v2.3.1+incompatible
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.2.0
 	github.com/mailgun/mailgun-go/v3 v3.6.2
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/pflag v1.0.3
-	github.com/spf13/viper v1.4.0
+	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.5.0
 	github.com/stretchr/testify v1.3.0
-	google.golang.org/grpc v1.21.0
+	golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135 // indirect
+	google.golang.org/grpc v1.25.1
+	honnef.co/go/tools v0.0.0-20190523083050-ea95bdfd59fc // indirect
 )
