@@ -41,7 +41,9 @@ export async function getUser() {
     if (error.response && errors.indexOf(error.response.status) != -1) {
       return new ApiResult({ signedIn: false, name: "", id: "" }, null);
     } else {
+      /* eslint-disable no-console */
       console.log(error.toJSON());
+      /* eslint-enable no-console */
       return new ApiResult(null, error);
     }
   }
@@ -52,7 +54,9 @@ export async function getSubscriptions() {
     const response = await axios.get("api/subscriptions");
     return new ApiResult(response.data["subscriptions"], null);
   } catch (error) {
+    /* eslint-disable no-console */
     console.log(error.toJSON());
+    /* eslint-enable no-console */
     return new ApiResult(null, error);
   }
 }
@@ -62,7 +66,9 @@ export async function createSubscription(subscription) {
     const response = await axios.post("api/subscriptions", subscription);
     return new ApiResult(response.data, null);
   } catch (error) {
+    /* eslint-disable no-console */
     console.log(error.toJSON());
+    /* eslint-enable no-console */
     return new ApiResult(null, error);
   }
 }
@@ -72,7 +78,9 @@ export async function updateSubscription(subscription) {
     const response = await axios.put("api/subscriptions", subscription);
     return new ApiResult(response.data, null);
   } catch (error) {
+    /* eslint-disable no-console */
     console.log(error.toJSON());
+    /* eslint-enable no-console */
     return new ApiResult(null, error);
   }
 }
@@ -82,7 +90,9 @@ export async function deleteSubscription(subscriptionId) {
     const response = await axios.delete(`api/subscriptions/${subscriptionId}`);
     return new ApiResult(response.data, null);
   } catch (error) {
+    /* eslint-disable no-console */
     console.log(error.toJSON());
+    /* eslint-enable no-console */
     return new ApiResult(null, error);
   }
 }
@@ -92,7 +102,9 @@ export async function deleteAccount() {
     const response = await axios.delete(`api/user`);
     return new ApiResult(response.data, null);
   } catch (error) {
+    /* eslint-disable no-console */
     console.log(error.toJSON());
+    /* eslint-enable no-console */
     return new ApiResult(null, error);
   }
 }
