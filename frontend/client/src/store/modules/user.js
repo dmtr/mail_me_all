@@ -36,12 +36,12 @@ const actions = {
     return res;
   },
 
-  async createSubscription({ commit }, subscription) {
+  async createSubscription(context, subscription) {
     const res = await createSubscription(subscription);
     return res;
   },
 
-  async updateSubscription({ commit }, subscription) {
+  async updateSubscription(context, subscription) {
     const res = await updateSubscription(subscription);
     return res;
   },
