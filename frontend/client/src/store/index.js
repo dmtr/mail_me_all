@@ -1,15 +1,13 @@
 import Vue from "vue";
 import Vuex from "vuex";
-
+import process from "process";
 import user from "./modules/user";
 
 Vue.use(Vuex);
-
-const debug = process.env.NODE_ENV !== "production";
 
 export default new Vuex.Store({
   modules: {
     user
   },
-  strict: debug
+  strict: process.env.NODE_ENV !== "production"
 });
