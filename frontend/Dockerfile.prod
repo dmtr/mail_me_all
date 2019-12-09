@@ -2,3 +2,4 @@ FROM nginx
 RUN mkdir /app
 COPY ./client/dist /app
 COPY nginx.prod.conf /etc/nginx/nginx.conf
+EXPOSE 8080
