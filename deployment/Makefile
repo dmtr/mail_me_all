@@ -17,3 +17,6 @@ build-yaml-backend:
 
 build-yaml-ingress:
 	envsubst < ingress.tpl > $(RESULT_DIR)/ingress.yaml
+
+build-yaml-cert:
+	envsubst < cert.tpl > $(RESULT_DIR)/cert.yaml

@@ -2,6 +2,9 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: main-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: read-it-later
+    networking.gke.io/managed-certificates: read-it-later-certificate
 spec:
   rules:
   - http:
