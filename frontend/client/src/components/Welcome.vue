@@ -3,7 +3,7 @@
     <v-list-item>
       <v-list-item-content
         class="font-weight-bold"
-      >Updater makes it possible to get tweets via email.</v-list-item-content>
+      >Read-it-later.app makes it possible to get tweets via email.</v-list-item-content>
     </v-list-item>
     <v-list-item>
       <v-list-item-content>

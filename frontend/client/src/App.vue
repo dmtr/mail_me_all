@@ -22,7 +22,7 @@
     </v-navigation-drawer>
     <v-app-bar app color="blue" dark>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title>Updater</v-toolbar-title>
+      <v-toolbar-title>Read-it-later.app</v-toolbar-title>
     </v-app-bar>
     <v-content>
       <router-view></router-view>
