@@ -27,6 +27,8 @@ spec:
             path: "/healthcheck"
             port: 8000
         env:
+         - name: MAILME_APP_DOMAIN
+           value: "read-it-later.app"
          - name: MAILME_APP_PORT
            value: "8000"
          - name: MAILME_APP_DEBUG
@@ -35,10 +37,12 @@ spec:
            value: "0.0.0.0"
          - name: MAILME_APP_HTTP_ONLY
            value: "1"
+         - name: MAILME_APP_SECURE
+           value: "1"
          - name: MAILME_APP_MAX_AGE
            value: "43200"
          - name: MAILME_APP_TW_CALLBACK_URL
-           value: "https://localhost/oauth/tw/callback"
+           value: "https://read-it-later.app/oauth/tw/callback"
          - name: MAILME_APP_TW_PROXY_HOST
            value: "twproxy" 
          - name: MAILME_APP_DSN
