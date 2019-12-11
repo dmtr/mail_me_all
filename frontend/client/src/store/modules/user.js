@@ -1,5 +1,4 @@
 import _ from "lodash";
-
 import {
   getUser,
   getSubscriptions,
