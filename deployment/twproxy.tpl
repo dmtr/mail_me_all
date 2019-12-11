@@ -19,6 +19,13 @@ spec:
         ports:
         - name: grpc
           containerPort: 5000
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "80Mi"
+            cpu: "110m"
 
 ---
 apiVersion: v1

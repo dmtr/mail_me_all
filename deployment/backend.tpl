@@ -52,6 +52,13 @@ spec:
                key: dsn
         ports:
         - containerPort: 8000
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "110m"
 
       - name: cloudsql-proxy
         image: gcr.io/cloudsql-docker/gce-proxy:1.16

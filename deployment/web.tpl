@@ -16,6 +16,13 @@ spec:
         image: gcr.io/${PROJECT_ID}/mailme_app_frontend:${FRONTEND_VERSION}
         ports:
         - containerPort: 8080
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "80Mi"
+            cpu: "120m"
 ---
 apiVersion: v1
 kind: Service
