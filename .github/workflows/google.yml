@@ -41,6 +41,7 @@ jobs:
     - name: Build App
       working-directory: ./frontend/client
       run: |
+        yarn install
         yarn run build
 
     # Setup gcloud CLI
