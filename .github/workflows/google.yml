@@ -76,6 +76,7 @@ jobs:
     - name: Deploy
       working-directory: ./deployment
       run: |
+        mkdir ./k8s
         PROKECT_ID=$GKE_PROJECT FRONTEND_VERSION=$GITHUB_SHA make
         kubectl apply -f ./k8s/web.yaml 
         kubectl get services -o wide
