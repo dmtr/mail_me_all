@@ -68,6 +68,6 @@ jobs:
       run: |
         mkdir ./k8s
         PROKECT_ID=$GKE_PROJECT FRONTEND_VERSION=$GITHUB_SHA make
-        gcloud container clusters get-credentials  standard-cluster-mailme --zone europe-west1-b $GKE_PROJECT
+        gcloud container clusters get-credentials  standard-cluster-mailme --zone europe-west1-b --project $GKE_PROJECT
         kubectl apply -f ./k8s/web.yaml 
         kubectl get services -o wide
