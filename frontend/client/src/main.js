@@ -13,7 +13,7 @@ Vue.use(VueRouter);
 
 const routes = [
   { path: "/settings", component: Settings },
-  { path: "/", component: Home }
+  { path: "/", component: Home, meta: { title: "Read-it-later.app" } }
 ];
 const router = new VueRouter({ routes });
 
