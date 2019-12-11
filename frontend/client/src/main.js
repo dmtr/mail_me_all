@@ -12,7 +12,7 @@ Vue.config.productionTip = false;
 Vue.use(VueRouter);
 
 const routes = [
-  { path: "/settings", component: Settings },
+  { path: "/settings", component: Settings, meta: { title: "Settings" } },
   { path: "/", component: Home, meta: { title: "Read-it-later.app" } }
 ];
 const router = new VueRouter({ routes });
