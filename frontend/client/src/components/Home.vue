@@ -17,12 +17,12 @@ import SubscriptionsList from "./SubscriptionsList";
 
 export default {
   name: "Home",
-  computed: {
-    ...mapGetters(["isUserSignedIn", "isUserLoaded", "subscriptions"])
-  },
   components: {
     Welcome,
     SubscriptionsList
+  },
+  computed: {
+    ...mapGetters(["isUserSignedIn", "isUserLoaded", "subscriptions"])
   },
   data: () => ({})
 };
