@@ -21,9 +21,9 @@ export default {
     Welcome,
     SubscriptionsList
   },
+  data: () => ({}),
   computed: {
     ...mapGetters(["isUserSignedIn", "isUserLoaded", "subscriptions"])
-  },
-  data: () => ({})
+  }
 };
 </script>
