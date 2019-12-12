@@ -71,10 +71,12 @@ func (t TwitterUserSearchResult) String() string {
 	return fmt.Sprintf("TwitterUserSearchResult: TwitterID %s, Name %s", t.TwitterID, t.Name)
 }
 
+// Equal checks if users ids are equal
 func (t TwitterUserSearchResult) Equal(another TwitterUserSearchResult) bool {
 	return t.TwitterID == another.TwitterID
 }
 
+// UserList is list of TwitterUserSearchResult structs
 type UserList []TwitterUserSearchResult
 
 func (u UserList) Len() int           { return len(u) }
