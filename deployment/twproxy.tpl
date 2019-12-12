@@ -16,6 +16,11 @@ spec:
         image: gcr.io/${PROJECT_ID}/mailme_app_twproxy:${TWPROXY_VERSION}
         command: ["/app/mailmeapp"]
         args: ["run-tw-proxy", "--tw-consumer-key=${TW_KEY}", "--tw-consumer-secret=${TW_SECRET}"]
+        env:
+         - name: MAILME_APP_PEM_FILE
+           value: "/app/service.pem"
+	 - name: MAILME_APP_KEY_FILE
+	   value: "/app/service.key"
         ports:
         - name: grpc
           containerPort: 5000
