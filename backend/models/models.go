@@ -268,6 +268,7 @@ type UserDatastore interface {
 	ReleaseLock(ctx context.Context, key uint) (bool, error)
 }
 
+// SystemUseCase - represents system tasks
 type SystemUseCase interface {
 	InitSubscriptions(ids ...uuid.UUID) error
 	PrepareSubscriptions(ids ...uuid.UUID) error
