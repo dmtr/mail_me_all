@@ -21,7 +21,8 @@ env:
   GITHUB_SHA: ${{ github.sha }}
   GKE_ZONE: us-west1-b
   GKE_CLUSTER: standard-cluster-mailme
-  IMAGE: mailme_app_backend
+  BACKEND_IMAGE: mailme_app_backend
+  TWPROXY_IMAGE: mailme_app_twproxy
 
 jobs:
   setup-build-publish-deploy:
@@ -55,12 +56,14 @@ jobs:
         mkdir ./cert
         echo "$SERVICE_KEY" > ./cert/service.key
         echo "$SERVICE_PEM" > ./cert/service.pem
-        docker build --target service --build-arg APP_PORT=8000 -t gcr.io/"$GKE_PROJECT"/"$IMAGE":"$GITHUB_SHA" .
+        docker build --target service --build-arg APP_PORT=8000 -t gcr.io/"$GKE_PROJECT"/"$BACKEND_IMAGE":"$GITHUB_SHA" .
+        docker build --target service --build-arg APP_PORT=5000 -t gcr.io/"$GKE_PROJECT"/"$TWPROXY_IMAGE":"$GITHUB_SHA" .
 
     # Push the Docker image to Google Container Registry
     - name: Publish
       run: |
-        docker push gcr.io/"$GKE_PROJECT"/"$IMAGE":"$GITHUB_SHA"
+        docker push gcr.io/"$GKE_PROJECT"/"$BACKEND_IMAGE":"$GITHUB_SHA"
+        docker push gcr.io/"$GKE_PROJECT"/"$TWPROXY_IMAGE":"$GITHUB_SHA"
         
 
     # Deploy the Docker image to the GKE cluster
@@ -69,6 +72,8 @@ jobs:
       run: |
         mkdir ./k8s
         PROJECT_ID="$GKE_PROJECT" BACKEND_VERSION="$GITHUB_SHA" TW_KEY="$TW_KEY" TW_SECRET="$TW_SECRET" AUTH_KEY="$AUTH_KEY" ENCRYPT_KEY="$ENCRYPT_KEY" CLOUD_SQL_CONNECTION="$CLOUD_SQL_CONNECTION" make build-yaml-backend
+        PROJECT_ID="$GKE_PROJECT" TWPROXY_VERSION="$GITHUB_SHA" TW_KEY="$TW_KEY" TW_SECRET="$TW_SECRET" make build-yaml-twproxy
         gcloud container clusters get-credentials  standard-cluster-mailme --zone europe-west1-b --project "$GKE_PROJECT"
         kubectl apply -f ./k8s/backend.yaml 
+        kubectl apply -f ./k8s/twproxy.yaml 
         rm -rf ./k8s
