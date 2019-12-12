@@ -59,7 +59,7 @@ jobs:
     # Push the Docker image to Google Container Registry
     - name: Publish
       run: |
-        docker push gcr.io/$GKE_PROJECT/mailme_app_frontend:$GITHUB_SHA
+        docker push gcr.io/"$GKE_PROJECT"/mailme_app_frontend:"$GITHUB_SHA"
         
 
     # Deploy the Docker image to the GKE cluster
@@ -67,7 +67,8 @@ jobs:
       working-directory: ./deployment
       run: |
         mkdir ./k8s
-        PROKECT_ID=$GKE_PROJECT FRONTEND_VERSION=$GITHUB_SHA make
-        gcloud container clusters get-credentials  standard-cluster-mailme --zone europe-west1-b --project $GKE_PROJECT
+        PROKECT_ID="$GKE_PROJECT" FRONTEND_VERSION="$GITHUB_SHA" make
+        gcloud container clusters get-credentials  standard-cluster-mailme --zone europe-west1-b --project "$GKE_PROJECT"
+        cat ./k8s/web.tpl
         kubectl apply -f ./k8s/web.yaml 
         kubectl get services -o wide
