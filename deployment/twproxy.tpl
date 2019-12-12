@@ -19,8 +19,8 @@ spec:
         env:
          - name: MAILME_APP_PEM_FILE
            value: "/app/service.pem"
-	 - name: MAILME_APP_KEY_FILE
-	   value: "/app/service.key"
+         - name: MAILME_APP_KEY_FILE
+           value: "/app/service.key"
         ports:
         - name: grpc
           containerPort: 5000
