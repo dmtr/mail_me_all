@@ -45,6 +45,8 @@ spec:
            value: "https://read-it-later.app/oauth/tw/callback"
          - name: MAILME_APP_TW_PROXY_HOST
            value: "twproxy" 
+         - name: MAILME_APP_PEM_FILE
+           value: "/app/service.pem"
          - name: MAILME_APP_DSN
            valueFrom:
              secretKeyRef:
