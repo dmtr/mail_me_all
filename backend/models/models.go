@@ -162,7 +162,7 @@ func (s *SubscriptionState) String() string {
 		"SubscriptionState: id %d, subscription_id %s, status %s, updated at %s", s.ID, s.SubscriptionID, s.Status, s.UpdatedAt)
 }
 
-// UserTweet - last read tweet of a user
+// UserLastTweet - last read tweet of a user
 type UserLastTweet struct {
 	ScreenName  string
 	LastTweetID string
