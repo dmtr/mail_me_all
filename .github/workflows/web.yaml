@@ -67,7 +67,7 @@ jobs:
       working-directory: ./deployment
       run: |
         mkdir ./k8s
-        PROKECT_ID="$GKE_PROJECT" FRONTEND_VERSION="$GITHUB_SHA" make
+        PROJECT_ID="$GKE_PROJECT" FRONTEND_VERSION="$GITHUB_SHA" make
         gcloud container clusters get-credentials  standard-cluster-mailme --zone europe-west1-b --project "$GKE_PROJECT"
         cat ./k8s/web.yaml
         kubectl apply -f ./k8s/web.yaml 
