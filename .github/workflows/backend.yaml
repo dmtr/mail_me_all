@@ -1,0 +1,69 @@
+name: Build backend and Deploy to GKE
+
+on:
+  push:
+    branches: 
+      - master
+    paths:
+    - 'backend/**'
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
+  GKE_EMAIL: ${{ secrets.GKE_EMAIL }}
+  TW_KEY: ${{ secrets.TW_KEY }}
+  TW_SECRET: ${{ secrets.TW_SECRET }}
+  AUTH_KEY: ${{ secrets.AUTH_KEY}}
+  ENCRYPT_KEY: ${{ secrets.ENCRYPT_KEY }}
+  CLOUD_SQL_CONNECTION: ${{ secrets.CLOUD_SQL_CONNECTION }}
+  GITHUB_SHA: ${{ github.sha }}
+  GKE_ZONE: us-west1-b
+  GKE_CLUSTER: standard-cluster-mailme
+  IMAGE: mailme_app_backend
+
+jobs:
+  setup-build-publish-deploy:
+    name: build backend
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+    
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '2.7.16'
+      
+    # Setup gcloud CLI
+    - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+      with:
+        version: '270.0.0'
+        service_account_email: ${{ secrets.GKE_EMAIL }}
+        service_account_key: ${{ secrets.GKE_KEY }}
+
+    # Configure docker to use the gcloud command-line tool as a credential helper
+    - run: |
+        # Set up docker to authenticate
+        # via gcloud command-line tool.
+        gcloud auth configure-docker
+      
+    # Build the Docker image
+    - name: Build
+      working-directory: ./backend
+      run: |        
+        docker build --target service --build-arg APP_PORT=8000 -t gcr.io/"$GKE_PROJECT"/"$IMAGE":"$GITHUB_SHA" .
+
+    # Push the Docker image to Google Container Registry
+    - name: Publish
+      run: |
+        docker push gcr.io/"$GKE_PROJECT"/"$IMAGE":"$GITHUB_SHA"
+        
+
+    # Deploy the Docker image to the GKE cluster
+    - name: Deploy
+      working-directory: ./deployment
+      run: |
+        mkdir ./k8s
+        PROJECT_ID="$GKE_PROJECT" BACKEND_VERSION="$GITHUB_SHA" TW_KEY="$TW_KEY" TW_SECRET="$TW_SECRET" AUTH_KEY="$AUTH_KEY" ENCRYPT_KEY="$ENCRYPT_KEY" CLOUD_SQL_CONNECTION="$CLOUD_SQL_CONNECTION" make build-yaml-backend
+        gcloud container clusters get-credentials  standard-cluster-mailme --zone europe-west1-b --project "$GKE_PROJECT"
+        kubectl apply -f ./k8s/backend.yaml 
+        rm -rf ./k8s
