@@ -49,6 +49,7 @@ type SystemUseCase struct {
 	From          string
 }
 
+// NewSystemUseCase creates a new SystemUseCase
 func NewSystemUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient, mgDomain, mgApiKey, from string) *SystemUseCase {
 	return &SystemUseCase{
 		UserDatastore: datastore,
