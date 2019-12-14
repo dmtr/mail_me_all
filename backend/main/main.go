@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/dmtr/mail_me_all/backend/app"
+	"github.com/dmtr/mail_me_all/backend/mail"
 	"github.com/dmtr/mail_me_all/backend/twapi"
 	"github.com/dmtr/mail_me_all/backend/twproxy"
 	"github.com/google/uuid"
@@ -29,6 +30,7 @@ const (
 	check      string = "check-new-subscriptions"
 	prepare    string = "prepare-subscriptions"
 	send       string = "send-subscriptions"
+	testEmail  string = "test-email"
 )
 
 func handleSignals(server *http.Server) {
@@ -109,6 +111,9 @@ func main() {
 	flag.String("encrypt-key", "", "encryption key")
 
 	var subscriptionIDs *string = flag.String("subscription-ids", "", "subscription IDs")
+	var subject *string = flag.String("subject", "", "email subject")
+	var to *string = flag.String("to", "", "email to")
+	var body *string = flag.String("body", "", "email body")
 
 	flag.Parse()
 	viper.BindPFlags(flag.CommandLine)
@@ -146,6 +151,9 @@ func main() {
 	} else if cmd == send {
 		a = app.GetApp(false, true, true, true)
 		sendSubscriptions(a, IDs...)
+	} else if cmd == testEmail {
+		a = app.GetApp(false, false, false, false)
+		mail.SendEmail(a.Conf.MgDomain, a.Conf.MgAPIKEY, a.Conf.From, *to, *subject, *body)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)
