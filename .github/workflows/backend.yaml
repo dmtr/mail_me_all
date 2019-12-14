@@ -66,6 +66,7 @@ jobs:
       run: |
         docker push gcr.io/"$GKE_PROJECT"/"$BACKEND_IMAGE":"$GITHUB_SHA"
         docker push gcr.io/"$GKE_PROJECT"/"$TWPROXY_IMAGE":"$GITHUB_SHA"
+        docker push gcr.io/"$GKE_PROJECT"/"$CRONTASKS_IMAGE":"$GITHUB_SHA"
         
 
     # Deploy the Docker image to the GKE cluster
