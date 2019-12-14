@@ -57,6 +57,45 @@ spec:
         resources:
           requests:
             memory: "64Mi"
+            cpu: "80m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+
+      - name: crontasks
+        image: gcr.io/${PROJECT_ID}/mailme_app_crontasks:${CRONTASKS_VERSION}
+        env:
+         - name: MAILME_APP_TW_PROXY_HOST
+           value: "twproxy" 
+         - name: MAILME_APP_PEM_FILE
+           value: "/app/service.pem"
+         - name: MAILME_APP_KEY_FILE
+           value: "/app/service.key"
+         - name: MAILME_APP_TEMPLATE_PATH
+           value: "/app/templates/"
+         - name: MAILME_APP_MG_DOMAIN
+           valueFrom:
+             secretKeyRef:
+               name: mgdomain
+               key: mgdomain
+         - name: MAILME_APP_MG_APIKEY
+           valueFrom:
+             secretKeyRef:
+               name: mgapikey
+               key: mgapikey 
+         - name: MAILME_APP_FROM
+           valueFrom:
+             secretKeyRef:
+               name: mgfrom
+               key: mgfrom 
+         - name: MAILME_APP_DSN
+           valueFrom:
+             secretKeyRef:
+               name: dsn
+               key: dsn
+        resources:
+          requests:
+            memory: "64Mi"
             cpu: "100m"
           limits:
             memory: "128Mi"
