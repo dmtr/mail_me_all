@@ -83,6 +83,7 @@ func (u UserList) Len() int           { return len(u) }
 func (u UserList) Swap(i, j int)      { u[i], u[j] = u[j], u[i] }
 func (u UserList) Less(i, j int) bool { return u[i].TwitterID < u[j].TwitterID }
 
+//Diff compares two UserLists
 func (u UserList) Diff(another UserList) UserList {
 	sorted := append(another[:0:0], another...)
 	sort.Sort(sorted)
