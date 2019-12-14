@@ -29,7 +29,7 @@ CMD ["/app/mailmeapp"]
 FROM alpine:3.10.1 as crontask
 RUN apk add --no-cache tzdata ca-certificates \
     && update-ca-certificates 2>/dev/null || true
-COPY --from=builder /app/backend/mailmeapp /app/
+COPY --from=builder /app/mailmeapp /app/
 COPY --from=builder /app/backend/crontasks/entrypoint.sh /app/entrypoint.sh
 COPY --from=builder /app/backend/cert/service.pem /app/service.pem	
 COPY --from=builder /app/backend/cert/service.key /app/service.key	
