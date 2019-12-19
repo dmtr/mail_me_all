@@ -56,11 +56,7 @@ migrate-down:
 	docker run --rm --net=host -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL) -path /migrations down $(N)
 test-backend:
 	$(info Running target $(MAKECMDGOALS) with $(POSTGRES_URL))
-	docker run --rm --name $(TEST_DB_CONTAINER) --network $(NETWORK) -d -e POSTGRES_DB=$(DB_NAME) -p $(DB_PORT):5432 $(DB_IMAGE)
-	./scripts/wait-for-pq.sh
-	docker run --rm --network $(NETWORK) -v $(ABS_PATH)/backend/migrations:/migrations migrate -database $(POSTGRES_URL_INTERNAL) -path /migrations up
-	cd ./backend && MAILME_APP_DSN=$(POSTGRES_URL) go test -v ./... || docker stop $(TEST_DB_CONTAINER) 
-	docker stop $(TEST_DB_CONTAINER) || echo already stopped
+	TEST_DB_CONTAINER=$(TEST_DB_CONTAINER) NETWORK=$(NETWORK) DB_NAME=$(DB_NAME) DB_PORT=$(DB_PORT) DB_IMAGE=$(DB_IMAGE) ABS_PATH=$(ABS_PATH) POSTGRES_URL_INTERNAL=$(POSTGRES_URL_INTERNAL) POSTGRES_URL=$(POSTGRES_URL) ./scripts/run-test.sh
 proto: 
 	$(info Running target $(MAKECMDGOALS))
         cd backend && protoc -I rpc rpc/twproxy.proto --go_out=plugins=grpc:rpc
