@@ -359,6 +359,24 @@ func testGetSubscriptionUserTweets(t *testing.T, tx *sqlx.Tx, d *UserDatastore) 
 	assert.Equal(t, "123", tw.LastTweetID)
 }
 
+func testInsertUserEmail(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
+	ctx := context.WithValue(context.Background(), "Tx", tx)
+	u, err := insertUser(d, ctx)
+	assert.NoError(t, err)
+
+	userEmail := models.UserEmail{
+		UserID: u.ID,
+		Email:  "test@example.com",
+	}
+	res, err := d.InsertUserEmail(ctx, userEmail)
+	assert.NoError(t, err)
+	assert.Equal(t, userEmail, res)
+
+	fromDb, err := d.GetUserEmail(ctx, userEmail)
+	assert.NoError(t, err)
+	assert.Equal(t, userEmail, fromDb)
+}
+
 func TestUserDatastore(t *testing.T) {
 	tests := map[string]testFunc{
 		"TestInsertTwitterUser":          testInsertTwitterUser,
@@ -372,6 +390,7 @@ func TestUserDatastore(t *testing.T) {
 		"TestGetNewSubscriptionsUsers":   testGetNewSubscriptionsUsers,
 		"TestInsertSubscriptionState":    testInsertSubscriptionState,
 		"TestGetSubscriptionUserTweets":  testGetSubscriptionUserTweets,
+		"TestInsertUserEmail":            testInsertUserEmail,
 	}
 	runTests(tests, t)
 }

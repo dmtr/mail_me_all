@@ -59,6 +59,16 @@ func (u User) String() string {
 	return fmt.Sprintf("User: Name %s, ID %s", u.Name, u.ID)
 }
 
+// UserEmail - confirmed user email address
+type UserEmail struct {
+	UserID uuid.UUID `db:"user_id"`
+	Email  string    `db:"email"`
+}
+
+func (u UserEmail) String() string {
+	return fmt.Sprintf("User: ID %s, email %s", u.UserID, u.Email)
+}
+
 // TwitterUserSearchResult - twitter user info
 type TwitterUserSearchResult struct {
 	Name          string `db:"name"`
@@ -267,6 +277,9 @@ type UserDatastore interface {
 
 	AcquireLock(ctx context.Context, key uint) (bool, error)
 	ReleaseLock(ctx context.Context, key uint) (bool, error)
+
+	InsertUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
+	GetUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 }
 
 // SystemUseCase - represents system tasks
