@@ -3,23 +3,41 @@ package usecases
 import (
 	"context"
 	"fmt"
+	"html/template"
+	"net/url"
+	"path/filepath"
+	"strings"
 
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dmtr/mail_me_all/backend/config"
+	"github.com/dmtr/mail_me_all/backend/db"
 	"github.com/dmtr/mail_me_all/backend/errors"
+	"github.com/dmtr/mail_me_all/backend/mail"
 	"github.com/dmtr/mail_me_all/backend/models"
 	pb "github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
+const ConfirmationEmailSubj = "Email address confirmation"
+
+type JWTClaims struct {
+	Email string `json:"email"`
+	jwt.StandardClaims
+}
+
 // UserUseCase implementation
 type UserUseCase struct {
 	UserDatastore models.UserDatastore
 	RpcClient     pb.TwProxyServiceClient
+	Conf          *config.Config
+	Tmpl          *template.Template
 }
 
 // NewUserUseCase implementation
-func NewUserUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient) *UserUseCase {
-	return &UserUseCase{UserDatastore: datastore, RpcClient: client}
+func NewUserUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient, conf *config.Config) *UserUseCase {
+	tmpl := template.Must(template.New("confirm.html").ParseFiles(filepath.Join(conf.TemplatePath, "confirm.html")))
+	return &UserUseCase{UserDatastore: datastore, RpcClient: client, Conf: conf, Tmpl: tmpl}
 }
 
 // GetUserByID implementation
@@ -145,7 +163,75 @@ func (u UserUseCase) AddSubscription(ctx context.Context, subscription models.Su
 		return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 	}
 
+	userEmail := models.UserEmail{
+		UserID: subscription.UserID,
+		Email:  subscription.Email,
+		Status: models.EmailStatusNew,
+	}
+
+	email, err := u.UserDatastore.InsertUserEmail(ctx, userEmail)
+	sendConfirmationEmail := false
+	if err != nil {
+		e := err.(*db.DbError)
+		if e.IsUniqueViolationError() {
+			err = nil
+			log.Infof("Record with email %s exists %s", userEmail, email)
+		}
+	} else {
+		sendConfirmationEmail = true
+	}
+
+	if err != nil {
+		return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+	}
+
+	if sendConfirmationEmail {
+		if err = u.sendConfirmationEmail(userEmail.Email); err != nil {
+			return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+		}
+	}
+
 	return s, nil
+}
+
+func (u UserUseCase) getEmailConfirmationLink(email string) (string, error) {
+	claims := JWTClaims{
+		email,
+		jwt.StandardClaims{
+			ExpiresAt: 24 * 60 * 60,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte(u.Conf.EncryptKey))
+	if err != nil {
+		return "", err
+	}
+
+	link := &url.URL{
+		Scheme:   "https",
+		Host:     u.Conf.Domain,
+		Path:     "api/confirm-email",
+		RawQuery: fmt.Sprintf("token=%s", ss),
+	}
+
+	return link.String(), err
+}
+
+func (u UserUseCase) sendConfirmationEmail(email string) error {
+	var buf strings.Builder
+	link, err := u.getEmailConfirmationLink(email)
+	if err != nil {
+		return err
+	}
+
+	err = u.Tmpl.Execute(&buf, link)
+	if err != nil {
+		return err
+	}
+
+	err = mail.SendEmail(u.Conf.MgDomain, u.Conf.MgAPIKEY, u.Conf.From, email, ConfirmationEmailSubj, buf.String())
+	return err
 }
 
 func (u UserUseCase) GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]models.Subscription, error) {

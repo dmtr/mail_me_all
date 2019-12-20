@@ -70,7 +70,7 @@ func runTests(tests map[string]testFunc, t *testing.T) {
 
 	datastoreMock := new(mocks.UserDatastore)
 	clientMock := new(mocks.TwProxyServiceClient)
-	userUseCase := usecases.NewUserUseCase(datastoreMock, clientMock)
+	userUseCase := usecases.NewUserUseCase(datastoreMock, clientMock, &conf)
 	router := GetRouter(&conf, nil, userUseCase)
 
 	for name, fn := range tests {
