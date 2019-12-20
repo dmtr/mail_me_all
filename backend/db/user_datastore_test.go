@@ -367,6 +367,7 @@ func testInsertUserEmail(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	userEmail := models.UserEmail{
 		UserID: u.ID,
 		Email:  "test@example.com",
+		Status: models.EmailStatusNew,
 	}
 	res, err := d.InsertUserEmail(ctx, userEmail)
 	assert.NoError(t, err)

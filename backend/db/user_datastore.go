@@ -853,7 +853,7 @@ func (d *UserDatastore) InsertUserEmail(ctx context.Context, userEmail models.Us
 		t.commitOrRollback()
 	}()
 
-	_, err = t.tx.NamedExec("INSERT INTO user_email_m2m (user_id, email) VALUES (:user_id, :email)", userEmail)
+	_, err = t.tx.NamedExec("INSERT INTO user_email_m2m (user_id, email, status) VALUES (:user_id, :email, :status)", userEmail)
 	if err != nil {
 		log.Error(err.Error() + fmt.Sprintf(" inserting UserEmail: %s", userEmail))
 		return models.UserEmail{}, t.getError()
@@ -870,6 +870,6 @@ func (d *UserDatastore) GetUserEmail(ctx context.Context, userEmail models.UserE
 	}()
 
 	var email models.UserEmail
-	err = t.tx.Get(&email, "SELECT user_id, email FROM user_email_m2m WHERE email=$1", userEmail.Email)
+	err = t.tx.Get(&email, "SELECT user_id, email, status FROM user_email_m2m WHERE email=$1", userEmail.Email)
 	return email, t.getError()
 }

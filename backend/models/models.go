@@ -27,6 +27,12 @@ const (
 
 	//Failed - subscription status
 	Failed string = "FAILED"
+
+	//EmailStatusNew - Email status NEW
+	EmailStatusNew string = "NEW"
+
+	//EmailStatusConfirmed - Email status Confirmed
+	EmailStatusConfirmed string = "CONFIRMED"
 )
 
 // Model interface
@@ -63,6 +69,7 @@ func (u User) String() string {
 type UserEmail struct {
 	UserID uuid.UUID `db:"user_id"`
 	Email  string    `db:"email"`
+	Status string    `db:"status"`
 }
 
 func (u UserEmail) String() string {
@@ -235,7 +242,7 @@ type UserUseCase interface {
 	SignInWithTwitter(ctx context.Context, twitterID, name, email, screenName, accessToken, tokenSecret string) (User, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (User, error)
 	SearchTwitterUsers(ctx context.Context, userID uuid.UUID, query string) ([]TwitterUserSearchResult, error)
-	AddSubscription(ctx context.Context, subscription Subscription) (Subscription, error)
+	AddSubscription(ctx context.Context, subscription Subscription, templatePath, domain string) (Subscription, error)
 	GetSubscriptions(ctx context.Context, userID uuid.UUID) ([]Subscription, error)
 	UpdateSubscription(ctx context.Context, userID uuid.UUID, subscription Subscription) (Subscription, error)
 	DeleteSubscription(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
