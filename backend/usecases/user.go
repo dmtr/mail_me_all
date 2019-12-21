@@ -224,7 +224,7 @@ func (u UserUseCase) getEmailConfirmationLink(email, userID string) (string, err
 	link := &url.URL{
 		Scheme:   "https",
 		Host:     u.Conf.Domain,
-		Path:     "confirm-email",
+		Path:     "confirm/email",
 		RawQuery: fmt.Sprintf("token=%s", token),
 	}
 
