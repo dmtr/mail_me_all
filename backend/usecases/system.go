@@ -371,6 +371,22 @@ func (s SystemUseCase) SendSubscriptions(templatePath string, ids ...uuid.UUID) 
 		}
 		log.Infof("Got subscription %s", subscription)
 
+		userEmail := models.UserEmail{
+			UserID: subscription.UserID,
+			Email:  subscription.Email,
+		}
+
+		email, err := s.UserDatastore.GetUserEmail(context.Background(), userEmail)
+		if err != nil {
+			log.Errorf("Can not get UserEmail %s, got error %s", userEmail, err)
+			continue
+		}
+
+		if email.Status != models.EmailStatusConfirmed {
+			log.Errorf("Email is not confirmed %s", email)
+			continue
+		}
+
 		user, err := s.UserDatastore.GetTwitterUser(context.Background(), subscription.UserID)
 		if err != nil {
 			log.Errorf("Can not get user %s, got error %s", subscription.UserID, err)
