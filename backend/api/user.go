@@ -460,3 +460,27 @@ func deleteAccount(usecases models.UserUseCase) gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{})
 	}
 }
+
+func confirmEmail(usecases models.UserUseCase) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.Query("token")
+		if token == "" {
+			c.String(http.StatusBadRequest, "Bad request")
+			return
+		}
+
+		ctx, err := getContextWithTransaction(c)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Server error")
+			return
+		}
+
+		err = usecases.ConfirmEmail(ctx, token)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "Server error")
+			return
+		}
+
+		c.String(http.StatusOK, "Email confirmed")
+	}
+}

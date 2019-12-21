@@ -247,6 +247,8 @@ type UserUseCase interface {
 	UpdateSubscription(ctx context.Context, userID uuid.UUID, subscription Subscription) (Subscription, error)
 	DeleteSubscription(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
 	DeleteAccount(ctx context.Context, userID uuid.UUID) error
+	ConfirmEmail(ctx context.Context, token string) error
+	GetToken(email, userID string) (string, error)
 }
 
 // UserDatastore - represents all user related database methods
@@ -287,6 +289,7 @@ type UserDatastore interface {
 
 	InsertUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 	GetUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
+	UpdateUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 }
 
 // SystemUseCase - represents system tasks

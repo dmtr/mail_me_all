@@ -153,10 +153,53 @@ func testSignInWithTwitterOk(t *testing.T, usecases *models.UseCases, datastoreM
 	clientMock.AssertNumberOfCalls(t, "GetUserInfo", 1)
 }
 
+func testConfirmEmailOk(t *testing.T, usecases *models.UseCases, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	uid := uuid.New()
+	email := "test@example.com"
+	userEmail := models.UserEmail{
+		UserID: uid,
+		Email:  email,
+		Status: models.EmailStatusNew,
+	}
+	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(userEmail, nil)
+
+	token, err := usecases.GetToken(email, uid.String())
+	assert.NoError(t, err)
+
+	confirmedEmail := models.UserEmail{
+		UserID: uid,
+		Email:  email,
+		Status: models.EmailStatusConfirmed,
+	}
+	datastoreMock.On("UpdateUserEmail", mock.Anything, confirmedEmail).Return(confirmedEmail, nil)
+
+	err = usecases.ConfirmEmail(context.Background(), token)
+	assert.NoError(t, err)
+}
+
+func testConfirmEmailFailedUsersNotMatch(t *testing.T, usecases *models.UseCases, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	uid := uuid.New()
+	email := "test@example.com"
+	userEmail := models.UserEmail{
+		UserID: uid,
+		Email:  email,
+		Status: models.EmailStatusNew,
+	}
+	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(userEmail, nil)
+
+	token, err := usecases.GetToken(email, uuid.New().String())
+	assert.NoError(t, err)
+
+	err = usecases.ConfirmEmail(context.Background(), token)
+	assert.Error(t, err)
+}
+
 func TestUseCases(t *testing.T) {
 	tests := map[string]testFunc{
-		"TestSignUpWithTwitterOk": testSignUpWithTwitterOk,
-		"TestSignInWithTwitterOk": testSignInWithTwitterOk,
+		"TestSignUpWithTwitterOk":             testSignUpWithTwitterOk,
+		"TestSignInWithTwitterOk":             testSignInWithTwitterOk,
+		"TestConfirmEmailOk":                  testConfirmEmailOk,
+		"TestConfirmEmailFailedUsersNotMatch": testConfirmEmailFailedUsersNotMatch,
 	}
 	runTests(tests, t)
 }

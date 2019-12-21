@@ -376,6 +376,11 @@ func testInsertUserEmail(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	fromDb, err := d.GetUserEmail(ctx, userEmail)
 	assert.NoError(t, err)
 	assert.Equal(t, userEmail, fromDb)
+
+	userEmail.Status = models.EmailStatusConfirmed
+	res, err = d.UpdateUserEmail(ctx, userEmail)
+	assert.NoError(t, err)
+	assert.Equal(t, userEmail, res)
 }
 
 func TestUserDatastore(t *testing.T) {

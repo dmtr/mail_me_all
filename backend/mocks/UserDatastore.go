@@ -588,3 +588,24 @@ func (_m *UserDatastore) UpdateUser(ctx context.Context, user models.User) (mode
 
 	return r0, r1
 }
+
+// UpdateUserEmail provides a mock function with given fields: ctx, userEmail
+func (_m *UserDatastore) UpdateUserEmail(ctx context.Context, userEmail models.UserEmail) (models.UserEmail, error) {
+	ret := _m.Called(ctx, userEmail)
+
+	var r0 models.UserEmail
+	if rf, ok := ret.Get(0).(func(context.Context, models.UserEmail) models.UserEmail); ok {
+		r0 = rf(ctx, userEmail)
+	} else {
+		r0 = ret.Get(0).(models.UserEmail)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, models.UserEmail) error); ok {
+		r1 = rf(ctx, userEmail)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

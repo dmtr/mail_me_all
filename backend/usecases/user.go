@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/dmtr/mail_me_all/backend/config"
@@ -22,7 +23,8 @@ import (
 const ConfirmationEmailSubj = "Email address confirmation"
 
 type JWTClaims struct {
-	Email string `json:"email"`
+	Email  string `json:"email"`
+	UserID string `json:"user_id"`
 	jwt.StandardClaims
 }
 
@@ -186,7 +188,7 @@ func (u UserUseCase) AddSubscription(ctx context.Context, subscription models.Su
 	}
 
 	if sendConfirmationEmail {
-		if err = u.sendConfirmationEmail(userEmail.Email); err != nil {
+		if err = u.sendConfirmationEmail(userEmail.Email, userEmail.UserID.String()); err != nil {
 			return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
 	}
@@ -194,11 +196,13 @@ func (u UserUseCase) AddSubscription(ctx context.Context, subscription models.Su
 	return s, nil
 }
 
-func (u UserUseCase) getEmailConfirmationLink(email string) (string, error) {
+func (u UserUseCase) GetToken(email, userID string) (string, error) {
+	exp := time.Now().Unix() + 24*60*60
 	claims := JWTClaims{
 		email,
+		userID,
 		jwt.StandardClaims{
-			ExpiresAt: 24 * 60 * 60,
+			ExpiresAt: exp,
 		},
 	}
 
@@ -208,19 +212,28 @@ func (u UserUseCase) getEmailConfirmationLink(email string) (string, error) {
 		return "", err
 	}
 
+	return ss, err
+}
+
+func (u UserUseCase) getEmailConfirmationLink(email, userID string) (string, error) {
+	token, err := u.GetToken(email, userID)
+	if err != nil {
+		return "", err
+	}
+
 	link := &url.URL{
 		Scheme:   "https",
 		Host:     u.Conf.Domain,
-		Path:     "api/confirm-email",
-		RawQuery: fmt.Sprintf("token=%s", ss),
+		Path:     "confirm-email",
+		RawQuery: fmt.Sprintf("token=%s", token),
 	}
 
 	return link.String(), err
 }
 
-func (u UserUseCase) sendConfirmationEmail(email string) error {
+func (u UserUseCase) sendConfirmationEmail(email, userID string) error {
 	var buf strings.Builder
-	link, err := u.getEmailConfirmationLink(email)
+	link, err := u.getEmailConfirmationLink(email, userID)
 	if err != nil {
 		return err
 	}
@@ -283,4 +296,50 @@ func (u UserUseCase) DeleteAccount(ctx context.Context, userID uuid.UUID) error 
 	}
 
 	return err
+}
+
+func (u UserUseCase) parseToken(token string) (models.UserEmail, error) {
+	t, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return []byte(u.Conf.EncryptKey), nil
+	})
+
+	if claims, ok := t.Claims.(jwt.MapClaims); ok && t.Valid {
+		email := claims["email"]
+		userID := claims["user_id"]
+		uid, err := uuid.Parse(userID.(string))
+		if err != nil {
+			return models.UserEmail{}, err
+		}
+		return models.UserEmail{Email: email.(string), UserID: uid}, nil
+	}
+	return models.UserEmail{}, err
+}
+
+func (u UserUseCase) ConfirmEmail(ctx context.Context, token string) error {
+	emailToConfirm, err := u.parseToken(token)
+	if err != nil {
+		return err
+	}
+
+	emailFromDB, err := u.UserDatastore.GetUserEmail(ctx, emailToConfirm)
+	if err != nil {
+		return err
+	}
+
+	if emailToConfirm.UserID != emailFromDB.UserID {
+		log.Errorf("Emails not matching %s %s", emailToConfirm, emailFromDB)
+		return NewUseCaseError("Can't confirm email", errors.AuthRequired)
+	}
+
+	emailToConfirm.Status = models.EmailStatusConfirmed
+	_, err = u.UserDatastore.UpdateUserEmail(ctx, emailToConfirm)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
