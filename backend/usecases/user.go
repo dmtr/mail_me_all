@@ -262,6 +262,33 @@ func (u UserUseCase) UpdateSubscription(ctx context.Context, userID uuid.UUID, s
 		return subscription, NewUseCaseError(err.Error(), errors.AuthRequired)
 	}
 
+	userEmail := models.UserEmail{
+		UserID: subscription.UserID,
+		Email:  subscription.Email,
+	}
+
+	sendConfirmationEmail := false
+	email, err := u.UserDatastore.GetUserEmail(ctx, userEmail)
+	if err != nil {
+		e := err.(*db.DbError)
+		if e.HasNoRows() {
+			sendConfirmationEmail = true
+		} else {
+			return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+		}
+	}
+
+	if email.UserID != subscription.UserID {
+		log.Warningf("Email %s belongs to another user %s", subscription.Email, email)
+		return subscription, NewUseCaseError("Email belongs to another user", errors.AuthRequired)
+	}
+
+	if sendConfirmationEmail || email.Status == models.EmailStatusNew {
+		if err = u.sendConfirmationEmail(userEmail.Email, userEmail.UserID.String()); err != nil {
+			return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+		}
+	}
+
 	s, err := u.UserDatastore.UpdateSubscription(ctx, subscription)
 	if err != nil {
 		return s, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
