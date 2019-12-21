@@ -477,6 +477,7 @@ func confirmEmail(usecases models.UserUseCase) gin.HandlerFunc {
 
 		err = usecases.ConfirmEmail(ctx, token)
 		if err != nil {
+			log.Errorf("Can't confirm email, got error %s", err)
 			c.String(http.StatusInternalServerError, "Server error")
 			return
 		}
