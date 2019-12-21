@@ -101,8 +101,17 @@ func testUpdateSubscriptionNotFound(t *testing.T, router *gin.Engine, datastoreM
 	e := &db.DbError{Err: sql.ErrNoRows}
 	datastoreMock.On("UpdateSubscription", mock.Anything, mock.Anything).Return(models.Subscription{}, e)
 
+	email := "test@example.com"
+	uid, _ := uuid.Parse(testUserID)
+	userEmail := models.UserEmail{
+		UserID: uid,
+		Email:  email,
+		Status: models.EmailStatusConfirmed,
+	}
+	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(userEmail, nil)
+
 	req := map[string]interface{}{
-		"id": uuid.New().String(), "title": "abc", "email": "test@example.com", "day": "monday",
+		"id": uuid.New().String(), "title": "abc", "email": email, "day": "monday",
 		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
 	reqJson, _ := json.Marshal(req)
 

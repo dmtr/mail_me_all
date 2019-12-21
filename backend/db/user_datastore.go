@@ -844,3 +844,48 @@ func (d *UserDatastore) ReleaseLock(ctx context.Context, key uint) (bool, error)
 
 	return res, err
 }
+
+func (d *UserDatastore) InsertUserEmail(ctx context.Context, userEmail models.UserEmail) (models.UserEmail, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	_, err = t.tx.NamedExec("INSERT INTO user_email_m2m (user_id, email, status) VALUES (:user_id, :email, :status)", userEmail)
+	if err != nil {
+		log.Error(err.Error() + fmt.Sprintf(" inserting UserEmail: %s", userEmail))
+		return models.UserEmail{}, t.getError()
+	}
+	return userEmail, t.getError()
+}
+
+func (d *UserDatastore) GetUserEmail(ctx context.Context, userEmail models.UserEmail) (models.UserEmail, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	var email models.UserEmail
+	err = t.tx.Get(&email, "SELECT user_id, email, status FROM user_email_m2m WHERE email=$1", userEmail.Email)
+	return email, t.getError()
+}
+
+func (d *UserDatastore) UpdateUserEmail(ctx context.Context, userEmail models.UserEmail) (models.UserEmail, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	_, err = t.tx.NamedExec("UPDATE user_email_m2m SET status=:status WHERE email=:email", userEmail)
+	if err != nil {
+		log.Error(err.Error() + fmt.Sprintf(" updating UserEmail: %s", userEmail))
+		return models.UserEmail{}, t.getError()
+	}
+	return userEmail, t.getError()
+}

@@ -21,3 +21,7 @@ spec:
         backend:
           serviceName: backend
           servicePort: 8000
+      - path: /confirm-email
+        backend:
+          serviceName: backend
+          servicePort: 8000

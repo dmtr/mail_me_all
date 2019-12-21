@@ -27,6 +27,12 @@ const (
 
 	//Failed - subscription status
 	Failed string = "FAILED"
+
+	//EmailStatusNew - Email status NEW
+	EmailStatusNew string = "NEW"
+
+	//EmailStatusConfirmed - Email status Confirmed
+	EmailStatusConfirmed string = "CONFIRMED"
 )
 
 // Model interface
@@ -57,6 +63,17 @@ type User struct {
 
 func (u User) String() string {
 	return fmt.Sprintf("User: Name %s, ID %s", u.Name, u.ID)
+}
+
+// UserEmail - confirmed user email address
+type UserEmail struct {
+	UserID uuid.UUID `db:"user_id"`
+	Email  string    `db:"email"`
+	Status string    `db:"status"`
+}
+
+func (u UserEmail) String() string {
+	return fmt.Sprintf("User: ID %s, email %s", u.UserID, u.Email)
 }
 
 // TwitterUserSearchResult - twitter user info
@@ -230,6 +247,8 @@ type UserUseCase interface {
 	UpdateSubscription(ctx context.Context, userID uuid.UUID, subscription Subscription) (Subscription, error)
 	DeleteSubscription(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
 	DeleteAccount(ctx context.Context, userID uuid.UUID) error
+	ConfirmEmail(ctx context.Context, token string) error
+	GetToken(email, userID string) (string, error)
 }
 
 // UserDatastore - represents all user related database methods
@@ -267,6 +286,10 @@ type UserDatastore interface {
 
 	AcquireLock(ctx context.Context, key uint) (bool, error)
 	ReleaseLock(ctx context.Context, key uint) (bool, error)
+
+	InsertUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
+	GetUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
+	UpdateUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 }
 
 // SystemUseCase - represents system tasks

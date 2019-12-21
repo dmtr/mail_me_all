@@ -47,6 +47,7 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 	}
 
 	if testing { // unit tests
+		router.GET("confirm-email", middlewares.TestTransactionlMiddleware(), confirmEmail(usecases))
 		api := router.Group("/api", middlewares.TestSessionMiddleware(testUserID))
 		api.GET("/user", middlewares.TestTransactionlMiddleware(), getUser(usecases))
 		api.GET("/twitter-users", searchTwitterUsers(usecases))
@@ -57,6 +58,7 @@ func RegisterRoutes(router *gin.Engine, conf *config.Config, db *sqlx.DB, usecas
 	} else {
 		router.GET("/oauth/tw/signin", gin.WrapH(twitter.LoginHandler(oauth1Config, nil)))
 		router.GET("/oauth/tw/callback", middlewares.TransactionlMiddleware(db), processTwitterCallback(conf, oauth1Config, usecases))
+		router.GET("confirm-email", middlewares.TransactionlMiddleware(db), confirmEmail(usecases))
 
 		api := router.Group("/api", middlewares.SessionMiddleware())
 		api.GET("/user", middlewares.TransactionlMiddleware(db), getUser(usecases))
