@@ -287,7 +287,13 @@ func (u UserUseCase) UpdateSubscription(ctx context.Context, userID uuid.UUID, s
 		return subscription, NewUseCaseError("Email belongs to another user", errors.AuthRequired)
 	}
 
-	if sendConfirmationEmail || email.Status == models.EmailStatusNew {
+	if sendConfirmationEmail {
+		userEmail.Status = models.EmailStatusNew
+		_, err = u.UserDatastore.InsertUserEmail(ctx, userEmail)
+		if err != nil {
+			return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
+		}
+
 		if err = u.sendConfirmationEmail(userEmail.Email, userEmail.UserID.String()); err != nil {
 			return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
