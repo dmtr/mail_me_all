@@ -238,7 +238,11 @@ func (u UserUseCase) sendConfirmationEmail(email, userID string) error {
 		return err
 	}
 
-	err = u.Tmpl.Execute(&buf, link)
+	type TemplateData struct {
+		ConfirmationLink string
+	}
+
+	err = u.Tmpl.Execute(&buf, TemplateData{ConfirmationLink: link})
 	if err != nil {
 		return err
 	}
@@ -278,7 +282,7 @@ func (u UserUseCase) UpdateSubscription(ctx context.Context, userID uuid.UUID, s
 		}
 	}
 
-	if email.UserID != subscription.UserID {
+	if !sendConfirmationEmail && email.UserID != subscription.UserID {
 		log.Warningf("Email %s belongs to another user %s", subscription.Email, email)
 		return subscription, NewUseCaseError("Email belongs to another user", errors.AuthRequired)
 	}

@@ -121,6 +121,57 @@ func testUpdateSubscriptionNotFound(t *testing.T, router *gin.Engine, datastoreM
 	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
 }
 
+func testUpdateSubscriptionFailedCantSendEmail(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	title := "abc"
+	email := "test@example.com"
+	s := models.Subscription{
+		ID:    uuid.New(),
+		Title: title,
+		Email: email,
+		Day:   "monday",
+	}
+	datastoreMock.On("UpdateSubscription", mock.Anything, mock.Anything).Return(s, nil)
+
+	e := &db.DbError{Err: sql.ErrNoRows}
+	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(models.UserEmail{}, e)
+
+	req := map[string]interface{}{
+		"id": uuid.New().String(), "title": title, "email": email, "day": "monday",
+		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
+	reqJson, _ := json.Marshal(req)
+
+	w := performPutRequest(router, "/api/subscriptions", bytes.NewBuffer(reqJson))
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	datastoreMock.AssertNumberOfCalls(t, "GetUserEmail", 1)
+	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 0)
+}
+
+func testUpdateSubscriptionOk(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+	id := uuid.New()
+	datastoreMock.On("UpdateSubscription", mock.Anything, mock.Anything).Return(models.Subscription{ID: id}, nil)
+
+	email := "test@example.com"
+	uid, _ := uuid.Parse(testUserID)
+	userEmail := models.UserEmail{
+		UserID: uid,
+		Email:  email,
+		Status: models.EmailStatusConfirmed,
+	}
+	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(userEmail, nil)
+
+	req := map[string]interface{}{
+		"id": id.String(), "title": "abc", "email": email, "day": "monday",
+		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
+	reqJson, _ := json.Marshal(req)
+
+	w := performPutRequest(router, "/api/subscriptions", bytes.NewBuffer(reqJson))
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
+	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
+}
+
 func testDeleteSubscriptionNotAuth(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
 	id, _ := uuid.Parse("1c61dcb2-8bdb-4e3a-8415-d73b1d6133d0")
 	s := models.Subscription{
@@ -149,14 +200,15 @@ func testDeleteAccountOk(t *testing.T, router *gin.Engine, datastoreMock *mocks.
 
 func TestUserEndpoints(t *testing.T) {
 	tests := map[string]testFunc{
-		"TestGetUserOk":                    testGetUserOk,
-		"TestGetUserNotFound":              testGetUserNotFound,
-		"TestSearchTwitterUsersOk":         testSearchTwitterUsersOk,
-		"TestSearchTwitterUsersBadRequest": testSearchTwitterUsersBadRequest,
-		"TestUpdateSubscriptionNotFound":   testUpdateSubscriptionNotFound,
-		"TestAddSubscriptionUserNotFound":  testAddSubscriptionUserNotFound,
-		"TestDeleteSubscriptionNotAuth":    testDeleteSubscriptionNotAuth,
-		"TestDeleteAccountOk":              testDeleteAccountOk,
+		"TestGetUserOk":                             testGetUserOk,
+		"TestGetUserNotFound":                       testGetUserNotFound,
+		"TestSearchTwitterUsersOk":                  testSearchTwitterUsersOk,
+		"TestSearchTwitterUsersBadRequest":          testSearchTwitterUsersBadRequest,
+		"TestUpdateSubscriptionNotFound":            testUpdateSubscriptionNotFound,
+		"TestAddSubscriptionUserNotFound":           testAddSubscriptionUserNotFound,
+		"TestDeleteSubscriptionNotAuth":             testDeleteSubscriptionNotAuth,
+		"TestDeleteAccountOk":                       testDeleteAccountOk,
+		"TestUpdateSubscriptionFailedCantSendEmail": testUpdateSubscriptionFailedCantSendEmail,
 	}
 	runTests(tests, t)
 }
