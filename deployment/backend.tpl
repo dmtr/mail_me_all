@@ -52,6 +52,21 @@ spec:
              secretKeyRef:
                name: dsn
                key: dsn
+         - name: MAILME_APP_MG_DOMAIN
+           valueFrom:
+             secretKeyRef:
+               name: mgdomain
+               key: mgdomain
+         - name: MAILME_APP_MG_APIKEY
+           valueFrom:
+             secretKeyRef:
+               name: mgapikey
+               key: mgapikey 
+         - name: MAILME_APP_FROM
+           valueFrom:
+             secretKeyRef:
+               name: mgfrom
+               key: mgfrom 
         ports:
         - containerPort: 8000
         resources:
