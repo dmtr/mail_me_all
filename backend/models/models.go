@@ -31,6 +31,9 @@ const (
 	//EmailStatusNew - Email status NEW
 	EmailStatusNew string = "NEW"
 
+	//EmailStatusSent - confirmation email was sent
+	EmailStatusSent string = "SENT"
+
 	//EmailStatusConfirmed - Email status Confirmed
 	EmailStatusConfirmed string = "CONFIRMED"
 )
@@ -248,7 +251,6 @@ type UserUseCase interface {
 	DeleteSubscription(ctx context.Context, userID uuid.UUID, subscriptionID uuid.UUID) error
 	DeleteAccount(ctx context.Context, userID uuid.UUID) error
 	ConfirmEmail(ctx context.Context, token string) error
-	GetToken(email, userID string) (string, error)
 }
 
 // UserDatastore - represents all user related database methods
@@ -290,13 +292,16 @@ type UserDatastore interface {
 	InsertUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 	GetUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 	UpdateUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
+	GetUserEmails(ctx context.Context, status string) ([]UserEmail, error)
 }
 
 // SystemUseCase - represents system tasks
 type SystemUseCase interface {
 	InitSubscriptions(ids ...uuid.UUID) error
 	PrepareSubscriptions(ids ...uuid.UUID) error
-	SendSubscriptions(templatePath string, ids ...uuid.UUID) error
+	SendSubscriptions(ids ...uuid.UUID) error
+	SendConfirmationEmail() error
+	GetToken(email, userID string) (string, error)
 }
 
 // UseCases - represents all use cases
@@ -308,4 +313,9 @@ type UseCases struct {
 // NewUseCases - returns new UseCases struct
 func NewUseCases(user UserUseCase, system SystemUseCase) *UseCases {
 	return &UseCases{user, system}
+}
+
+//EmailSender - send emails
+type EmailSender interface {
+	Send(from, to, subject, body string) error
 }

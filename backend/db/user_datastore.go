@@ -889,3 +889,27 @@ func (d *UserDatastore) UpdateUserEmail(ctx context.Context, userEmail models.Us
 	}
 	return userEmail, t.getError()
 }
+
+func (d *UserDatastore) GetUserEmails(ctx context.Context, status string) ([]models.UserEmail, error) {
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	rows, err := t.tx.Queryx("SELECT user_id, email, status FROM user_email_m2m WHERE status=$1", status)
+
+	emails := make([]models.UserEmail, 0)
+	for rows.Next() {
+		var e models.UserEmail
+		err = rows.StructScan(&e)
+		if err != nil {
+			log.Errorf("Got error %s", err)
+			continue
+		}
+		emails = append(emails, e)
+	}
+
+	return emails, t.getError()
+}

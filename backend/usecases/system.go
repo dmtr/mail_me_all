@@ -5,13 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/dmtr/mail_me_all/backend/mail"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/models"
 	pb "github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/google/uuid"
@@ -40,23 +43,27 @@ func getShortenerRegexp() *regexp.Regexp {
 	return shortenerRegex
 }
 
+type JWTClaims struct {
+	Email  string `json:"email"`
+	UserID string `json:"user_id"`
+	jwt.StandardClaims
+}
+
 // SystemUseCase implementation
 type SystemUseCase struct {
 	UserDatastore models.UserDatastore
 	RpcClient     pb.TwProxyServiceClient
-	MgDomain      string
-	MgAPIKEY      string
-	From          string
+	Conf          *config.Config
+	EmailSender   models.EmailSender
 }
 
 // NewSystemUseCase creates a new SystemUseCase
-func NewSystemUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient, mgDomain, mgApiKey, from string) *SystemUseCase {
+func NewSystemUseCase(datastore models.UserDatastore, client pb.TwProxyServiceClient, conf *config.Config, emailSender models.EmailSender) *SystemUseCase {
 	return &SystemUseCase{
 		UserDatastore: datastore,
 		RpcClient:     client,
-		MgDomain:      mgDomain,
-		MgAPIKEY:      mgApiKey,
-		From:          from}
+		Conf:          conf,
+		EmailSender:   emailSender}
 }
 
 func find(slice []string, val string) (int, bool) {
@@ -319,7 +326,7 @@ func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserT
 	return ch
 }
 
-func (s SystemUseCase) SendSubscriptions(templatePath string, ids ...uuid.UUID) error {
+func (s SystemUseCase) SendSubscriptions(ids ...uuid.UUID) error {
 	lock, err := s.UserDatastore.AcquireLock(context.Background(), sendKey)
 	if err != nil {
 		return err
@@ -352,6 +359,7 @@ func (s SystemUseCase) SendSubscriptions(templatePath string, ids ...uuid.UUID) 
 		"shortener": shortener,
 	}
 
+	templatePath := s.Conf.TemplatePath
 	tmpl := template.Must(template.New("mail.html").Funcs(funcMap).ParseFiles(filepath.Join(templatePath, "mail.html")))
 
 	var wg sync.WaitGroup
@@ -450,7 +458,7 @@ func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscr
 
 	log.Debugf("html %s", buf.String())
 
-	err = mail.SendEmail(s.MgDomain, s.MgAPIKEY, s.From, subscription.Email, subscription.GetSubject(), buf.String())
+	err = s.EmailSender.Send(s.Conf.From, subscription.Email, subscription.GetSubject(), buf.String())
 
 	if err != nil {
 		subscriptionState.Status = models.Failed
@@ -462,4 +470,64 @@ func (s SystemUseCase) sendSubscription(subscription models.Subscription, subscr
 		log.Errorf("Can not update subscription state got error %s", err)
 		return
 	}
+}
+
+func (s SystemUseCase) GetToken(email, userID string) (string, error) {
+	exp := time.Now().Unix() + 24*60*60
+	claims := JWTClaims{
+		email,
+		userID,
+		jwt.StandardClaims{
+			ExpiresAt: exp,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte(s.Conf.EncryptKey))
+	if err != nil {
+		return "", err
+	}
+
+	return ss, err
+}
+
+func (s SystemUseCase) getEmailConfirmationLink(email, userID string) (string, error) {
+	token, err := s.GetToken(email, userID)
+	if err != nil {
+		return "", err
+	}
+
+	link := &url.URL{
+		Scheme:   "https",
+		Host:     s.Conf.Domain,
+		Path:     "confirm/email",
+		RawQuery: fmt.Sprintf("token=%s", token),
+	}
+
+	return link.String(), err
+}
+
+func (s SystemUseCase) SendConfirmationEmail() error {
+	emails, err := s.UserDatastore.GetUserEmails(context.Background(), models.EmailStatusNew)
+	tmpl := template.Must(template.New("confirm.html").ParseFiles(filepath.Join(s.Conf.TemplatePath, "confirm.html")))
+
+	for _, email := range emails {
+		var buf strings.Builder
+		link, err := s.getEmailConfirmationLink(email.Email, email.UserID.String())
+		if err != nil {
+			log.Errorf("Can not get confirmation link: %s", err)
+		}
+
+		type TemplateData struct {
+			ConfirmationLink string
+		}
+
+		err = tmpl.Execute(&buf, TemplateData{ConfirmationLink: link})
+		if err != nil {
+			log.Errorf("Can not execute template: %s", err)
+		}
+
+		err = s.EmailSender.Send(s.Conf.From, email.Email, ConfirmationEmailSubj, buf.String())
+	}
+	return err
 }

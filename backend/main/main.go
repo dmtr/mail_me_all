@@ -25,12 +25,13 @@ import (
 )
 
 const (
-	runAPI     string = "api"
-	runTwProxy string = "run-tw-proxy"
-	check      string = "check-new-subscriptions"
-	prepare    string = "prepare-subscriptions"
-	send       string = "send-subscriptions"
-	testEmail  string = "test-email"
+	runAPI           string = "api"
+	runTwProxy       string = "run-tw-proxy"
+	check            string = "check-new-subscriptions"
+	prepare          string = "prepare-subscriptions"
+	send             string = "send-subscriptions"
+	testEmail        string = "test-email"
+	sendConfirmation string = "send-confirmation"
 )
 
 func handleSignals(server *http.Server) {
@@ -153,7 +154,11 @@ func main() {
 		sendSubscriptions(a, IDs...)
 	} else if cmd == testEmail {
 		a = app.GetApp(false, false, false, false)
-		mail.SendEmail(a.Conf.MgDomain, a.Conf.MgAPIKEY, a.Conf.From, *to, *subject, *body)
+		sender := mail.NewEmailSender(a.Conf)
+		sender.Send(a.Conf.From, *to, *subject, *body)
+	} else if cmd == sendConfirmation {
+		a = app.GetApp(false, true, true, true)
+		sendConfirmationEmail(a)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)

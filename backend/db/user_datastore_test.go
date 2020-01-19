@@ -381,6 +381,14 @@ func testInsertUserEmail(t *testing.T, tx *sqlx.Tx, d *UserDatastore) {
 	res, err = d.UpdateUserEmail(ctx, userEmail)
 	assert.NoError(t, err)
 	assert.Equal(t, userEmail, res)
+
+	emails, err := d.GetUserEmails(ctx, models.EmailStatusSent)
+	assert.NoError(t, err)
+	assert.Len(t, emails, 0)
+
+	emails, err = d.GetUserEmails(ctx, models.EmailStatusConfirmed)
+	assert.NoError(t, err)
+	assert.Len(t, emails, 1)
 }
 
 func TestUserDatastore(t *testing.T) {

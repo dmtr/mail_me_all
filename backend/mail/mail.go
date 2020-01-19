@@ -4,16 +4,25 @@ import (
 	"context"
 	"time"
 
+	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/mailgun/mailgun-go/v3"
 	log "github.com/sirupsen/logrus"
 )
 
 const timeout = time.Second * 20
 
-func SendEmail(mgDomain, mgApiKey, from, to, subject, body string) error {
+type EmailSender struct {
+	Conf *config.Config
+}
+
+func NewEmailSender(conf *config.Config) EmailSender {
+	return EmailSender{Conf: conf}
+}
+
+func (e EmailSender) Send(from, to, subject, body string) error {
 	var err error
 
-	mg := mailgun.NewMailgun(mgDomain, mgApiKey)
+	mg := mailgun.NewMailgun(e.Conf.MgDomain, e.Conf.MgAPIKEY)
 	mg.SetAPIBase(mailgun.APIBaseEU)
 
 	m := mg.NewMessage(from, subject, "", to)
