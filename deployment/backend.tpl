@@ -80,6 +80,8 @@ spec:
       - name: crontasks
         image: gcr.io/${PROJECT_ID}/mailme_app_crontasks:${CRONTASKS_VERSION}
         env:
+         - name: MAILME_APP_DOMAIN
+           value: "read-it-later.app"
          - name: MAILME_APP_TW_PROXY_HOST
            value: "twproxy" 
          - name: MAILME_APP_PEM_FILE
