@@ -121,19 +121,11 @@ func testUpdateSubscriptionNotFound(t *testing.T, router *gin.Engine, datastoreM
 	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
 }
 
-func testUpdateSubscriptionFailedCantSendEmail(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
+func testUpdateSubscriptionSameEmail(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
 	title := "abc"
 	email := "test@example.com"
-	s := models.Subscription{
-		ID:    uuid.New(),
-		Title: title,
-		Email: email,
-		Day:   "monday",
-	}
-	datastoreMock.On("UpdateSubscription", mock.Anything, mock.Anything).Return(s, nil)
-
-	e := &db.DbError{Err: sql.ErrNoRows}
-	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(models.UserEmail{}, e)
+	userID := uuid.New()
+	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(models.UserEmail{Email: email, UserID: userID}, nil)
 
 	req := map[string]interface{}{
 		"id": uuid.New().String(), "title": title, "email": email, "day": "monday",
@@ -169,7 +161,6 @@ func testUpdateSubscriptionOk(t *testing.T, router *gin.Engine, datastoreMock *m
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
-	datastoreMock.AssertNumberOfCalls(t, "UpdateSubscription", 1)
 }
 
 func testDeleteSubscriptionNotAuth(t *testing.T, router *gin.Engine, datastoreMock *mocks.UserDatastore, clientMock *mocks.TwProxyServiceClient) {
@@ -200,15 +191,15 @@ func testDeleteAccountOk(t *testing.T, router *gin.Engine, datastoreMock *mocks.
 
 func TestUserEndpoints(t *testing.T) {
 	tests := map[string]testFunc{
-		"TestGetUserOk":                             testGetUserOk,
-		"TestGetUserNotFound":                       testGetUserNotFound,
-		"TestSearchTwitterUsersOk":                  testSearchTwitterUsersOk,
-		"TestSearchTwitterUsersBadRequest":          testSearchTwitterUsersBadRequest,
-		"TestUpdateSubscriptionNotFound":            testUpdateSubscriptionNotFound,
-		"TestAddSubscriptionUserNotFound":           testAddSubscriptionUserNotFound,
-		"TestDeleteSubscriptionNotAuth":             testDeleteSubscriptionNotAuth,
-		"TestDeleteAccountOk":                       testDeleteAccountOk,
-		"TestUpdateSubscriptionFailedCantSendEmail": testUpdateSubscriptionFailedCantSendEmail,
+		"TestGetUserOk":                    testGetUserOk,
+		"TestGetUserNotFound":              testGetUserNotFound,
+		"TestSearchTwitterUsersOk":         testSearchTwitterUsersOk,
+		"TestSearchTwitterUsersBadRequest": testSearchTwitterUsersBadRequest,
+		"TestUpdateSubscriptionNotFound":   testUpdateSubscriptionNotFound,
+		"TestAddSubscriptionUserNotFound":  testAddSubscriptionUserNotFound,
+		"TestDeleteSubscriptionNotAuth":    testDeleteSubscriptionNotAuth,
+		"TestDeleteAccountOk":              testDeleteAccountOk,
+		"TestUpdateSubscriptionSameEmail":  testUpdateSubscriptionSameEmail,
 	}
 	runTests(tests, t)
 }

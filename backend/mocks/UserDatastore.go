@@ -302,6 +302,29 @@ func (_m *UserDatastore) GetUserEmail(ctx context.Context, userEmail models.User
 	return r0, r1
 }
 
+// GetUserEmails provides a mock function with given fields: ctx, status
+func (_m *UserDatastore) GetUserEmails(ctx context.Context, status string) ([]models.UserEmail, error) {
+	ret := _m.Called(ctx, status)
+
+	var r0 []models.UserEmail
+	if rf, ok := ret.Get(0).(func(context.Context, string) []models.UserEmail); ok {
+		r0 = rf(ctx, status)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.UserEmail)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, status)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // InsertSubscription provides a mock function with given fields: ctx, subscription
 func (_m *UserDatastore) InsertSubscription(ctx context.Context, subscription models.Subscription) (models.Subscription, error) {
 	ret := _m.Called(ctx, subscription)

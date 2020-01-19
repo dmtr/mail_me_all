@@ -7,6 +7,7 @@ import (
 	"github.com/dmtr/mail_me_all/backend/api"
 	"github.com/dmtr/mail_me_all/backend/config"
 	"github.com/dmtr/mail_me_all/backend/db"
+	"github.com/dmtr/mail_me_all/backend/mail"
 	"github.com/dmtr/mail_me_all/backend/models"
 	"github.com/dmtr/mail_me_all/backend/rpc"
 	"github.com/dmtr/mail_me_all/backend/usecases"
@@ -46,7 +47,8 @@ func initLogger(loglevel log.Level) {
 func getUseCases(db_ *sqlx.DB, client pb.TwProxyServiceClient, conf config.Config) *models.UseCases {
 	userDatastore := db.NewUserDatastore(db_)
 	userUseCase := usecases.NewUserUseCase(userDatastore, client, &conf)
-	systemUseCase := usecases.NewSystemUseCase(userDatastore, client, conf.MgDomain, conf.MgAPIKEY, conf.From)
+	es := mail.NewEmailSender(&conf)
+	systemUseCase := usecases.NewSystemUseCase(userDatastore, client, &conf, es)
 	return models.NewUseCases(userUseCase, systemUseCase)
 }
 

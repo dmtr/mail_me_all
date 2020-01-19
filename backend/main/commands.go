@@ -31,10 +31,21 @@ func prepareSubscriptions(a *app.App, ids ...uuid.UUID) {
 func sendSubscriptions(a *app.App, ids ...uuid.UUID) {
 	log.Info("Executing sendSubscriptions command")
 
-	err := a.UseCases.SendSubscriptions(a.Conf.TemplatePath, ids...)
+	err := a.UseCases.SendSubscriptions(ids...)
 	if err != nil {
 		log.Errorf("Got error executing command %s", err)
 	}
 
 	log.Info("Command sendSubscriptions finished")
+}
+
+func sendConfirmationEmail(a *app.App) {
+	log.Info("Executing sendConfirmationEmail command")
+
+	err := a.UseCases.SendConfirmationEmail()
+	if err != nil {
+		log.Errorf("Got error executing command %s", err)
+	}
+
+	log.Info("Command sendConfirmationEmail finished")
 }
