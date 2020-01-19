@@ -132,6 +132,7 @@ func (s Subscription) String() string {
 	return fmt.Sprintf("Subscription: ID %s, UserID %s, Title %s, users amount %d", s.ID, s.UserID, s.Title, len(s.UserList))
 }
 
+//GetSubject returns the letter subject
 func (s Subscription) GetSubject() string {
 	return fmt.Sprintf("New Issue of %s", s.Title)
 }
