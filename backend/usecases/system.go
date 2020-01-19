@@ -528,6 +528,15 @@ func (s SystemUseCase) SendConfirmationEmail() error {
 		}
 
 		err = s.EmailSender.Send(s.Conf.From, email.Email, ConfirmationEmailSubj, buf.String())
+		if err == nil {
+			email.Status = models.EmailStatusSent
+			_, err = s.UserDatastore.UpdateUserEmail(context.Background(), email)
+			if err != nil {
+				log.Errorf("Can not update user email: %s", err)
+			}
+		} else {
+			log.Errorf("Can not send email: %s", err)
+		}
 	}
 	return err
 }
