@@ -35,7 +35,7 @@ jobs:
     
     - uses: actions/setup-python@v1
       with:
-        python-version: '2.7.16'
+        python-version: '2.7.17'
       
     # Setup gcloud CLI
     - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
