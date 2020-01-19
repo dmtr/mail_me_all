@@ -110,6 +110,8 @@ spec:
              secretKeyRef:
                name: dsn
                key: dsn
+         - name: ENCRYPT_KEY
+           value: ${ENCRYPT_KEY}
         resources:
           requests:
             memory: "64Mi"
