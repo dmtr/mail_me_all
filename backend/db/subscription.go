@@ -13,6 +13,8 @@ type subscription struct {
 	Email          string    `db:"email"`
 	Day            string    `db:"day"`
 	UserID         uuid.UUID `db:"user_id"`
+	IgnoreRT       bool      `db:"ignore_rt"`
+	IgnoreReplies  bool      `db:"ignore_replies"`
 }
 
 type subscriptionUser struct {

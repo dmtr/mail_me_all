@@ -254,7 +254,7 @@ func (s SystemUseCase) prepareSubscription(subscription models.Subscription, use
 
 	channels := make([]<-chan models.Tweet, 0)
 	for _, u := range subscription.UserList {
-		ch := s.getTweets(subscriptionUserTweets, u, user.AccessToken, user.TokenSecret, user.TwitterID)
+		ch := s.getTweets(subscriptionUserTweets, u, user.AccessToken, user.TokenSecret, user.TwitterID, subscription.IgnoreRT, subscription.IgnoreReplies)
 		channels = append(channels, ch)
 	}
 
@@ -273,7 +273,7 @@ func (s SystemUseCase) prepareSubscription(subscription models.Subscription, use
 	}
 }
 
-func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserTweets, user models.TwitterUserSearchResult, accessToken, tokenSecret, twitterID string) <-chan models.Tweet {
+func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserTweets, user models.TwitterUserSearchResult, accessToken, tokenSecret, twitterID string, ignoreRT, ignoreReplies bool) <-chan models.Tweet {
 	ch := make(chan models.Tweet)
 
 	lastTweet, ok := subscriptionUserTweets.Tweets[user.TwitterID]
@@ -292,11 +292,13 @@ func (s SystemUseCase) getTweets(subscriptionUserTweets models.SubscriptionUserT
 
 	go func() {
 		req := pb.UserTimelineRequest{
-			AccessToken:  accessToken,
-			AccessSecret: tokenSecret,
-			TwitterId:    twitterID,
-			ScreenName:   user.ScreenName,
-			SinceId:      sinceID,
+			AccessToken:   accessToken,
+			AccessSecret:  tokenSecret,
+			TwitterId:     twitterID,
+			ScreenName:    user.ScreenName,
+			SinceId:       sinceID,
+			IgnoreRt:      ignoreRT,
+			IgnoreReplies: ignoreReplies,
 		}
 
 		tweets, err := s.RpcClient.GetUserTimeline(context.Background(), &req)

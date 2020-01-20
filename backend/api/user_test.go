@@ -86,7 +86,7 @@ func testAddSubscriptionUserNotFound(t *testing.T, router *gin.Engine, datastore
 	datastoreMock.On("GetUser", mock.Anything, mock.Anything).Return(models.User{}, e)
 
 	req := map[string]interface{}{
-		"id": nil, "title": "abc", "email": "test@example.com", "day": "monday",
+		"id": nil, "title": "abc", "email": "test@example.com", "day": "monday", "ignore_rt": false, "ignore_replies": false,
 		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
 	reqJson, _ := json.Marshal(req)
 
@@ -111,7 +111,7 @@ func testUpdateSubscriptionNotFound(t *testing.T, router *gin.Engine, datastoreM
 	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(userEmail, nil)
 
 	req := map[string]interface{}{
-		"id": uuid.New().String(), "title": "abc", "email": email, "day": "monday",
+		"id": uuid.New().String(), "title": "abc", "email": email, "day": "monday", "ignore_rt": false, "ignore_replies": false,
 		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
 	reqJson, _ := json.Marshal(req)
 
@@ -128,7 +128,7 @@ func testUpdateSubscriptionSameEmail(t *testing.T, router *gin.Engine, datastore
 	datastoreMock.On("GetUserEmail", mock.Anything, mock.Anything).Return(models.UserEmail{Email: email, UserID: userID}, nil)
 
 	req := map[string]interface{}{
-		"id": uuid.New().String(), "title": title, "email": email, "day": "monday",
+		"id": uuid.New().String(), "title": title, "email": email, "day": "monday", "ignore_rt": false, "ignore_replies": false,
 		"userList": []twitterUser{twitterUser{ID: "123", Name: "test", ScreenName: "test", ProfileIMGURL: "url"}}}
 	reqJson, _ := json.Marshal(req)
 

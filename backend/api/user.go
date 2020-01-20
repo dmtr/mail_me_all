@@ -35,11 +35,13 @@ type twitterUser struct {
 }
 
 type subscription struct {
-	ID       string        `json:"id"`
-	Title    string        `json:"title" binding:"required"`
-	Email    string        `json:"email" binding:"required"`
-	Day      string        `json:"day" binding:"required"`
-	UserList []twitterUser `json:"userList" binding:"required"`
+	ID            string        `json:"id"`
+	Title         string        `json:"title" binding:"required"`
+	Email         string        `json:"email" binding:"required"`
+	Day           string        `json:"day" binding:"required"`
+	IgnoreRT      bool          `json:"ignore_rt"`
+	IgnoreReplies bool          `json:"ignore_replies"`
+	UserList      []twitterUser `json:"userList" binding:"required"`
 }
 
 func adaptUser(user models.User, signedIn bool) appUser {
@@ -62,10 +64,12 @@ func adaptTwitterUserSearchResult(user models.TwitterUserSearchResult) twitterUs
 
 func adaptSubscription(s models.Subscription) subscription {
 	subcr := subscription{
-		ID:    s.ID.String(),
-		Title: s.Title,
-		Email: s.Email,
-		Day:   s.Day,
+		ID:            s.ID.String(),
+		Title:         s.Title,
+		Email:         s.Email,
+		Day:           s.Day,
+		IgnoreRT:      s.IgnoreRT,
+		IgnoreReplies: s.IgnoreReplies,
 	}
 
 	for _, u := range s.UserList {
@@ -322,16 +326,19 @@ func getSubscriptions(usecases models.UserUseCase) gin.HandlerFunc {
 func getSubscription(c *gin.Context, userID uuid.UUID) (models.Subscription, error) {
 	var s subscription
 	if err := c.ShouldBindJSON(&s); err != nil {
+		log.Errorf("!!! %s", err)
 		return models.Subscription{}, err
 	}
 
 	id, _ := uuid.Parse(s.ID)
 	newSubscription := models.Subscription{
-		ID:     id,
-		UserID: userID,
-		Title:  s.Title,
-		Email:  s.Email,
-		Day:    strings.ToLower(s.Day),
+		ID:            id,
+		UserID:        userID,
+		Title:         s.Title,
+		Email:         s.Email,
+		Day:           strings.ToLower(s.Day),
+		IgnoreRT:      s.IgnoreRT,
+		IgnoreReplies: s.IgnoreReplies,
 	}
 
 	for _, u := range s.UserList {

@@ -220,7 +220,7 @@ func (d *UserDatastore) InsertSubscription(ctx context.Context, subscription mod
 	}()
 
 	tx := t.tx
-	res, err := tx.NamedQuery("INSERT INTO subscription (user_id, title, email, day) VALUES (:user_id, :title, :email, :day) RETURNING id", subscription)
+	res, err := tx.NamedQuery("INSERT INTO subscription (user_id, title, email, day, ignore_rt, ignore_replies) VALUES (:user_id, :title, :email, :day, :ignore_rt, :ignore_replies) RETURNING id", subscription)
 	if err != nil {
 		log.Error(err.Error() + fmt.Sprintf(" inserting subscription: %s", subscription))
 		return models.Subscription{}, t.getError()
@@ -259,7 +259,7 @@ func (d *UserDatastore) GetSubscriptions(ctx context.Context, userID uuid.UUID) 
 	}
 
 	rows, err := t.tx.Queryx(
-		"SELECT s.id AS subscription_id, s.user_id, s.title, s.email, s.day, u.id, u.name, u.twitter_id, u.screen_name, u.profile_image_url "+
+		"SELECT s.id AS subscription_id, s.user_id, s.title, s.email, s.day, s.ignore_rt, s.ignore_replies, u.id, u.name, u.twitter_id, u.screen_name, u.profile_image_url "+
 			"FROM subscription s "+
 			"INNER JOIN subscription_user_m2m m2m ON m2m.subscription_id = s.id "+
 			"INNER JOIN subscription_user u ON u.id = m2m.user_id "+
@@ -278,11 +278,13 @@ func (d *UserDatastore) GetSubscriptions(ctx context.Context, userID uuid.UUID) 
 		err = rows.StructScan(&row)
 
 		s := models.Subscription{
-			ID:     row.SubscriptionID,
-			Title:  row.Title,
-			Email:  row.Email,
-			Day:    row.Day,
-			UserID: row.UserID,
+			ID:            row.SubscriptionID,
+			Title:         row.Title,
+			Email:         row.Email,
+			Day:           row.Day,
+			UserID:        row.UserID,
+			IgnoreRT:      row.IgnoreRT,
+			IgnoreReplies: row.IgnoreReplies,
 		}
 		u := models.TwitterUserSearchResult{
 			TwitterID:     row.TwitterID,
@@ -319,7 +321,7 @@ func (d *UserDatastore) GetSubscription(ctx context.Context, subscriptionID uuid
 
 	var subscription models.Subscription
 
-	err = t.tx.Get(&subscription, "SELECT id, user_id, title, email, day FROM subscription WHERE id=$1", subscriptionID)
+	err = t.tx.Get(&subscription, "SELECT id, user_id, title, email, day, ignore_rt, ignore_replies FROM subscription WHERE id=$1", subscriptionID)
 
 	if err != nil {
 		return subscription, t.getError()
@@ -368,7 +370,7 @@ func (d *UserDatastore) UpdateSubscription(ctx context.Context, subscription mod
 	}
 
 	tx := t.tx
-	_, err = tx.NamedExec("UPDATE subscription SET title=:title, email=:email, day=:day WHERE id = :id", subscription)
+	_, err = tx.NamedExec("UPDATE subscription SET title=:title, email=:email, day=:day, ignore_rt=:ignore_rt, ignore_replies=:ignore_replies WHERE id = :id", subscription)
 	if err != nil {
 		return subscription, t.getError()
 	}

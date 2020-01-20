@@ -48,6 +48,8 @@ message UserTimelineRequest {
 	string screen_name = 4;
 	int64 since_id = 5;
 	int64 count = 6;
+	bool ignore_rt = 7;
+	bool ignore_replies = 8;
 }
 
 message Tweet {

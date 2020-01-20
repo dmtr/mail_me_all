@@ -139,7 +139,7 @@ func (t Twitter) SearchUsers(accessToken, accessSecret, twitterID, query string)
 	return res, err
 }
 
-func (t Twitter) GetUserTimeline(accessToken, accessSecret, twitterID, screenName string, sinceID int64, count int64) ([]Tweet, error) {
+func (t Twitter) GetUserTimeline(accessToken, accessSecret, twitterID, screenName string, sinceID int64, count int64, ignoreRT, ignoreReplies bool) ([]Tweet, error) {
 	client := t.getSession(accessToken, accessSecret, twitterID)
 
 	trim := true
@@ -147,10 +147,14 @@ func (t Twitter) GetUserTimeline(accessToken, accessSecret, twitterID, screenNam
 		trim = false
 	}
 
+	includeRT := !ignoreRT
+
 	params := tw.UserTimelineParams{
-		ScreenName: screenName,
-		TrimUser:   &trim,
-		TweetMode:  "extended",
+		ScreenName:      screenName,
+		TrimUser:        &trim,
+		TweetMode:       "extended",
+		IncludeRetweets: &includeRT,
+		ExcludeReplies:  &ignoreReplies,
 	}
 
 	if sinceID != 0 {

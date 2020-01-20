@@ -120,12 +120,14 @@ func (u UserList) Diff(another UserList) UserList {
 
 // Subscription represents user subscription
 type Subscription struct {
-	ID       uuid.UUID `db:"id"`
-	UserID   uuid.UUID `db:"user_id"`
-	Title    string    `db:"title"`
-	Email    string    `db:"email"`
-	Day      string    `db:"day"`
-	UserList UserList
+	ID            uuid.UUID `db:"id"`
+	UserID        uuid.UUID `db:"user_id"`
+	Title         string    `db:"title"`
+	Email         string    `db:"email"`
+	Day           string    `db:"day"`
+	IgnoreRT      bool      `db:"ignore_rt"`
+	IgnoreReplies bool      `db:"ignore_replies"`
+	UserList      UserList
 }
 
 func (s Subscription) String() string {
