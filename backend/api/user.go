@@ -264,13 +264,7 @@ func addSubscription(usecases models.UserUseCase) gin.HandlerFunc {
 			return
 		}
 
-		ctx, err := getContextWithTransaction(c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
-			return
-		}
-
-		newSubscription, err = usecases.AddSubscription(ctx, newSubscription)
+		newSubscription, err = usecases.AddSubscription(context.Background(), newSubscription)
 
 		if err != nil {
 			log.Errorf("Can not add subscription %s, got error %s", newSubscription, err)
@@ -360,19 +354,13 @@ func updateSubscription(usecases models.UserUseCase) gin.HandlerFunc {
 			return
 		}
 
-		ctx, err := getContextWithTransaction(c)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"code": errors.ServerError})
-			return
-		}
-
 		updatedSubscription, err := getSubscription(c, userID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": errors.BadRequest, "message": err.Error()})
 			return
 		}
 
-		updatedSubscription, err = usecases.UpdateSubscription(ctx, userID, updatedSubscription)
+		updatedSubscription, err = usecases.UpdateSubscription(context.Background(), userID, updatedSubscription)
 		if err != nil {
 			log.Errorf("Can not add subscription %s, got error %s", updatedSubscription, err)
 			e, _ := err.(*useCases.UseCaseError)
