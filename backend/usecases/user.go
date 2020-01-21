@@ -197,16 +197,14 @@ func (u UserUseCase) UpdateSubscription(ctx context.Context, userID uuid.UUID, s
 		e := err.(*db.DbError)
 		if e.HasNoRows() {
 			userEmail.Status = models.EmailStatusNew
-			_, err = u.UserDatastore.InsertUserEmail(ctx, userEmail)
+			email, err = u.UserDatastore.InsertUserEmail(ctx, userEmail)
 			if err != nil {
 				return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 			}
 		} else {
 			return subscription, NewUseCaseError(err.Error(), errors.GetErrorCode(err))
 		}
-	}
-
-	if email.UserID != subscription.UserID {
+	} else if email.UserID != subscription.UserID {
 		log.Warningf("Email %s belongs to another user %s", subscription.Email, email)
 		return subscription, NewUseCaseError("Email belongs to another user", errors.AuthRequired)
 	}
