@@ -23,7 +23,7 @@ export PG_PORT=$(DB_PORT)
 export PG_DATABASE=$(DB_NAME)
 export PG_USER=$(DB_USER)
 
-.PHONY: all restart build-backend restart-backend up-backend restart-all migrate-up migrate-down proto test-backend
+.PHONY: all restart build-backend restart-backend up-backend restart-all migrate-up migrate-down protoc test-backend
 
 all: build-backend up-backend 
 restart: restart-all
@@ -57,6 +57,6 @@ migrate-down:
 test-backend:
 	$(info Running target $(MAKECMDGOALS) with $(POSTGRES_URL))
 	TEST_DB_CONTAINER=$(TEST_DB_CONTAINER) NETWORK=$(NETWORK) DB_NAME=$(DB_NAME) DB_PORT=$(DB_PORT) DB_IMAGE=$(DB_IMAGE) ABS_PATH=$(ABS_PATH) POSTGRES_URL_INTERNAL=$(POSTGRES_URL_INTERNAL) POSTGRES_URL=$(POSTGRES_URL) ./scripts/run-test.sh
-proto: 
+protoc:
 	$(info Running target $(MAKECMDGOALS))
-        cd backend && protoc -I rpc rpc/twproxy.proto --go_out=plugins=grpc:rpc
+	cd backend && protoc -I rpc rpc/twproxy.proto --go_out=plugins=grpc:rpc

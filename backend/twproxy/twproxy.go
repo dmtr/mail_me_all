@@ -63,7 +63,7 @@ func (s *ServiceServer) SearchUsers(ctx context.Context, request *pb.UserSearchR
 //
 func (s *ServiceServer) GetUserTimeline(ctx context.Context, request *pb.UserTimelineRequest) (*pb.UserTimelineResponse, error) {
 	tweets, err := s.twitter.GetUserTimeline(
-		request.AccessToken, request.AccessSecret, request.TwitterId, request.ScreenName, request.SinceId, request.Count)
+		request.AccessToken, request.AccessSecret, request.TwitterId, request.ScreenName, request.SinceId, request.Count, request.IgnoreRt, request.IgnoreReplies)
 	if err != nil {
 		return nil, err
 	}

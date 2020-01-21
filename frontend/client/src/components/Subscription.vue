@@ -4,6 +4,8 @@
       <v-text-field v-model="subscription.title" :rules="titleRules" label="Subscription title"></v-text-field>
       <v-text-field v-model="currentEmail" :rules="emailRules" label="E-mail"></v-text-field>
       <v-select v-model="subscription.day" :items="days" label="Subscription delivery day"></v-select>
+      <v-checkbox v-model="subscription.ignore_rt" label="Ignore retweets"></v-checkbox>
+      <v-checkbox v-model="subscription.ignore_replies" label="Ignore replies"></v-checkbox>
       <TwUserList v-bind:userList="subscription.userList" v-on:removeUser="removeUser" />
       <v-autocomplete
         v-model="selected"
@@ -93,6 +95,8 @@ export default {
           title: "",
           email: "",
           day: null,
+          ignore_rt: false,
+          ignore_replies: false,
           userList: []
         };
       }
