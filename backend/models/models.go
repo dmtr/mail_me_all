@@ -160,6 +160,14 @@ func (s Subscription) Equal(another Subscription) bool {
 		return false
 	}
 
+	if s.IgnoreRT != another.IgnoreRT {
+		return false
+	}
+
+	if s.IgnoreReplies != another.IgnoreReplies {
+		return false
+	}
+
 	if len(s.UserList) != len(another.UserList) {
 		return false
 	}

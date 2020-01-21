@@ -326,7 +326,6 @@ func getSubscriptions(usecases models.UserUseCase) gin.HandlerFunc {
 func getSubscription(c *gin.Context, userID uuid.UUID) (models.Subscription, error) {
 	var s subscription
 	if err := c.ShouldBindJSON(&s); err != nil {
-		log.Errorf("!!! %s", err)
 		return models.Subscription{}, err
 	}
 

@@ -57,7 +57,7 @@ func GetApp(withAPI bool, opts ...bool) *App {
 	log.Infoln("Loading Config")
 	conf := config.GetConfig()
 	initLogger(conf.Loglevel)
-	log.Infof("Config loaded %v", conf)
+	log.Infoln("Config loaded")
 
 	withDB := false
 	withRpcConn := false
