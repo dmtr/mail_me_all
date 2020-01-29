@@ -29,7 +29,7 @@ const getters = {
 };
 
 function handle401(commit, res) {
-  if ((res.error && res.error.code === 5) || res.error.code == 401) {
+  if (res.error && (res.error.code === 5 || res.error.code == 401)) {
     commit("setUser", null);
   }
 }
