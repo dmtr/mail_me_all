@@ -28,6 +28,12 @@ const getters = {
       : ""
 };
 
+function handle401(commit, res) {
+  if (res.error && (res.error.code === 5 || res.error.code == 401)) {
+    commit("setUser", null);
+  }
+}
+
 const actions = {
   async getUser({ commit }) {
     const res = await getUser();
@@ -39,11 +45,13 @@ const actions = {
 
   async createSubscription(context, subscription) {
     const res = await createSubscription(subscription);
+    handle401(context.commit, res);
     return res;
   },
 
   async updateSubscription(context, subscription) {
     const res = await updateSubscription(subscription);
+    handle401(context.commit, res);
     return res;
   },
 
@@ -51,6 +59,8 @@ const actions = {
     const res = await deleteSubscription(subscription.id);
     if (!res.error) {
       commit("removeSubscription", subscription);
+    } else {
+      handle401(commit, res);
     }
   },
 
@@ -58,6 +68,8 @@ const actions = {
     const res = await getSubscriptions();
     if (!res.error) {
       commit("setSubscriptions", res.data);
+    } else {
+      handle401(commit, res);
     }
     return res;
   },
@@ -67,6 +79,8 @@ const actions = {
     if (!res.error) {
       commit("setUser", null);
       commit("setSubscriptions", []);
+    } else {
+      handle401(commit, res);
     }
   }
 };
