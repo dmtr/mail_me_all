@@ -915,3 +915,22 @@ func (d *UserDatastore) GetUserEmails(ctx context.Context, status string) ([]mod
 
 	return emails, t.getError()
 }
+
+func (d *UserDatastore) RemoveOldTweets(ctx context.Context, tweetTTL int) error {
+	log.Debugf("Going to remove tweets older than %d", tweetTTL)
+	var err error
+	t := getTransaction(ctx, d.DB, &err)
+
+	defer func() {
+		t.commitOrRollback()
+	}()
+
+	q := fmt.Sprintf("DELETE FROM tweet WHERE tweet.id IN (SELECT t.id FROM tweet t INNER JOIN subscription_state_tweet_m2m m ON m.tweet_id = t.id INNER JOIN subscription_state s ON s.id = m.subscription_state_id WHERE NOW() - s.created_at > INTERVAL '%d DAYS')", tweetTTL)
+	_, err = t.tx.Exec(q)
+	if err != nil {
+		log.Error(err.Error() + fmt.Sprintf(" removing tweets"))
+		return t.getError()
+	}
+	return t.getError()
+
+}

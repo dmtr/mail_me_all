@@ -542,3 +542,8 @@ func (s SystemUseCase) SendConfirmationEmail() error {
 	}
 	return err
 }
+
+func (s SystemUseCase) RemoveOldTweets() error {
+	err := s.UserDatastore.RemoveOldTweets(context.Background(), s.Conf.TweetTTL)
+	return err
+}

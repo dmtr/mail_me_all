@@ -49,3 +49,14 @@ func sendConfirmationEmail(a *app.App) {
 
 	log.Info("Command sendConfirmationEmail finished")
 }
+
+func removeOldTweets(a *app.App) {
+	log.Info("Executing removeOldTweets command")
+
+	err := a.UseCases.RemoveOldTweets()
+	if err != nil {
+		log.Errorf("Got error executing command %s", err)
+	}
+
+	log.Info("Command removeOldTweets finished")
+}

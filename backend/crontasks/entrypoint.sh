@@ -17,8 +17,10 @@ echo "$CRON_SCHEDULE_CHECK /app/mailmeapp check-new-subscriptions" >> /var/spool
 CRON_SCHEDULE_PREPARE='5 18 * * *'
 echo "$CRON_SCHEDULE_PREPARE /app/mailmeapp prepare-subscriptions" >> /var/spool/cron/crontabs/root
 
-
 CRON_SCHEDULE_SEND='20 18 * * *'
 echo "$CRON_SCHEDULE_SEND /app/mailmeapp send-subscriptions" >> /var/spool/cron/crontabs/root
+
+CRON_SCHEDULE_REMOVE='15 10 * * *'
+echo "$CRON_SCHEDULE_REMOVE /app/mailmeapp remove-old-tweets" >> /var/spool/cron/crontabs/root
 
 crond -f
