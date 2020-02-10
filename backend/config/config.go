@@ -40,6 +40,7 @@ type Config struct {
 	From             string
 	PemFile          string
 	KeyFile          string
+	TweetTTL         int
 }
 
 // GetConfig returns app config
@@ -65,6 +66,7 @@ func GetConfig() Config {
 	viper.SetDefault("FROM", "")
 	viper.SetDefault("PEM_FILE", "")
 	viper.SetDefault("KEY_FILE", "")
+	viper.SetDefault("TWEET_TTL", 7)
 	viper.AutomaticEnv()
 
 	loglevel, err := log.ParseLevel(viper.GetString("LOGLEVEL"))
@@ -97,6 +99,7 @@ func GetConfig() Config {
 		From:             viper.GetString("FROM"),
 		PemFile:          viper.GetString("PEM_FILE"),
 		KeyFile:          viper.GetString("KEY_FILE"),
+		TweetTTL:         viper.GetInt("TWEET_TTL"),
 	}
 
 	return conf

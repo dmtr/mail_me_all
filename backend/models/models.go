@@ -304,6 +304,8 @@ type UserDatastore interface {
 	GetUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 	UpdateUserEmail(ctx context.Context, userEmail UserEmail) (UserEmail, error)
 	GetUserEmails(ctx context.Context, status string) ([]UserEmail, error)
+
+	RemoveOldTweets(ctx context.Context, tweetTTL int) error
 }
 
 // SystemUseCase - represents system tasks
@@ -313,6 +315,7 @@ type SystemUseCase interface {
 	SendSubscriptions(ids ...uuid.UUID) error
 	SendConfirmationEmail() error
 	GetToken(email, userID string) (string, error)
+	RemoveOldTweets() error
 }
 
 // UseCases - represents all use cases

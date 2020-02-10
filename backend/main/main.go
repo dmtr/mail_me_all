@@ -32,6 +32,7 @@ const (
 	send             string = "send-subscriptions"
 	testEmail        string = "test-email"
 	sendConfirmation string = "send-confirmation"
+	removeTweets     string = "remove-old-tweets"
 )
 
 func handleSignals(server *http.Server) {
@@ -159,6 +160,9 @@ func main() {
 	} else if cmd == sendConfirmation {
 		a = app.GetApp(false, true, true, true)
 		sendConfirmationEmail(a)
+	} else if cmd == removeTweets {
+		a = app.GetApp(false, true, false, true)
+		removeOldTweets(a)
 	} else {
 		fmt.Printf("Unknown command %s", cmd)
 		os.Exit(1)

@@ -486,6 +486,20 @@ func (_m *UserDatastore) ReleaseLock(ctx context.Context, key uint) (bool, error
 	return r0, r1
 }
 
+// RemoveOldTweets provides a mock function with given fields: ctx, tweetTTL
+func (_m *UserDatastore) RemoveOldTweets(ctx context.Context, tweetTTL int) error {
+	ret := _m.Called(ctx, tweetTTL)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
+		r0 = rf(ctx, tweetTTL)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // RemoveUser provides a mock function with given fields: ctx, userID
 func (_m *UserDatastore) RemoveUser(ctx context.Context, userID uuid.UUID) error {
 	ret := _m.Called(ctx, userID)
